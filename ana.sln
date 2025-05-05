@@ -1,0 +1,56 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35913.81
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ana.AppHost", "ana.AppHost\ana.AppHost.csproj", "{3CC17F39-013D-452B-A429-446A9DB79965}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ana.ServiceDefaults", "ana.ServiceDefaults\ana.ServiceDefaults.csproj", "{A29DA894-E65C-BA42-3678-4B261A84533A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ana.ApiService", "ana.ApiService\ana.ApiService.csproj", "{D3F45D66-0837-418F-1F88-E39FE878B1B8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ana.Web", "ana.Web\ana.Web\ana.Web.csproj", "{8ECFCF2B-F691-4C2A-8852-0AD57415B71C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ana.Web.Client", "ana.Web\ana.Web.Client\ana.Web.Client.csproj", "{DC94D0E0-B250-4F7B-8973-C4096D1255B8}"
+EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "ana.react", "ana.react\ana.react.esproj", "{BFE28307-8DD0-C53F-B48E-7FA2B5FD8363}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3CC17F39-013D-452B-A429-446A9DB79965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CC17F39-013D-452B-A429-446A9DB79965}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CC17F39-013D-452B-A429-446A9DB79965}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CC17F39-013D-452B-A429-446A9DB79965}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A29DA894-E65C-BA42-3678-4B261A84533A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A29DA894-E65C-BA42-3678-4B261A84533A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A29DA894-E65C-BA42-3678-4B261A84533A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A29DA894-E65C-BA42-3678-4B261A84533A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3F45D66-0837-418F-1F88-E39FE878B1B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3F45D66-0837-418F-1F88-E39FE878B1B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3F45D66-0837-418F-1F88-E39FE878B1B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3F45D66-0837-418F-1F88-E39FE878B1B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ECFCF2B-F691-4C2A-8852-0AD57415B71C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ECFCF2B-F691-4C2A-8852-0AD57415B71C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ECFCF2B-F691-4C2A-8852-0AD57415B71C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ECFCF2B-F691-4C2A-8852-0AD57415B71C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC94D0E0-B250-4F7B-8973-C4096D1255B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC94D0E0-B250-4F7B-8973-C4096D1255B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC94D0E0-B250-4F7B-8973-C4096D1255B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC94D0E0-B250-4F7B-8973-C4096D1255B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFE28307-8DD0-C53F-B48E-7FA2B5FD8363}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFE28307-8DD0-C53F-B48E-7FA2B5FD8363}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFE28307-8DD0-C53F-B48E-7FA2B5FD8363}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{BFE28307-8DD0-C53F-B48E-7FA2B5FD8363}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFE28307-8DD0-C53F-B48E-7FA2B5FD8363}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFE28307-8DD0-C53F-B48E-7FA2B5FD8363}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3E718EE1-6FEA-480B-89A8-6720B3DE2360}
+	EndGlobalSection
+EndGlobal
