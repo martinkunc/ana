@@ -109,8 +109,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         databaseName: databaseName,
         cosmosOptionsAction: cosmosOptions =>
         {
+            cosmosOptions.HttpClientFactory(() =>
+                {
+                    HttpMessageHandler httpMessageHandler = new HttpClientHandler()
+                    {
+                        ServerCertificateCustomValidationCallback = (req, cert, chain, errors) => true
+                    };
+
+                    return new HttpClient(httpMessageHandler);
+                });
+            cosmosOptions.LimitToEndpoint(true);
             cosmosOptions.ConnectionMode(Microsoft.Azure.Cosmos.ConnectionMode.Gateway);
-        });
+        }
+        );
 
  
 
@@ -135,13 +146,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddSingleton<CosmosClient>(provider =>
 {
-    CosmosClientOptions clientOptions = new ()
+    CosmosClientOptions clientOptions = new()
     {
-        HttpClientFactory = () => new HttpClient(new HttpClientHandler()
+        HttpClientFactory = () =>
         {
-            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        }),
+            HttpMessageHandler httpMessageHandler = new HttpClientHandler()
+            {
+                ServerCertificateCustomValidationCallback = (req, cert, chain, errors) => true
+            };
+
+            return new HttpClient(httpMessageHandler);
+        },
         ConnectionMode = ConnectionMode.Gateway,
+        LimitToEndpoint = true
     };
     return new CosmosClient(connectionString, clientOptions);
 });

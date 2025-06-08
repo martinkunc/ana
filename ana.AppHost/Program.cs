@@ -13,10 +13,10 @@ if (builder.Environment.IsDevelopment())
 #pragma warning disable ASPIRECOSMOSDB001
     // In development, we can use a local Cosmos DB emulator
     cosmosResource = builder.AddAzureCosmosDB("cosmos-db")
-        .RunAsPreviewEmulator(
+        .RunAsEmulator(
                      emulator =>
                      {
-                         emulator.WithDataExplorer();
+                         //emulator.WithDataExplorer();
                          emulator.WithGatewayPort(8081);
                                                   
                      });
