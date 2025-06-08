@@ -75,11 +75,50 @@ builder.Services.AddProblemDetails();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+foreach (var conf in builder.Configuration.AsEnumerable())
+{
+    Console.WriteLine($"Config: {conf.Key} = {conf.Value}");
+}
+
+var connectionString = builder.Configuration.GetConnectionString("IdentityDatabase");
+
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("cosmosdb");
-    options.UseCosmos(connectionString, "IdentityDatabase");
+    // var databaseName = builder.Configuration["CosmosDb:Database"] ?? "IdentityDatabase";
+    // options.UseCosmos(connectionString, databaseName);
+    var databaseName = builder.Configuration["CosmosDb:Database"] ?? "IdentityDatabase";
+    //options.UseCosmos(connectionString, databaseName);
+
+    // Parse the connection string manually
+    var accountEndpoint = "";
+    var accountKey = "";
+    var parts = connectionString.Split(';');
+    foreach (var part in parts)
+    {
+        if (part.StartsWith("AccountEndpoint=", StringComparison.OrdinalIgnoreCase))
+            accountEndpoint = part.Substring("AccountEndpoint=".Length);
+        else if (part.StartsWith("AccountKey=", StringComparison.OrdinalIgnoreCase))
+            accountKey = part.Substring("AccountKey=".Length);
+    }
+
+    // Configure Cosmos options explicitly
+    options.UseCosmos(
+        accountEndpoint: accountEndpoint,
+        accountKey: accountKey,
+        databaseName: databaseName,
+        cosmosOptionsAction: cosmosOptions =>
+        {
+            cosmosOptions.ConnectionMode(Microsoft.Azure.Cosmos.ConnectionMode.Gateway);
+        });
+
+ 
+
+    // var connectionString = builder.Configuration.GetConnectionString("cosmosdb");
+    // options.UseCosmos(connectionString, "IdentityDatabase");
 });
+
+
 
 // builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 // {
@@ -87,15 +126,24 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // })
 // .AddEntityFrameworkStores<ApplicationDbContext>();
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-        .AddEntityFrameworkStores<ApplicationDbContext>()
-        .AddDefaultTokenProviders();
+// builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+//         .AddEntityFrameworkStores<ApplicationDbContext>()
+//         .AddDefaultTokenProviders();
+
+
 
 
 builder.Services.AddSingleton<CosmosClient>(provider =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("cosmosdb");
-    return new CosmosClient(connectionString);
+    CosmosClientOptions clientOptions = new ()
+    {
+        HttpClientFactory = () => new HttpClient(new HttpClientHandler()
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        }),
+        ConnectionMode = ConnectionMode.Gateway,
+    };
+    return new CosmosClient(connectionString, clientOptions);
 });
 
 // Duplicate identity provider
@@ -104,6 +152,16 @@ builder.Services.AddSingleton<CosmosClient>(provider =>
 //     .AddDefaultTokenProviders();
 
 
+builder.Services.AddCosmosIdentity<ApplicationDbContext, IdentityUser, IdentityRole, string>(
+      options => options.SignIn.RequireConfirmedAccount = true // Always a good idea :)
+    )
+    //.AddDefaultUI() // Use this if Identity Scaffolding is in use
+    .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>, 
+    UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
+
+var externalUrl = builder.Configuration["ASPNETCORE_EXTERNAL_URL"];
 
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
@@ -114,14 +172,17 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
     
     // Disable automatic redirects
     options.UserInteraction.ErrorUrl = "/error";
-    options.UserInteraction.LoginUrl = null;
-    options.UserInteraction.LoginReturnUrlParameter = null;
+    options.UserInteraction.LoginUrl = "/account/login";
+    options.UserInteraction.LoginReturnUrlParameter = "returnUrl";
 })
 .AddInMemoryIdentityResources(Config.GetResources())
 .AddInMemoryApiScopes(Config.GetApiScopes())
 .AddInMemoryApiResources(Config.GetApis())
 .AddInMemoryClients(Config.GetClients(builder.Configuration))
-.AddAspNetIdentity<ApplicationUser>();
+//.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
+.AddAspNetIdentity<IdentityUser>();
+
+builder.Services.AddRazorPages();
 
 if (builder.Environment.IsDevelopment())
 {
@@ -145,17 +206,35 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+
+
 app.UseIdentityServer();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseFileServer();
 app.UseBlazorFrameworkFiles();
+app.MapRazorPages();
+
+app.MapFallbackToFile("index.html");
 
 app.MapAnaApi();
 
 
+var setupCosmosDb = builder.Configuration["SetupCosmosDb"] ?? "false";
+var cosmosIdentityDbName = "IdentityDatabase";
+
+if (bool.TryParse(setupCosmosDb, out var setup) && setup)
+{
+    var builder1 = new DbContextOptionsBuilder<ApplicationDbContext>();
+    builder1.UseCosmos(connectionString, cosmosIdentityDbName);
+
+    using (var dbContext = new ApplicationDbContext(builder1.Options))
+    {
+        await SeedDatabase.Initialize(app.Services);
+
+        
+    }
+}
 
 
 app.Run();
-
-

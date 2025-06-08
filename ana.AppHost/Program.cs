@@ -7,19 +7,21 @@ using Microsoft.Extensions.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 IResourceBuilder<AzureCosmosDBResource> cosmosResource = null;
-
+IResourceBuilder<Aspire.Hosting.Azure.AzureCosmosDBDatabaseResource> cosmosDb;
 if (builder.Environment.IsDevelopment())
 {
-    #pragma warning disable ASPIRECOSMOSDB001
+#pragma warning disable ASPIRECOSMOSDB001
     // In development, we can use a local Cosmos DB emulator
     cosmosResource = builder.AddAzureCosmosDB("cosmos-db")
         .RunAsPreviewEmulator(
                      emulator =>
                      {
                          emulator.WithDataExplorer();
-                         emulator.WithGatewayPort(7777);
+                         emulator.WithGatewayPort(8081);
+                                                  
                      });
-    #pragma warning restore ASPIRECOSMOSDB001
+#pragma warning restore ASPIRECOSMOSDB001
+    cosmosDb = cosmosResource.AddCosmosDatabase("IdentityDatabase");
 }
 else
 {
@@ -47,11 +49,13 @@ else
         //account.AssignProperty(x => x.DatabaseAccountOfferType, $"'{CosmosDBAccountOfferType.Standard}'");
         //account.AssignProperty(x => x.Locations[0].LocationName, $"'{AzureLocation.UKWest.Name}'");
     });
+    cosmosDb = cosmosResource.AddCosmosDatabase("IdentityDatabase");
 }
 
-
 var apiService = builder.AddProject<Projects.ana_ApiService>("apiservice")
-    .WithReference(cosmosResource)
+    .WithReference(cosmosDb)
+    .WithEnvironment("CosmosDb__Database", "IdentityDatabase")
+    .WaitFor(cosmosDb)
     .WithExternalHttpEndpoints();
 
 // builder.AddProject<Projects.ana_Web>("webfrontend")
@@ -62,6 +66,8 @@ var apiService = builder.AddProject<Projects.ana_ApiService>("apiservice")
 
 var apiUrlHttp = apiService.GetEndpoint("http"); // or "https" if using HTTPS
 var apiUrlHttps = apiService.GetEndpoint("https");
+
+apiService.WithEnvironment("ASPNETCORE_EXTERNAL_URL", apiUrlHttps);
 
 builder.AddNpmApp("reactapp", "../ana.react")
     .WithReference(apiService)

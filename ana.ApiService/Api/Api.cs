@@ -13,6 +13,8 @@ public static class AnaApi
         //var rootGroup = routes.MapGroup("/");
         //rootGroup.MapGet("/", () => "API is running");
 
+            
+
         var group = routes.MapGroup("/api/v1/");
 
         group.WithTags("AnaTag");

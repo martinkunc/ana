@@ -42,13 +42,15 @@ public class Config
         return new List<IdentityResource>
             {
                 new IdentityResources.OpenId(),
-                new IdentityResources.Profile()
+                new IdentityResources.Profile(),
+                new IdentityResources.Email()
             };
     }
 
     // client want to access resources (aka scopes)
     public static IEnumerable<Client> GetClients(IConfiguration configuration)
     {
+        var externalUrl = configuration["ASPNETCORE_EXTERNAL_URL"];
         return new List<Client>
             {
                 new Client
@@ -57,17 +59,18 @@ public class Config
                     AllowedGrantTypes = GrantTypes.Code,
                     RequirePkce = true,
                     RequireClientSecret = false,
-                    
-                    RedirectUris = { "https://localhost:5001/authentication/login-callback" },
-                    PostLogoutRedirectUris = { "https://localhost:5001/authentication/logout-callback" },
-                    
+
+                    RedirectUris = {   $"{externalUrl}/authentication/login-callback" },
+                    PostLogoutRedirectUris = { $"{externalUrl}/authentication/logout-callback" },
+
                     AllowedScopes = new List<string>
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
-                        IdentityServerConstants.StandardScopes.Email
+                        IdentityServerConstants.StandardScopes.Email,
+                        Scopes.ana,
                     }
-                },            
+                },
                 new Client
                 {
                     ClientId = "webapp",

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
-public class ApplicationUser : IdentityUser
+public class ApplicationUser_ : IdentityUser
     {
         [Required]
         public string CardNumber { get; set; }

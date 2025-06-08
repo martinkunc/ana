@@ -1,0 +1,17 @@
+@page "/account/login"
+@model LoginModel
+@{
+    ViewData["Title"] = "Login";
+}
+<h2>Login</h2>
+<form method="post">
+    @Html.AntiForgeryToken()
+    <input asp-for="Input.Username" placeholder="Username" />
+    <input asp-for="Input.Password" type="password" placeholder="Password" />
+    <input type="hidden" asp-for="ReturnUrl" />
+    <button type="submit">Login</button>
+</form>
+@if (Model.ErrorMessage != null)
+{
+    <div>@Model.ErrorMessage</div>
+}
