@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -8,10 +8,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ana.ServiceDefaults\ana.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\ana.Web\ana.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Duende.IdentityServer" Version="7.2.3" />
+    <PackageReference Include="Duende.IdentityServer.AspNetIdentity" Version="7.2.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Cosmos" Version="9.0.5" />
   </ItemGroup>
 
 </Project>

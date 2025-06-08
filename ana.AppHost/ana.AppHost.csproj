@@ -13,13 +13,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ana.ApiService\ana.ApiService.csproj" />
-    <ProjectReference Include="..\ana.react\ana.react.esproj" />
-    <ProjectReference Include="..\ana.Web\ana.Web\ana.Web.csproj" />
+    <ProjectReference Include="..\ana.Web\ana.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.0.0" />
-	<PackageReference Include="Aspire.Hosting.NodeJs" Version="9.0.0" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.3.0" />
+    <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" Version="9.3.0" />
+	<PackageReference Include="Aspire.Hosting.NodeJs" Version="9.3.0" />
   </ItemGroup>
 
 </Project>
