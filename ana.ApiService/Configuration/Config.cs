@@ -1,9 +1,32 @@
 using Duende.IdentityServer;
 using Duende.IdentityServer.Models;
+using Microsoft.Azure.Cosmos;
 using OpenTelemetry.Context;
 
 public class Config
 {
+    public static class Database
+    {
+        public const string Name = "ana-db";
+        public const string ConnectionStringSecretName = "ana-db-connectionstring";
+    }
+    
+    public static class Users
+    {
+        public const string DefaultAdminPasswordKeyVaultSecretName = "default-admin-password";
+    }
+
+    public static class KeyVault
+    {
+        public const string KeyVaultUrl = "https://ana-kv.vault.azure.net/";
+
+    }
+
+    public static class IdentityServer
+    {
+        public const string CertificateName = "anaidentitycert";
+    }
+    
     public static class Resources
     {
         public const string ana = "ana";
@@ -48,9 +71,8 @@ public class Config
     }
 
     // client want to access resources (aka scopes)
-    public static IEnumerable<Client> GetClients(IConfiguration configuration)
+    public static IEnumerable<Client> GetClients(IConfiguration configuration, string externalUrl)
     {
-        var externalUrl = configuration["ASPNETCORE_EXTERNAL_URL"];
         return new List<Client>
             {
                 new Client
@@ -61,7 +83,7 @@ public class Config
                     RequireClientSecret = false,
 
                     RedirectUris = {   $"{externalUrl}/authentication/login-callback" },
-                    PostLogoutRedirectUris = { $"{externalUrl}/authentication/logout-callback" },
+                    PostLogoutRedirectUris = { $"{externalUrl}/authentication/login" }, // $"{externalUrl}/authentication/logout-callback" 
 
                     AllowedScopes = new List<string>
                     {

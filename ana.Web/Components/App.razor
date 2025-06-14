@@ -1,16 +1,9 @@
 ﻿<CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(App).Assembly">
+    <Router AppAssembly="@typeof(ana.Web.Components.App).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                 <NotAuthorized>
-                    @if (context.User.Identity?.IsAuthenticated != true)
-                    {
-                        <RedirectToLogin />
-                    }
-                    else
-                    {
-                        <p role="alert">You are not authorized to access this resource.</p>
-                    }
+                    <LoginRedirect />
                 </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -25,14 +18,17 @@
 </CascadingAuthenticationState>
 
 
+
 @code {
-    @* protected override void OnInitialized()
+    // Optionally log available routes for debugging
+    /*
+    protected override void OnInitialized()
     {
-        // Optionally log available routes for debugging
         Console.WriteLine("Available routes:");
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
             Console.WriteLine($"Assembly: {assembly.FullName}");
         }
-    } *@
+    }
+    */
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+
 public class LoginModel : PageModel
 {
     private readonly SignInManager<IdentityUser> _signInManager;
@@ -22,8 +23,8 @@ public class LoginModel : PageModel
     public class InputModel
     {
         [Required]
-        public string Username { get; set; }
-        [Required]
+        public string Email { get; set; }
+        
         public string Password { get; set; }
     }
 
@@ -36,12 +37,13 @@ public class LoginModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(string returnUrl = null)
     {
+        ModelState.Remove("Input.Password");
         Console.WriteLine($"OnPostAsync called with returnUrl: {returnUrl}");
 
         ReturnUrl = returnUrl ?? Url.Content("~/");
         if (ModelState.IsValid)
         {
-            var result = await _signInManager.PasswordSignInAsync(Input.Username, Input.Password, false, lockoutOnFailure: false);
+            var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password ?? "", false, lockoutOnFailure: false);
             if (result.Succeeded)
             {
                 return LocalRedirect(ReturnUrl);

@@ -1,4 +1,8 @@
+using System.Security.Cryptography.X509Certificates;
 using ana.ServiceDefaults;
+using Azure.Identity;
+using Azure.Security.KeyVault.Certificates;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Azure.Cosmos;
@@ -6,10 +10,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
+
 var builder = WebApplication.CreateBuilder(args);
+
+var logger = LoggerFactory.Create(config =>
+{
+    config.AddConsole();
+    config.AddDebug();
+}).CreateLogger<Program>();
+
+logger.LogInformation($"Starting application with INFO: ");
+logger.LogDebug($"Starting application with Debug: ");
+logger.LogError($"Starting application with Error: ");
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
+
+
 
 //builder.AddDefaultAuthentication();
 
@@ -75,22 +92,37 @@ builder.Services.AddProblemDetails();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+//builder.AddAzureCosmosClient("cosmos-db");
+
 foreach (var conf in builder.Configuration.AsEnumerable())
 {
-    Console.WriteLine($"Config: {conf.Key} = {conf.Value}");
+    
+    logger.LogInformation($"Config: {conf.Key} = {conf.Value}");
+}
+var connectionStringName = "cosmos-db";
+var connectionString = builder.Configuration.GetConnectionString(connectionStringName);
+
+var AnotherConnString = builder.Configuration["ConnectionStrings:cosmos-db"];
+
+Console.WriteLine($"Api: Connection string: { AnotherConnString}");
+
+                       
+if (string.IsNullOrEmpty(connectionString))
+{
+    
+    var client = new SecretClient(new Uri(Config.KeyVault.KeyVaultUrl), new DefaultAzureCredential());
+    KeyVaultSecret secret = await client.GetSecretAsync(Config.Database.ConnectionStringSecretName);
+    connectionString = secret.Value;
 }
 
-var connectionString = builder.Configuration.GetConnectionString("IdentityDatabase");
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Cosmos DB connection string is not configured.");
+}
 
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    // var databaseName = builder.Configuration["CosmosDb:Database"] ?? "IdentityDatabase";
-    // options.UseCosmos(connectionString, databaseName);
-    var databaseName = builder.Configuration["CosmosDb:Database"] ?? "IdentityDatabase";
-    //options.UseCosmos(connectionString, databaseName);
-
-    // Parse the connection string manually
     var accountEndpoint = "";
     var accountKey = "";
     var parts = connectionString.Split(';');
@@ -106,7 +138,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseCosmos(
         accountEndpoint: accountEndpoint,
         accountKey: accountKey,
-        databaseName: databaseName,
+        databaseName: Config.Database.Name,
         cosmosOptionsAction: cosmosOptions =>
         {
             cosmosOptions.HttpClientFactory(() =>
@@ -124,9 +156,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         );
 
  
-
-    // var connectionString = builder.Configuration.GetConnectionString("cosmosdb");
-    // options.UseCosmos(connectionString, "IdentityDatabase");
 });
 
 
@@ -163,11 +192,6 @@ builder.Services.AddSingleton<CosmosClient>(provider =>
     return new CosmosClient(connectionString, clientOptions);
 });
 
-// Duplicate identity provider
-// builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-//     .AddUserStore<CosmosUserStore>()
-//     .AddDefaultTokenProviders();
-
 
 builder.Services.AddCosmosIdentity<ApplicationDbContext, IdentityUser, IdentityRole, string>(
       options => options.SignIn.RequireConfirmedAccount = true // Always a good idea :)
@@ -178,7 +202,13 @@ builder.Services.AddCosmosIdentity<ApplicationDbContext, IdentityUser, IdentityR
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>, 
     UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
 
-var externalUrl = builder.Configuration["ASPNETCORE_EXTERNAL_URL"];
+var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
+var serviceName = "apiservice"; // Your service name as defined in Container Apps
+
+
+var externalUrl = builder.Configuration["ASPNETCORE_EXTERNAL_URL"] ?? $"https://{serviceName}.{envDnsSuffix}";
+
+Console.WriteLine($"MY: External URL: {externalUrl}");
 
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
@@ -186,30 +216,54 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
     options.Events.RaiseInformationEvents = true;
     options.Events.RaiseFailureEvents = true;
     options.Events.RaiseSuccessEvents = true;
-    
+
     // Disable automatic redirects
     options.UserInteraction.ErrorUrl = "/error";
     options.UserInteraction.LoginUrl = "/account/login";
     options.UserInteraction.LoginReturnUrlParameter = "returnUrl";
+    options.KeyManagement.Enabled = false;
+    
 })
 .AddInMemoryIdentityResources(Config.GetResources())
 .AddInMemoryApiScopes(Config.GetApiScopes())
 .AddInMemoryApiResources(Config.GetApis())
-.AddInMemoryClients(Config.GetClients(builder.Configuration))
+.AddInMemoryClients(Config.GetClients(builder.Configuration,externalUrl))
 //.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
 .AddAspNetIdentity<IdentityUser>();
 
 builder.Services.AddRazorPages();
 
-if (builder.Environment.IsDevelopment())
+
+var identityServerKeyPath = builder.Configuration["IdentityServerKeyPath"];
+if (identityServerKeyPath != null)
 {
-    // TODO: Not recommended for production - you need to store your key material somewhere secure
-    identityServerBuilder.AddDeveloperSigningCredential();
+    if (!File.Exists(identityServerKeyPath)) {
+        throw new FileNotFoundException("Identity server key file not found.", identityServerKeyPath);
+    }
+    var bytes = File.ReadAllBytes(identityServerKeyPath);
+    var importedCertificate = X509CertificateLoader.LoadPkcs12(bytes, null);
+
+    // Load the signing certificate from the specified path
+    identityServerBuilder.AddSigningCredential(importedCertificate);
 }
 else
 {
-    identityServerBuilder.AddDeveloperSigningCredential(persistKey: false);
+    var client = new SecretClient(new Uri(Config.KeyVault.KeyVaultUrl), new DefaultAzureCredential());
+    KeyVaultSecret secret = await client.GetSecretAsync(Config.IdentityServer.CertificateName);
+    
+    // The secret value should be the Base64 encoded PFX
+    var pfxBytes = Convert.FromBase64String(secret.Value);
+    //var cert = new X509Certificate2(pfxBytes);
+    var cert = X509CertificateLoader.LoadPkcs12(pfxBytes, null);
+    
+    if (cert == null)
+    {
+        throw new InvalidOperationException("Failed to load the signing certificate from Key Vault.");
+    }
+    
+    identityServerBuilder.AddSigningCredential(cert);
 }
+
 
 builder.Services.AddAuthorization();
 
@@ -223,8 +277,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-
-
 app.UseIdentityServer();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -237,20 +289,15 @@ app.MapFallbackToFile("index.html");
 app.MapAnaApi();
 
 
-var setupCosmosDb = builder.Configuration["SetupCosmosDb"] ?? "false";
-var cosmosIdentityDbName = "IdentityDatabase";
+var builder1 = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-if (bool.TryParse(setupCosmosDb, out var setup) && setup)
+builder1.UseCosmos(connectionString, Config.Database.Name);
+
+using (var dbContext = new ApplicationDbContext(builder1.Options))
 {
-    var builder1 = new DbContextOptionsBuilder<ApplicationDbContext>();
-    builder1.UseCosmos(connectionString, cosmosIdentityDbName);
+    await SeedDatabase.Initialize(app.Services);
 
-    using (var dbContext = new ApplicationDbContext(builder1.Options))
-    {
-        await SeedDatabase.Initialize(app.Services);
-
-        
-    }
+    
 }
 
 

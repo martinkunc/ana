@@ -35,6 +35,10 @@ To store your Azure credentials, edit your:
 ```
 code %APPDATA%\Microsoft\UserSecrets\03fad75d-f8ce-4083-8bf8-cb8ef785cf37\secrets.js
 ```
+On Linux and Mac:
+```
+code ~/.microsoft/usersecrets/03fad75d-f8ce-4083-8bf8-cb8ef785cf37/secrets.json
+```
 and add this section:
 ```
   "Azure": {
@@ -55,7 +59,7 @@ The limitation is because EF query with contains for Identity Role is not parsed
 To connect in either user Port forwarding forwarding from local 58081 (or other) to 8081 in machine, or setup Bridged networking. I was using Parallels port forwarding.
 
 
-CosmosDb emulator has to be set for remote access.
+CosmosDb emulator in the Windows machine has to be set for remote access.
 First a key file has to be generated. In Powershell:
 & "C:\Program Files\Azure Cosmos DB Emulator\Microsoft.Azure.Cosmos.Emulator.exe" /GenKeyFile=$env:USERPROFILE\CosmosEmulatorKey
 
@@ -67,10 +71,12 @@ rm -Recurse $env:LOCALAPPDATA\CosmosDBEmulator
 ```
 
 Then it can be started:
+```
 & "C:\Program Files\Azure Cosmos DB Emulator\CosmosDB.Emulator.exe" `
     /KeyFile=$env:USERPROFILE\CosmosEmulatorKey `
     /AllowNetworkAccess `
     /EnablePreviewFeatures
+```
 
 The start takes some time and the explorer in browser should then open. Unfortunatelly once we set another generated key, the explorer still reports the build in key and cannot connect to itself.
 
@@ -88,9 +94,20 @@ AccountEndpoint=https://localhost:58081/;AccountKey=+Jc58XdOA1ukucCS0Vg6LIfasG+s
 
 Finally under Azure Side Bar button, Workspace, CosmosDb the connection to NoSql CosmosDb can be created.
 
+The connection string has to be set to application using above method to .net secrets store for application. The section to add is:
+```
+    "ConnectionStrings": {
+        "cosmos-db": "AccountEndpoint=https://localhost:58081/;AccountKey=+Jc58XdOA1ukucCS0Vg6LIfasG+sAZVbuEOPlFv5XXpwSYGdVdjy9y9bzkm4HKDJJdvukG3K/ugUpcePYPowNg=="
+    }
+```
 
 
 ## Default user login
-User Admin, Password Admin123!
+Default user is admin. His password shall be set locally by using this command, where instead of "123", specify the password.
+
+```
+dotnet user-secrets set "DefaultAdminPassword" "123" -p ana.AppHost/ana.AppHost.csproj
+```
+
 
 

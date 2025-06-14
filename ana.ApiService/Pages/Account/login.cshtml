@@ -3,15 +3,27 @@
 @{
     ViewData["Title"] = "Login";
 }
-<h2>Login</h2>
-<form method="post">
-    @Html.AntiForgeryToken()
-    <input asp-for="Input.Username" placeholder="Username" />
-    <input asp-for="Input.Password" type="password" placeholder="Password" />
-    <input type="hidden" asp-for="ReturnUrl" />
-    <button type="submit">Login</button>
-</form>
-@if (Model.ErrorMessage != null)
-{
-    <div>@Model.ErrorMessage</div>
-}
+<div class="login-container">
+    <h2>Anniversary notifications</h2>
+
+    <form method="post" novalidate>
+        @Html.AntiForgeryToken()
+
+        <div class="form-group">
+            <label>User email</label>
+            <input type="text" asp-for="Input.Email" class="form-control" value="" />
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" asp-for="Input.Password" class="form-control" required="false" />
+            <span asp-validation-for="Input.Password" class="text-danger"></span>
+        </div>
+
+        <div class="button-group">
+            <button type="submit" asp-page-handler="Register" class="btn btn-secondary">Register</button>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+    </form>
+</div>

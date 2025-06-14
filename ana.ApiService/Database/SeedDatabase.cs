@@ -1,4 +1,6 @@
 using System.Threading.Tasks;
+using Azure.Identity;
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Azure.Cosmos;
 using Microsoft.VisualBasic;
@@ -10,21 +12,20 @@ public static class SeedDatabase
     public static async Task Initialize(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
-        
+
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var cosmosClient = scope.ServiceProvider.GetRequiredService<CosmosClient>();
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<IdentityUser>>();
-    
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        string? defaultAdminPassword = await GetDefaultAdminPassword(configuration);
+
         //await cosmosClient.CreateDatabaseIfNotExistsAsync("IdentityDatabase");
 
         //await context.Database.EnsureCreatedAsync();
+        Console.WriteLine("Creating Cosmos DB database and containers...");
 
-        var databaseResponse = await cosmosClient.CreateDatabaseIfNotExistsAsync(
-                "IdentityDatabase",
-                ThroughputProperties.CreateAutoscaleThroughput(4000)
-            );
         var database = cosmosClient
-            .GetDatabase("IdentityDatabase");
+            .GetDatabase(Config.Database.Name);
 
         //await context.Database.EnsureCreatedAsync();
 
@@ -49,6 +50,8 @@ public static class SeedDatabase
                 partitionKeyPath: "/" + key
             );
 
+
+
             // Set the partition key kind to Hash
             //containerProperties.PartitionKeyDefinition.Kind = PartitionKeyKind.Hash;
             //containerProperties.PartitionKeyDefinitionVersion = Cosmos.PartitionKeyDefinitionVersion.V1;
@@ -59,18 +62,34 @@ public static class SeedDatabase
 
             var container = await database.CreateContainerAsync(containerProperties);
 
-            //var throughput = await container.ReadThroughputAsync();
-
-            // _logger.LogInformation(
-            //     "Container {ContainerName} exists with {Throughput} RU/s",
-            //     containerName,
-            //     throughput?.Resource?.Throughput ?? 400);
         }
 
-        await PopulateContainer(context, passwordHasher);
+        await PopulateContainer(context, passwordHasher, defaultAdminPassword);
 
         //await context.Database.EnsureCreatedAsync();
 
+    }
+
+    private static async Task<string> GetDefaultAdminPassword(IConfiguration configuration)
+    {
+        var defaultAdminPassword = configuration["DefaultAdminPassword"];
+        var defaultAdminPasswordIsEmpty = configuration["DefaultAdminPasswordIsEmpty"];
+        if (defaultAdminPasswordIsEmpty == true.ToString())
+        {
+            defaultAdminPassword = "";
+        }
+        if (defaultAdminPassword == null)
+        {
+            var client = new SecretClient(new Uri(Config.KeyVault.KeyVaultUrl), new DefaultAzureCredential());
+            KeyVaultSecret secret = await client.GetSecretAsync(Config.Users.DefaultAdminPasswordKeyVaultSecretName);
+            defaultAdminPassword = secret.Value;
+        }
+        if (defaultAdminPassword == null)
+        {
+            defaultAdminPassword = "";
+        }
+
+        return defaultAdminPassword;
     }
 
     private static async Task<bool> DoesContainerExist(Database database, string containerName)
@@ -87,28 +106,24 @@ public static class SeedDatabase
         return exists;
     }
 
-    private static async Task PopulateContainer(ApplicationDbContext context, IPasswordHasher<IdentityUser> passwordHasher)
+    private static async Task PopulateContainer(ApplicationDbContext context, IPasswordHasher<IdentityUser> passwordHasher, string defaultAdminPassword)
     {
         var et = context.Model.GetEntityTypes();
 
         foreach (var entityType in et)
         {
-            // if (entityType.ClrType.Name == containerName)
-            // {
-            //     await PopulateContainerAsync(containerName, context, passwordHasher);
-            //     return;
-            // }
-
             switch (entityType.ClrType)
             {
                 case Type t when t == typeof(IdentityUser):
+                    if (await context.Set<IdentityUser>().FirstOrDefaultAsync() != null)
+                        break;
                     context.Users.AddRange(
                        new IdentityUser
                        {
                            UserName = "admin",
                            Email = "admin@mail.com",
                            EmailConfirmed = true,
-                           PasswordHash = passwordHasher.HashPassword(null, "Admin123!"),
+                           PasswordHash = passwordHasher.HashPassword(null, defaultAdminPassword),
                            SecurityStamp = Guid.NewGuid().ToString(),
                            NormalizedUserName = "ADMIN",
                            NormalizedEmail = "admin@mail.com".ToUpperInvariant(),
@@ -121,6 +136,8 @@ public static class SeedDatabase
                     await context.SaveChangesAsync();
                     break;
                 case Type t when t == typeof(IdentityUserLogin<string>):
+                    if (await context.Set<IdentityUserLogin<string>>().FirstOrDefaultAsync() != null)
+                        break;
                     context.UserLogins.AddRange(
                        new IdentityUserLogin<string>
                        {
@@ -133,6 +150,8 @@ public static class SeedDatabase
                     await context.SaveChangesAsync();
                     break;
                 case Type t when t == typeof(IdentityRole): // is this entity needed
+                    if (await context.Set<IdentityRole>().FirstOrDefaultAsync() != null)
+                        break;
                     context.Roles.AddRange(
                         new IdentityRole
                         {
@@ -147,6 +166,10 @@ public static class SeedDatabase
                     await context.SaveChangesAsync();
                     break;
                 case Type t when t == typeof(IdentityUserRole<string>):
+                
+                    if (await context.Set<IdentityUserRole<string>>().FirstOrDefaultAsync() != null)
+                        break;
+
                     var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
                     var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
                     var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin");
