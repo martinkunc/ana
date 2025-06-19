@@ -74,6 +74,7 @@ var apiServiceBuilder = builder.AddProject<Projects.ana_ApiService>("apiservice"
     .WithReference(cosmosResource)
     .WithEnvironment("DefaultAdminPassword", defaultAdminPassword)
     .WithEnvironment("DefaultAdminPasswordIsEmpty", defaultAdminPasswordIsEmpty)
+    .WithEnvironment("issuer-signing-key", builder.Configuration["issuer-signing-key"])
     .WaitFor(cosmosResource);
 
 var apiService = apiServiceBuilder.WithExternalHttpEndpoints();

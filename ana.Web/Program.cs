@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using System.Net.Http.Json;
 using ana.Web;
-using ana.Web.Components;
+using ana.Web.Pages;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -22,11 +22,13 @@ Console.WriteLine($"BaseAddress URL: {builder.HostEnvironment.BaseAddress}");
 // Configure OIDC authentication
 builder.Services.AddOidcAuthentication(options =>
 {
-    builder.Configuration.Bind("Oidc", options.ProviderOptions);
+    //builder.Configuration.Bind("Oidc", options.ProviderOptions);
     options.ProviderOptions.DefaultScopes.Add("ana"); // Add custom API scope
+    options.ProviderOptions.ClientId = "blazor"; // Client ID registered in IdentityServer
     options.ProviderOptions.Authority = builder.HostEnvironment.BaseAddress;
     options.ProviderOptions.PostLogoutRedirectUri = $"{builder.HostEnvironment.BaseAddress}authentication/login";
     options.ProviderOptions.RedirectUri = $"{builder.HostEnvironment.BaseAddress}authentication/login-callback";
+    options.ProviderOptions.ResponseType = "code"; // Use authorization code flow
 });
 
 // register the cookie handler

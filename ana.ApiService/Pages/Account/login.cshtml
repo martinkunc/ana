@@ -11,7 +11,7 @@
 
         <div class="form-group">
             <label>User email</label>
-            <input type="text" asp-for="Input.Email" class="form-control" value="" />
+            <input type="text" asp-for="Input.Email" class="form-control" value="" required="false" autofocus />
             <span asp-validation-for="Input.Email" class="text-danger"></span>
         </div>
 
@@ -21,9 +21,35 @@
             <span asp-validation-for="Input.Password" class="text-danger"></span>
         </div>
 
-        <div class="button-group">
-            <button type="submit" asp-page-handler="Register" class="btn btn-secondary">Register</button>
-            <button type="submit" class="btn btn-primary">Login</button>
+        @if (Model.ShowRegistrationFields)
+        {
+            <input type="hidden" asp-for="Input.IsRegistration" class="form-control" value="1"/>
+
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" asp-for="Input.DisplayName" class="form-control" required="false"/>
+                <span asp-validation-for="Input.DisplayName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Group Name</label>
+                <input type="text" asp-for="Input.GroupName" class="form-control" required="false"/>
+                <span asp-validation-for="Input.GroupName" class="text-danger"></span>
+            </div>
+        }
+
+        <div class="button-group reverse-buttons">
+            <button type="submit" class="btn btn-primary">@(Model.ShowRegistrationFields ? "Create Account" : "Login")</button>        
+            @if (!Model.ShowRegistrationFields)
+            {
+                <button type="submit" asp-page-handler="Register" class="btn btn-secondary">Register</button>
+            } else 
+            {
+                <button type="submit" asp-page-handler="BackToLogin" class="btn btn-secondary">Login instead</button>
+            }
+        </div>
+        <div class="form-group">
+            <span class="text-danger">@(Model.ErrorMessage)</span>
         </div>
     </form>
 </div>

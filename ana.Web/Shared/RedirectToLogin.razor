@@ -1,0 +1,11 @@
+@inject NavigationManager Navigation
+@inject ILogger<RedirectToLogin> Logger
+
+@code {
+    protected override void OnInitialized()
+    {
+        Logger.LogInformation("User not authenticated, redirecting to login");
+        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+        Navigation.NavigateTo($"/authentication/login?returnUrl={returnUrl}", true);
+    }
+}

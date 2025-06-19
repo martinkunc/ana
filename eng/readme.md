@@ -29,29 +29,7 @@ Bicep:
 winget install -e --id Microsoft.Bicep
 ```
 
-Setup of .net user secrets for .net Aspire provisioning in dev mode
-ana.AppHost is configured to use user secret `03fad75d-f8ce-4083-8bf8-cb8ef785cf37`
-To store your Azure credentials, edit your:
-```
-code %APPDATA%\Microsoft\UserSecrets\03fad75d-f8ce-4083-8bf8-cb8ef785cf37\secrets.js
-```
-On Linux and Mac:
-```
-code ~/.microsoft/usersecrets/03fad75d-f8ce-4083-8bf8-cb8ef785cf37/secrets.json
-```
-and add this section:
-```
-  "Azure": {
-    "CredentialSource": "AzureCli",
-    "SubscriptionId": "YOUR-AZURE-SUBSCRIPTION-ID",
-    "ResourceGroupPrefix": "rg_ana",
-    "Location": "Germany West Central"
-  }
-```
-and add your subscription id, which can be found as id in output of the following command:
-```
-az account show
-```
+
 
 ## CosmosDb Emulator configuration
 This application requires Windows based Cosmos Db. The best way to run it on MacOs or linux is to use a Windows VM. Fortunatelly the emulator works on Windows ARM.
@@ -94,20 +72,44 @@ AccountEndpoint=https://localhost:58081/;AccountKey=+Jc58XdOA1ukucCS0Vg6LIfasG+s
 
 Finally under Azure Side Bar button, Workspace, CosmosDb the connection to NoSql CosmosDb can be created.
 
-The connection string has to be set to application using above method to .net secrets store for application. The section to add is:
+The connection string has to be set to application using these commands, replace with your connection string with access key.
+
 ```
-    "ConnectionStrings": {
-        "cosmos-db": "AccountEndpoint=https://localhost:58081/;AccountKey=+Jc58XdOA1ukucCS0Vg6LIfasG+sAZVbuEOPlFv5XXpwSYGdVdjy9y9bzkm4HKDJJdvukG3K/ugUpcePYPowNg=="
-    }
+COSMOS_CONN_STR="AccountEndpoint=https://localhost:58081/;AccountKey=+Jc58XdOA1ukucCS0Vg6LIfasG+sAZVbuEOPlFv5XXpwSYGdVdjy9y9bzkm4HKDJJdvukG3K/ugUpcePYPowNg=="
+cd ana.AppHost
+dotnet user-secrets set "ConnectionStrings:cosmos-db" "$COSMOS_CONN_STR"
+cd ..
 ```
+
+
 
 
 ## Default user login
 Default user is admin. His password shall be set locally by using this command, where instead of "123", specify the password.
 
 ```
+cd ana.AppHost
 dotnet user-secrets set "DefaultAdminPassword" "123" -p ana.AppHost/ana.AppHost.csproj
+cd ..
 ```
 
+## Add Issuser signing key to app's secrets
+We need to set the key used to validate Identity server's generate JWT token among clients and Api and for this we need to generate secret key. Issue these commands:
+```
+ISSUER_SECRET_KEY=$(openssl rand -base64 32)
+cd ana.AppHost
+dotnet user-secrets set "issuer-signing-key" "$ISSUER_SECRET_KEY"
+cd ..
+```
 
-
+## Viewing the secrets
+Setup of .net user secrets for .net Aspire provisioning in dev mode
+ana.AppHost is configured to use user secret `03fad75d-f8ce-4083-8bf8-cb8ef785cf37`
+You can see the secrets using.
+```
+code %APPDATA%\Microsoft\UserSecrets\03fad75d-f8ce-4083-8bf8-cb8ef785cf37\secrets.js
+```
+On Linux and Mac:
+```
+code ~/.microsoft/usersecrets/03fad75d-f8ce-4083-8bf8-cb8ef785cf37/secrets.json
+```

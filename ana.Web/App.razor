@@ -1,10 +1,13 @@
 ﻿<CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(ana.Web.Components.App).Assembly">
+    <Router AppAssembly="@typeof(ana.Web.App).Assembly">
         <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+            <AuthorizeRouteView RouteData="@routeData">
                 <NotAuthorized>
-                    <LoginRedirect />
+                    <RedirectToLogin />
                 </NotAuthorized>
+                <Authorizing>
+                    Authorizing ..
+                </Authorizing>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
         </Found>

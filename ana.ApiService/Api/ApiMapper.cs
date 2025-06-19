@@ -1,23 +1,27 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
-public static class AnaApi
-{
-    private static readonly string[] Summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+public static class ApiMapper {
 
-    public static RouteGroupBuilder MapAnaApi(this IEndpointRouteBuilder routes)
+    public static IApiEndpoints apiEndpoints;
+    private static readonly string[] Summaries = new[]
+    {
+        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    };
+
+    public static RouteGroupBuilder MapApiEndpoints(this IEndpointRouteBuilder routes)
     {
         //var rootGroup = routes.MapGroup("/");
         //rootGroup.MapGet("/", () => "API is running");
+        apiEndpoints = routes.ServiceProvider.GetService<IApiEndpoints>() ?? throw new InvalidOperationException("IApiEndpoints service is not registered.");
 
-            
+
 
         var group = routes.MapGroup("/api/v1/");
 
         group.WithTags("AnaTag");
+
 
         group.MapGet("weatherforecast", () =>
         {
@@ -48,6 +52,10 @@ public static class AnaApi
             })
             .ToArray();
         })
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces<WeatherForecast>();
+
+        authGroup.MapPost("group", apiEndpoints.CreateGroup)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces<WeatherForecast>();
 
@@ -104,4 +112,7 @@ public static class AnaApi
 
         return group;
     }
+
+    
+
 }

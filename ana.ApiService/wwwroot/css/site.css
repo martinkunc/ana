@@ -11,6 +11,7 @@
 
 .form-group {
     margin-bottom: 15px;
+    transition: all 0.3s ease;
 }
 
 .form-group label {
@@ -37,6 +38,12 @@
     border: none;
     border-radius: 4px;
     cursor: pointer;
+}
+
+.reverse-buttons {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
 }
 
 .btn-primary {

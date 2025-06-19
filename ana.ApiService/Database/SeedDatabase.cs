@@ -24,6 +24,8 @@ public static class SeedDatabase
         //await context.Database.EnsureCreatedAsync();
         Console.WriteLine("Creating Cosmos DB database and containers...");
 
+        await cosmosClient.CreateDatabaseIfNotExistsAsync(Config.Database.Name);
+
         var database = cosmosClient
             .GetDatabase(Config.Database.Name);
 
@@ -35,11 +37,11 @@ public static class SeedDatabase
         var containerNames = new[]
         {
             "Identity", "Identity_Logins", "Identity_DeviceFlowCodes", "Identity_PersistedGrant",
-            "Identity_Roles",  "Identity_UserRoles","Identity_Tokens"
+            "Identity_Roles",  "Identity_UserRoles","Identity_Tokens", "AnaGroups", "AnaGroupToUsers"
         };
         var keys = new[] {
             "Id","ProviderKey","SessionId","Key",
-            "Id","UserId","UserId"
+            "Id","UserId","UserId", "Id", "UserId"
         };
         for (var i = 0; i < containerNames.Length; i++)
         {
@@ -108,141 +110,129 @@ public static class SeedDatabase
 
     private static async Task PopulateContainer(ApplicationDbContext context, IPasswordHasher<IdentityUser> passwordHasher, string defaultAdminPassword)
     {
-        var et = context.Model.GetEntityTypes();
 
-        foreach (var entityType in et)
+        if (await context.Set<IdentityUser>().FirstOrDefaultAsync() == null)
         {
-            switch (entityType.ClrType)
+            context.Users.AddRange(
+               new IdentityUser
+               {
+                   UserName = "admin",
+                   Email = "admin@mail.com",
+                   EmailConfirmed = true,
+                   PasswordHash = passwordHasher.HashPassword(null, defaultAdminPassword),
+                   SecurityStamp = Guid.NewGuid().ToString(),
+                   NormalizedUserName = "ADMIN",
+                   NormalizedEmail = "admin@mail.com".ToUpperInvariant(),
+                   PhoneNumber = "1234567890",
+                   PhoneNumberConfirmed = true,
+                   TwoFactorEnabled = false,
+                   LockoutEnabled = false,
+                   AccessFailedCount = 0
+               });
+            await context.SaveChangesAsync();
+        }
+
+        if (await context.Set<IdentityUserLogin<string>>().FirstOrDefaultAsync() == null)
+        {
+            context.UserLogins.AddRange(
+               new IdentityUserLogin<string>
+               {
+                   UserId = "admin",
+                   LoginProvider = "CustomLoginProvider",
+                   ProviderKey = "CustomProviderKey",
+                   ProviderDisplayName = "CustomProvider"
+
+               });
+            await context.SaveChangesAsync();
+        }
+
+        if (await context.Set<IdentityRole>().FirstOrDefaultAsync() == null)
+        {
+            context.Roles.AddRange(
+                new IdentityRole
+                {
+                    Name = "Admin",
+                    NormalizedName = "ADMIN"
+                },
+                new IdentityRole
+                {
+                    Name = "User",
+                    NormalizedName = "USER"
+                });
+            await context.SaveChangesAsync();
+        }
+
+        if (await context.Set<IdentityUserRole<string>>().FirstOrDefaultAsync() == null)
+        {
+            var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+            var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin");
+            if (adminRole != null && adminUser != null)
             {
-                case Type t when t == typeof(IdentityUser):
-                    if (await context.Set<IdentityUser>().FirstOrDefaultAsync() != null)
-                        break;
-                    context.Users.AddRange(
-                       new IdentityUser
-                       {
-                           UserName = "admin",
-                           Email = "admin@mail.com",
-                           EmailConfirmed = true,
-                           PasswordHash = passwordHasher.HashPassword(null, defaultAdminPassword),
-                           SecurityStamp = Guid.NewGuid().ToString(),
-                           NormalizedUserName = "ADMIN",
-                           NormalizedEmail = "admin@mail.com".ToUpperInvariant(),
-                           PhoneNumber = "1234567890",
-                           PhoneNumberConfirmed = true,
-                           TwoFactorEnabled = false,
-                           LockoutEnabled = false,
-                           AccessFailedCount = 0
-                       });
-                    await context.SaveChangesAsync();
-                    break;
-                case Type t when t == typeof(IdentityUserLogin<string>):
-                    if (await context.Set<IdentityUserLogin<string>>().FirstOrDefaultAsync() != null)
-                        break;
-                    context.UserLogins.AddRange(
-                       new IdentityUserLogin<string>
-                       {
-                           UserId = "admin",
-                           LoginProvider = "CustomLoginProvider",
-                           ProviderKey = "CustomProviderKey",
-                           ProviderDisplayName = "CustomProvider"
-                       
-                       });
-                    await context.SaveChangesAsync();
-                    break;
-                case Type t when t == typeof(IdentityRole): // is this entity needed
-                    if (await context.Set<IdentityRole>().FirstOrDefaultAsync() != null)
-                        break;
-                    context.Roles.AddRange(
-                        new IdentityRole
-                        {
-                            Name = "Admin",
-                            NormalizedName = "ADMIN"
-                        },
-                        new IdentityRole
-                        {
-                            Name = "User",
-                            NormalizedName = "USER"
-                        });
-                    await context.SaveChangesAsync();
-                    break;
-                case Type t when t == typeof(IdentityUserRole<string>):
-                
-                    if (await context.Set<IdentityUserRole<string>>().FirstOrDefaultAsync() != null)
-                        break;
+                context.UserRoles.Add(new IdentityUserRole<string>
+                {
+                    UserId = adminUser.Id,
+                    RoleId = adminRole.Id
+                });
+            }
+            await context.SaveChangesAsync();
+        }
 
-                    var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
-                    var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
-                    var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin");
-                    if (adminRole != null && adminUser != null)
+        if (await context.Set<AnaGroup>().FirstOrDefaultAsync() == null)
+        {
+            // var adminRole = await context.AnaGroups.FirstOrDefaultAsync(r => r.Name == "Admin");
+            // var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin");
+            if (adminUser != null)
+            {
+                var adminsGroup = new AnaGroup
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "Admin's group",
+                };
+                context.AnaGroups.Add(adminsGroup);
+                await context.SaveChangesAsync();
+
+                var adminsGroupToUser = await context.AnaGroupToUsers
+                    .FirstOrDefaultAsync(
+                        u => u.UserId == adminUser.Id && u.GroupId == adminsGroup.Id);
+                if (adminsGroupToUser == null)
+                {
+                    context.AnaGroupToUsers.Add(new AnaGroupToUser
                     {
-                        context.UserRoles.Add(new IdentityUserRole<string>
-                        {
-                            UserId = adminUser.Id,
-                            RoleId = adminRole.Id
-                        });
-                    }
+                        UserId = adminUser.Id,
+                        GroupId = adminsGroup.Id
+                    });
                     await context.SaveChangesAsync();
-                    break;
-                    // case "UserClaims":
-                    //     var adminUserClaim = context.Users.FirstOrDefault(u => u.UserName == "admin");
-                    //     if (adminUserClaim != null)
-                    //     {
-                    //         context.UserClaims.Add(new IdentityUserClaim<string>()
-                    //         {
-                    //             UserId = adminUserClaim.Id,
-                    //             ClaimType = "AdminClaim",
-                    //             ClaimValue = "true"
-                    //         });
-                    //     }
-                    //     await context.SaveChangesAsync();
-                    //     break;
-                    // case "UserLogins":
-                    //     var adminUserLogin = context.Users.FirstOrDefault(u => u.UserName == "admin");
-                    //     if (adminUserLogin != null)
-                    //     {
-                    //         context.UserLogins.Add(new IdentityUserLogin<string>
-                    //         {
-                    //             UserId = adminUserLogin.Id,
-                    //             LoginProvider = "CustomLoginProvider",
-                    //             ProviderKey = "CustomProviderKey",
-                    //             ProviderDisplayName = "CustomProvider"
-                    //         });
-                    //     }
-                    //     await context.SaveChangesAsync();
-                    //     break;
-                    // case "UserTokens":
-                    //     var adminUserToken = context.Users.FirstOrDefault(u => u.UserName == "admin");
-                    //     if (adminUserToken != null)
-                    //     {
-                    //         context.UserTokens.Add(new IdentityUserToken<string>
-                    //         {
-                    //             UserId = adminUserToken.Id,
-                    //             LoginProvider = "CustomLoginProvider",
-                    //             Name = "CustomTokenName",
-                    //             Value = "CustomTokenValue"
-                    //         });
-                    //     }
-                    //     await context.SaveChangesAsync();
-                    //     break;
-                    // case "RoleClaims":
-                    //     var adminRoleClaim = context.Roles.FirstOrDefault(r => r.Name == "Admin");
-                    //     if (adminRoleClaim != null)
-                    //     {
-                    //         context.RoleClaims.Add(new IdentityRoleClaim<string>
-                    //         {
-                    //             RoleId = adminRoleClaim.Id,
-                    //             ClaimType = "AdminClaim",
-                    //             ClaimValue = "true"
-                    //         });
-                    //     }
-                    //     await context.SaveChangesAsync();
-                    //     break;
-
-                    // default:
-                    //     throw new ArgumentException($"Unknown container name: {containerName}", nameof(containerName));
-
+                }
             }
         }
+
+        // if (await context.Set<AnaGroupToUser>().FirstOrDefaultAsync() == null)
+        // {
+        //     // var adminRole = await context.AnaGroups.FirstOrDefaultAsync(r => r.Name == "Admin");
+        //     // var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+        //     var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin");
+        //     var adminsGroup = await context.AnaGroups.FirstOrDefaultAsync(u => u. == "admin");
+        //     if (adminUser != null)
+        //     {
+        //         var adminsGroup = new AnaGroup
+        //         {
+        //             Id = Guid.NewGuid().ToString(),
+        //             Name = "Admin's group",
+        //         };
+        //         context.AnaGroups.Add(adminsGroup);
+
+        //         context.AnaGroupToUsers.Add(new AnaGroupToUser
+        //         {
+        //             UserId = adminUser.Id,
+        //             GroupId = adminsGroup.Id
+        //         });
+        //     }
+        //     await context.SaveChangesAsync();
+
+        // }
+
     }
 
 

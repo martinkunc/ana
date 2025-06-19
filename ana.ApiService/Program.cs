@@ -62,17 +62,27 @@ builder.AddServiceDefaults();
 //         };
 //     });
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+var issuerSigningKey = Convert.FromBase64String(await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.IssuerSigningKeySecretName, Config.KeyVault.IssuerSigningKeySecretName));
+
+builder.Services.AddAuthentication(options =>
+{ 
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
     .AddJwtBearer(options =>
     {
+        
         options.Authority = builder.Configuration["Identity:Url"];
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateAudience = false,
+            ValidateAudience = true,
             ValidateIssuer = true,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(issuerSigningKey),
+            ValidIssuer =  Config.IdentityServer.IssuerName,
+            ValidAudience = Config.IdentityServer.AudienceName
         };
         options.Events = new JwtBearerEvents
         {
@@ -86,6 +96,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+
+
 // Add services to the container.
 builder.Services.AddProblemDetails();
 
@@ -96,32 +108,50 @@ builder.Services.AddOpenApi();
 
 foreach (var conf in builder.Configuration.AsEnumerable())
 {
-    
+
     logger.LogInformation($"Config: {conf.Key} = {conf.Value}");
 }
-var connectionStringName = "cosmos-db";
-var connectionString = builder.Configuration.GetConnectionString(connectionStringName);
-
-var AnotherConnString = builder.Configuration["ConnectionStrings:cosmos-db"];
-
-Console.WriteLine($"Api: Connection string: { AnotherConnString}");
-
-                       
-if (string.IsNullOrEmpty(connectionString))
-{
-    
-    var client = new SecretClient(new Uri(Config.KeyVault.KeyVaultUrl), new DefaultAzureCredential());
-    KeyVaultSecret secret = await client.GetSecretAsync(Config.Database.ConnectionStringSecretName);
-    connectionString = secret.Value;
-}
-
-if (string.IsNullOrEmpty(connectionString))
-{
-    throw new InvalidOperationException("Cosmos DB connection string is not configured.");
-}
 
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+string connectionString = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.ConnectionStringCosmos, Config.KeyVault.ConnectionStringSecretName);
+
+// builder.Services.AddDbContext<ApplicationDbContext>(options =>
+// {
+//     var accountEndpoint = "";
+//     var accountKey = "";
+//     var parts = connectionString.Split(';');
+//     foreach (var part in parts)
+//     {
+//         if (part.StartsWith("AccountEndpoint=", StringComparison.OrdinalIgnoreCase))
+//             accountEndpoint = part.Substring("AccountEndpoint=".Length);
+//         else if (part.StartsWith("AccountKey=", StringComparison.OrdinalIgnoreCase))
+//             accountKey = part.Substring("AccountKey=".Length);
+//     }
+
+//     // Configure Cosmos options explicitly
+//     options.UseCosmos(
+//         accountEndpoint: accountEndpoint,
+//         accountKey: accountKey,
+//         databaseName: Config.Database.Name,
+//         cosmosOptionsAction: cosmosOptions =>
+//         {
+//             cosmosOptions.HttpClientFactory(() =>
+//             {
+//                 HttpMessageHandler httpMessageHandler = new HttpClientHandler()
+//                 {
+//                     ServerCertificateCustomValidationCallback = (req, cert, chain, errors) => true
+//                 };
+
+//                 return new HttpClient(httpMessageHandler);
+//             });
+//             cosmosOptions.LimitToEndpoint(true);
+//             cosmosOptions.ConnectionMode(Microsoft.Azure.Cosmos.ConnectionMode.Gateway);
+//         }
+//         );
+
+// });
+
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     var accountEndpoint = "";
     var accountKey = "";
@@ -142,20 +172,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         cosmosOptionsAction: cosmosOptions =>
         {
             cosmosOptions.HttpClientFactory(() =>
+            {
+                HttpMessageHandler httpMessageHandler = new HttpClientHandler()
                 {
-                    HttpMessageHandler httpMessageHandler = new HttpClientHandler()
-                    {
-                        ServerCertificateCustomValidationCallback = (req, cert, chain, errors) => true
-                    };
+                    ServerCertificateCustomValidationCallback = (req, cert, chain, errors) => true
+                };
 
-                    return new HttpClient(httpMessageHandler);
-                });
+                return new HttpClient(httpMessageHandler);
+            });
             cosmosOptions.LimitToEndpoint(true);
             cosmosOptions.ConnectionMode(Microsoft.Azure.Cosmos.ConnectionMode.Gateway);
         }
         );
 
- 
 });
 
 
@@ -194,12 +223,31 @@ builder.Services.AddSingleton<CosmosClient>(provider =>
 
 
 builder.Services.AddCosmosIdentity<ApplicationDbContext, IdentityUser, IdentityRole, string>(
-      options => options.SignIn.RequireConfirmedAccount = true // Always a good idea :)
+
+      options => options.SignIn.RequireConfirmedAccount = false
     )
     //.AddDefaultUI() // Use this if Identity Scaffolding is in use
     .AddDefaultTokenProviders();
 
-builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>, 
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    // Password settings
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 0;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+
+    // Lockout settings
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    // User settings
+    options.User.RequireUniqueEmail = true;
+});
+
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>,
     UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
 
 var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
@@ -222,12 +270,12 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
     options.UserInteraction.LoginUrl = "/account/login";
     options.UserInteraction.LoginReturnUrlParameter = "returnUrl";
     options.KeyManagement.Enabled = false;
-    
+
 })
 .AddInMemoryIdentityResources(Config.GetResources())
 .AddInMemoryApiScopes(Config.GetApiScopes())
 .AddInMemoryApiResources(Config.GetApis())
-.AddInMemoryClients(Config.GetClients(builder.Configuration,externalUrl))
+.AddInMemoryClients(Config.GetClients(builder.Configuration, externalUrl))
 //.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
 .AddAspNetIdentity<IdentityUser>();
 
@@ -237,7 +285,8 @@ builder.Services.AddRazorPages();
 var identityServerKeyPath = builder.Configuration["IdentityServerKeyPath"];
 if (identityServerKeyPath != null)
 {
-    if (!File.Exists(identityServerKeyPath)) {
+    if (!File.Exists(identityServerKeyPath))
+    {
         throw new FileNotFoundException("Identity server key file not found.", identityServerKeyPath);
     }
     var bytes = File.ReadAllBytes(identityServerKeyPath);
@@ -250,22 +299,41 @@ else
 {
     var client = new SecretClient(new Uri(Config.KeyVault.KeyVaultUrl), new DefaultAzureCredential());
     KeyVaultSecret secret = await client.GetSecretAsync(Config.IdentityServer.CertificateName);
-    
+
     // The secret value should be the Base64 encoded PFX
     var pfxBytes = Convert.FromBase64String(secret.Value);
     //var cert = new X509Certificate2(pfxBytes);
     var cert = X509CertificateLoader.LoadPkcs12(pfxBytes, null);
-    
+
     if (cert == null)
     {
         throw new InvalidOperationException("Failed to load the signing certificate from Key Vault.");
     }
-    
+
     identityServerBuilder.AddSigningCredential(cert);
 }
 
 
 builder.Services.AddAuthorization();
+
+var tokenService = new TokenService(
+    builder.Configuration,
+    LoggerFactory.Create(builder => builder.AddConsole())
+        .CreateLogger<TokenService>(),
+    issuerSigningKey
+);
+
+builder.Services.AddSingleton<ITokenService>(tokenService);
+
+var httpClient =  new HttpClient();
+
+var apiClient = new ApiClient(httpClient, externalUrl, tokenService,
+    LoggerFactory.Create(builder => builder.AddConsole())
+        .CreateLogger<ApiClient>());
+
+builder.Services.AddSingleton<IApiClient>(apiClient);
+
+builder.Services.AddSingleton<IApiEndpoints, ApiEndpoints>();
 
 var app = builder.Build();
 
@@ -286,7 +354,7 @@ app.MapRazorPages();
 
 app.MapFallbackToFile("index.html");
 
-app.MapAnaApi();
+app.MapApiEndpoints();
 
 
 var builder1 = new DbContextOptionsBuilder<ApplicationDbContext>();
@@ -297,8 +365,9 @@ using (var dbContext = new ApplicationDbContext(builder1.Options))
 {
     await SeedDatabase.Initialize(app.Services);
 
-    
+
 }
 
 
 app.Run();
+
