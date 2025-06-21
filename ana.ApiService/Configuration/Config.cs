@@ -32,8 +32,8 @@ public class Config
     public static class IdentityServer
     {
         public const string CertificateName = "anaidentitycert";
-        public const string IssuerName = "Ana Identity Server";
-        public const string AudienceName = "ana api";
+        //public const string IssuerName = "Ana Identity Server";
+        public const string AudienceName = "ana_api";
     }
     
     public static class Resources
@@ -45,6 +45,7 @@ public class Config
     public static class Scopes
     {
         public const string ana = "ana";
+        public const string anaApi = "ana_api";
         // Add other scopes as needed
     }
 
@@ -54,6 +55,10 @@ public class Config
         return new List<ApiResource>
             {
                 new ApiResource(Resources.ana, "Ana Service"),
+                new ApiResource(Scopes.anaApi, "Ana API Service")
+                {
+                    Scopes = { Scopes.anaApi }
+                }
             };
     }
 
@@ -63,7 +68,8 @@ public class Config
     {
         return new List<ApiScope>
             {
-                new ApiScope(Scopes.ana, "ana Service"),
+                new ApiScope(Scopes.ana, "ana Service"), // blazor
+                new ApiScope(Scopes.anaApi, "ana Api Service"),
             };
     }
 
@@ -100,6 +106,7 @@ public class Config
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.Email,
                         Scopes.ana,
+                        Scopes.anaApi,
                     }
                 },
                 new Client
@@ -108,10 +115,10 @@ public class Config
                     ClientName = "WebApp Client",
                     ClientSecrets = new List<Secret>
                     {
-                        new Secret("secret".Sha256())
+                        new Secret("secret".Sha256()) // change
                     },
                     ClientUri = $"{configuration["WebAppClient"]}",                             // public uri of the client
-                    AllowedGrantTypes = GrantTypes.Code,
+                    AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
                     AllowAccessTokensViaBrowser = false,
                     RequireConsent = false,
                     AllowOfflineAccess = true,
@@ -131,6 +138,7 @@ public class Config
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.OfflineAccess,
                         Scopes.ana,
+                        Scopes.anaApi,
                     },
                     AccessTokenLifetime = 60*60*2, // 2 hours
                     IdentityTokenLifetime= 60*60*2 // 2 hours

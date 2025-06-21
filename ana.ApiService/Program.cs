@@ -64,6 +64,15 @@ builder.AddServiceDefaults();
 
 var issuerSigningKey = Convert.FromBase64String(await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.IssuerSigningKeySecretName, Config.KeyVault.IssuerSigningKeySecretName));
 
+var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
+var serviceName = "apiservice"; // Your service name as defined in Container Apps
+
+
+var externalUrl = builder.Configuration["ASPNETCORE_EXTERNAL_URL"] ?? $"https://{serviceName}.{envDnsSuffix}";
+
+Console.WriteLine($"MY: External URL: {externalUrl}");
+
+
 builder.Services.AddAuthentication(options =>
 { 
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -72,7 +81,7 @@ builder.Services.AddAuthentication(options =>
     .AddJwtBearer(options =>
     {
         
-        options.Authority = builder.Configuration["Identity:Url"];
+        options.Authority = externalUrl;
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -80,12 +89,18 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuer = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(issuerSigningKey),
-            ValidIssuer =  Config.IdentityServer.IssuerName,
+            //IssuerSigningKey = new SymmetricSecurityKey(issuerSigningKey),
+            ValidIssuer =  externalUrl,
             ValidAudience = Config.IdentityServer.AudienceName
         };
         options.Events = new JwtBearerEvents
         {
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(context.Exception, "Authentication failed");
+                return Task.CompletedTask;
+            },
             OnChallenge = context =>
             {
                 context.HandleResponse();
@@ -250,13 +265,6 @@ builder.Services.Configure<IdentityOptions>(options =>
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>,
     UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
 
-var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
-var serviceName = "apiservice"; // Your service name as defined in Container Apps
-
-
-var externalUrl = builder.Configuration["ASPNETCORE_EXTERNAL_URL"] ?? $"https://{serviceName}.{envDnsSuffix}";
-
-Console.WriteLine($"MY: External URL: {externalUrl}");
 
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
@@ -270,7 +278,7 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
     options.UserInteraction.LoginUrl = "/account/login";
     options.UserInteraction.LoginReturnUrlParameter = "returnUrl";
     options.KeyManagement.Enabled = false;
-
+    options.IssuerUri = externalUrl;
 })
 .AddInMemoryIdentityResources(Config.GetResources())
 .AddInMemoryApiScopes(Config.GetApiScopes())
@@ -325,13 +333,26 @@ var tokenService = new TokenService(
 
 builder.Services.AddSingleton<ITokenService>(tokenService);
 
-var httpClient =  new HttpClient();
+var httpClient = new HttpClient();
 
-var apiClient = new ApiClient(httpClient, externalUrl, tokenService,
-    LoggerFactory.Create(builder => builder.AddConsole())
-        .CreateLogger<ApiClient>());
+builder.Services.AddHttpClient(
+    "Auth",
+    opt => opt.BaseAddress = new Uri(externalUrl))
+    .AddHttpMessageHandler<CookieHandler>();
 
-builder.Services.AddSingleton<IApiClient>(apiClient);
+builder.Services.AddSingleton<IApiClient>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var logger = sp.GetRequiredService<ILogger<ApiClient>>();
+
+    return new ApiClient(httpClientFactory, externalUrl, logger);
+});
+
+// var apiClient = new ApiClient(httpClient, externalUrl, tokenService,
+//     LoggerFactory.Create(builder => builder.AddConsole())
+//         .CreateLogger<ApiClient>());
+
+//builder.Services.AddSingleton<IApiClient>(apiClient);
 
 builder.Services.AddSingleton<IApiEndpoints, ApiEndpoints>();
 

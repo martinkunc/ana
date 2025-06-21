@@ -6,8 +6,7 @@ using Microsoft.Extensions.Logging;
 public class ApiEndpoints : IApiEndpoints
 {
     private readonly ILogger<ApiEndpoints> _logger;
-    //private readonly ApplicationDbContext _applicationDbContext;
-    private readonly IServiceProvider _serviceProvider;
+    
     private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
 
     public ApiEndpoints(ILogger<ApiEndpoints> logger,
@@ -20,9 +19,9 @@ public class ApiEndpoints : IApiEndpoints
     }
 
 
-    public async Task<CreateGroupResponse> CreateGroup(ClaimsPrincipal user, CreateGroupRequest request)
+    public async Task<CreateGroupResponse> CreateGroup(CreateGroupRequest request)
     {
-        
+
         _logger.LogInformation("Creating group with name: {groupName}", request.Name);
         //var _applicationDbContext = _serviceProvider.GetRequiredService<ApplicationDbContext>();
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
@@ -34,27 +33,37 @@ public class ApiEndpoints : IApiEndpoints
         };
 
         _applicationDbContext.AnaGroups.Add(group);
-        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("User ID not found in claims.");
 
         _applicationDbContext.AnaGroupToUsers.Add(new AnaGroupToUser
         {
-            UserId = userId,
+            UserId = request.userId,
             GroupId = group.Id
         });
         await _applicationDbContext.SaveChangesAsync();
 
         return new CreateGroupResponse { Group = group };
     }
+    
+    public async Task<GetUserGroupsResponse> GetUserGroups(string userId)
+    {
+        
+        _logger.LogInformation("Getting groups ");
+
+        //var userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("User ID not found in claims.");
+
+        var _applicationDbContext = _dbContextFactory.CreateDbContext();
+
+        var userGroupToUsers = await _applicationDbContext.AnaGroupToUsers
+            .Where(agu => agu.UserId == userId)
+            .Select(gu => gu.GroupId)
+            .ToListAsync();
+
+        var groups = await _applicationDbContext.AnaGroups
+            .Where(g => userGroupToUsers.Contains(g.Id))
+            .ToListAsync();
+
+        return new GetUserGroupsResponse { UserId=userId, Groups = groups };
+    }
 
 
 }
-
-    public class CreateGroupRequest
-    {
-        public string Name { get; set; }
-    }
-
-    public class CreateGroupResponse
-    {
-        public AnaGroup Group { get; set; }
-    }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Duende.IdentityModel;
+using System.Linq;
 
 public class LoginModel : PageModel
 {
@@ -136,6 +137,12 @@ public class LoginModel : PageModel
     private async Task<IActionResult> LoginUser(string? returnUrl = null)
     {
         var result = await _signInManager.PasswordSignInAsync(Input.Email ?? "", Input.Password ?? "", false, lockoutOnFailure: false);
+
+        // 
+        var userId = User.FindFirst("sub")?.Value ?? throw new InvalidOperationException("User ID not found in claims.");
+        var groups = await _apiClient.GetGroupsAsync(User.Identity,userId);
+        //
+
         if (result.Succeeded)
         {
             return LocalRedirect(returnUrl ?? "/");

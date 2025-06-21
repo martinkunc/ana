@@ -1,5 +1,5 @@
 ﻿@page "/weather"
-@inject HttpClient Http
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 <PageTitle>Weather</PageTitle>
 
@@ -7,7 +7,7 @@
 
 <p>This component demonstrates fetching data from the server.</p>
 
-@if (forecasts == null)
+@if (anaGroups == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -16,20 +16,16 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
+                <th>Id</th>
+                <th>Name</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var forecast in forecasts)
+            @foreach (var agroup in anaGroups)
             {
                 <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
+                    <td>@agroup.Id</td>
+                    <td>@agroup.Name</td>
                 </tr>
             }
         </tbody>
@@ -37,21 +33,22 @@ else
 }
 
 @code {
-    private WeatherForecast[]? forecasts;
+
+    [Inject]
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+
+    [Inject]
+    private IApiClient apiClient { get; set; }
+
+    private List<AnaGroup> anaGroups;
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        Console.WriteLine($"User is authenticated: {string.Join(",",authState.User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
+        var userId = authState.User.Claims.FirstOrDefault( c => c.Type == "sub")?.Value ?? throw new InvalidOperationException("User ID not found in claims.");
+
+        anaGroups = await apiClient.GetGroupsAsync(userId);
     }
 
-    public class WeatherForecast
-    {
-        public DateOnly Date { get; set; }
-
-        public int TemperatureC { get; set; }
-
-        public string? Summary { get; set; }
-
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-    }
 }

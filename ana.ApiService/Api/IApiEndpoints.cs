@@ -2,5 +2,6 @@ using System.Security.Claims;
 
 public interface IApiEndpoints
 {
-    Task<CreateGroupResponse> CreateGroup(ClaimsPrincipal user, CreateGroupRequest request);
+    Task<CreateGroupResponse> CreateGroup(CreateGroupRequest request);
+    Task<GetUserGroupsResponse> GetUserGroups(string userId);
 }
