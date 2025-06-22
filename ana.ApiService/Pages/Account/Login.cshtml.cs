@@ -10,22 +10,20 @@ using System.Linq;
 public class LoginModel : PageModel
 {
     private readonly SignInManager<IdentityUser> _signInManager;
-    private readonly ITokenService _tokenService;
+    
     private readonly IApiClient _apiClient;
     private readonly UserManager<IdentityUser> _userManager;
 
-    private readonly ILogger<TokenService> _logger;
+    private readonly ILogger<LoginModel> _logger;
 
     public LoginModel(
         SignInManager<IdentityUser> signInManager,
         UserManager<IdentityUser> userManager,
-        ITokenService tokenService,
         IApiClient apiClient,
-        ILogger<TokenService> logger)
+        ILogger<LoginModel> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _tokenService = tokenService;
         _apiClient = apiClient;
         _logger = logger;
     }
@@ -118,9 +116,11 @@ public class LoginModel : PageModel
 
 
             _logger.LogInformation("Generated JWT token for user {Email} with Identity {Identity}", user.Email, User.Identity);
-            
-            await _apiClient.CreateGroupAsync(User.Identity, Input.GroupName);
+            var userId = User.FindFirst(JwtClaimTypes.Subject)?.Value ?? throw new InvalidOperationException("User ID not found in claims.");
+            var createGroupResponse = await _apiClient.CreateGroupAsync(userId, Input.GroupName);
             _logger.LogInformation("Group {GroupName} created for user {Email}", Input.GroupName, user.Email);
+
+            await _apiClient.SelectGroupAsync(createGroupResponse.UserId, createGroupResponse.Group.Id);
 
 
             return LocalRedirect(returnUrl ?? "/");
@@ -140,7 +140,8 @@ public class LoginModel : PageModel
 
         // 
         var userId = User.FindFirst("sub")?.Value ?? throw new InvalidOperationException("User ID not found in claims.");
-        var groups = await _apiClient.GetGroupsAsync(User.Identity,userId);
+        var groups = await _apiClient.GetGroupsAsync(userId);
+        // just test
         //
 
         if (result.Succeeded)

@@ -37,11 +37,13 @@ public static class SeedDatabase
         var containerNames = new[]
         {
             "Identity", "Identity_Logins", "Identity_DeviceFlowCodes", "Identity_PersistedGrant",
-            "Identity_Roles",  "Identity_UserRoles","Identity_Tokens", "AnaGroups", "AnaGroupToUsers"
+            "Identity_Roles",  "Identity_UserRoles","Identity_Tokens", "AnaGroups", "AnaGroupToUsers",
+            "AnaRoles", "AnaAnnivs"
         };
         var keys = new[] {
             "Id","ProviderKey","SessionId","Key",
-            "Id","UserId","UserId", "Id", "UserId"
+            "Id","UserId","UserId", "Id", "UserId",
+            "Id", "Id"
         };
         for (var i = 0; i < containerNames.Length; i++)
         {
@@ -178,12 +180,29 @@ public static class SeedDatabase
             await context.SaveChangesAsync();
         }
 
+        if (await context.Set<AnaRole>().FirstOrDefaultAsync() == null)
+        {
+                context.AnaRoles.AddRange(
+                    new AnaRole
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = Config.Roles.Admin,
+                    }, new AnaRole
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = Config.Roles.Admin,
+                    });
+                await context.SaveChangesAsync();
+        }
+
+
         if (await context.Set<AnaGroup>().FirstOrDefaultAsync() == null)
         {
             // var adminRole = await context.AnaGroups.FirstOrDefaultAsync(r => r.Name == "Admin");
             // var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
             var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin");
-            if (adminUser != null)
+            var adminRole = await context.AnaRoles.FirstOrDefaultAsync(u => u.Name == Config.Roles.Admin);
+            if (adminUser != null && adminRole != null)
             {
                 var adminsGroup = new AnaGroup
                 {
@@ -201,7 +220,8 @@ public static class SeedDatabase
                     context.AnaGroupToUsers.Add(new AnaGroupToUser
                     {
                         UserId = adminUser.Id,
-                        GroupId = adminsGroup.Id
+                        GroupId = adminsGroup.Id,
+                        RoleId = adminRole.Id,
                     });
                     await context.SaveChangesAsync();
                 }

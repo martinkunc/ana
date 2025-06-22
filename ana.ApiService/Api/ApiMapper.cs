@@ -5,10 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 public static class ApiMapper {
 
     public static IApiEndpoints apiEndpoints;
-    private static readonly string[] Summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
+
 
     public static RouteGroupBuilder MapApiEndpoints(this IEndpointRouteBuilder routes)
     {
@@ -23,45 +20,48 @@ public static class ApiMapper {
         group.WithTags("AnaTag");
 
 
-        group.MapGet("weatherforecast", () =>
-        {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
-        })
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces<WeatherForecast>();
 
         var authGroup = routes.MapGroup("/api/v1/")
-                        .RequireAuthorization(new AuthorizeAttribute
-                        {
-                            AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
-                        });
-
-        authGroup.MapGet("authweatherforecast", () =>
-        {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            .RequireAuthorization(new AuthorizeAttribute
             {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
-        })
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces<WeatherForecast>();
+                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            });
+
 
         authGroup.MapPost("group", apiEndpoints.CreateGroup)
             .Produces(StatusCodes.Status400BadRequest)
-            .Produces<WeatherForecast>();
+            .Produces<CreateGroupResponse>();
 
         authGroup.MapGet("user/groups/{userId}", apiEndpoints.GetUserGroups)
             .Produces(StatusCodes.Status400BadRequest)
-            .Produces<WeatherForecast>();
+            .Produces<GetUserGroupsResponse>();
+
+        authGroup.MapGet("user/select-group/{userId}", apiEndpoints.GetSelectedGroup)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status200OK);
+
+        authGroup.MapPost("user/select-group/{userId}/{groupId}", apiEndpoints.SelectGroup)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status200OK);
+
+        // api/v1/group/{encodedGroupId}/anniversaries
+        authGroup.MapGet("group/{groupId}/anniversaries", apiEndpoints.GetAnniversaries)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status200OK);
+
+        // api/v1/group/{encodedGroupId}/anniversaries
+        authGroup.MapPost("group/{groupId}/anniversary", apiEndpoints.CreateAnniversary)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status200OK);
+
+        authGroup.MapPut("group/{groupId}/anniversary/{anniversaryId}", apiEndpoints.UpdateAnniversary)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status200OK);
+
+
+        authGroup.MapDelete("group/{groupId}/anniversary/{anniversaryId}", apiEndpoints.DeleteAnniversary)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status200OK);
 
         // group.MapGet("items/type/all/brand/{catalogBrandId:int}", (int catalogBrandId, CatalogDbContext catalogContext, int? before, int? after, int pageSize = 8)
         //     => GetCatalogItems(catalogBrandId, catalogContext, before, after, pageSize))

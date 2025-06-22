@@ -324,14 +324,6 @@ else
 
 builder.Services.AddAuthorization();
 
-var tokenService = new TokenService(
-    builder.Configuration,
-    LoggerFactory.Create(builder => builder.AddConsole())
-        .CreateLogger<TokenService>(),
-    issuerSigningKey
-);
-
-builder.Services.AddSingleton<ITokenService>(tokenService);
 
 var httpClient = new HttpClient();
 
@@ -344,15 +336,11 @@ builder.Services.AddSingleton<IApiClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var logger = sp.GetRequiredService<ILogger<ApiClient>>();
-
-    return new ApiClient(httpClientFactory, externalUrl, logger);
+    var webappClientSecret = "secret"; // TODO
+    return new ApiClient(httpClientFactory, externalUrl, webappClientSecret, logger);
 });
 
-// var apiClient = new ApiClient(httpClient, externalUrl, tokenService,
-//     LoggerFactory.Create(builder => builder.AddConsole())
-//         .CreateLogger<ApiClient>());
 
-//builder.Services.AddSingleton<IApiClient>(apiClient);
 
 builder.Services.AddSingleton<IApiEndpoints, ApiEndpoints>();
 

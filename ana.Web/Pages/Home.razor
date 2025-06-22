@@ -1,8 +1,54 @@
 ﻿@page "/"
 @layout MainLayout
+@inherits LayoutComponentBase
 @attribute [Authorize]
-<PageTitle>Home</PageTitle>
+<PageTitle>Anniversaries</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Anniversaries</h1>
 
-Welcome to your new app.
+@if (AnniversariesLoadingStatus != null)
+{
+    <p><em>@AnniversariesLoadingStatus</em></p>
+}
+else
+{
+<table style="width:100%; table-layout:fixed;">
+    <colgroup>
+        <col style="width: 9em;" />    <!-- Date column -->
+        <col style="width: auto;" />   <!-- Occasion column -->
+        <col style="width: 9em;" />    <!-- Edit button column -->
+    </colgroup>
+    <tbody>
+        @foreach (var a in Anniversaries)
+        {
+            <tr>
+                <td>@a.Date</td>
+                <td>@a.Name</td>
+                <td>
+                    <button type="button" @onclick="() => EditAnniversary(a.Id, a.GroupId, a.Date, a.Name)">Edit</button>
+                    <button type="button" @onclick="() => RemoveAnniversary(a.Id, a.GroupId)">Remove</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+}
+
+<div style="margin-top: 2em;">
+    <div>@(string.IsNullOrEmpty(newAnniversary.Id) ? "Add new anniversary" : "Editing existing anniversary")</div>
+    <div style="display: flex; gap: 0.5em; margin-top: 0.5em;">
+        <span style="width: 9em;">Date (day/month)</span>
+        <span style="flex: 1;">Occasion</span>
+    </div>
+    <EditForm EditContext="@editContext" OnValidSubmit="AddAnniversary">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div style="display: flex; gap: 0.5em; margin-top: 0.5em;">
+            <InputText style="width: 9em;" @bind-Value="newAnniversary.Date" placeholder="d/m" />
+            <InputText style="flex: 1;" @bind-Value="newAnniversary.Name" placeholder="name" />
+        </div>
+        <div style="margin-top: 0.5em;">
+            <button type="submit">@(string.IsNullOrEmpty(newAnniversary.Id) ? "Add" : "Save")</button>
+        </div>
+    </EditForm>
+</div>

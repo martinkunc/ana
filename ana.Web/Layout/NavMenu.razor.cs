@@ -25,9 +25,11 @@ public partial class NavMenu : LayoutComponentBase
         Console.WriteLine($"User is authenticated: {string.Join(",",authState.User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
         var userId = authState.User.Claims.FirstOrDefault( c => c.Type == "sub")?.Value ?? throw new InvalidOperationException("User ID not found in claims.");
 
-        var groups = await apiClient.GetGroupsAsync(userId);
-        if (groups != null && groups.Any()) {
-            AnaGroupName = groups.FirstOrDefault()?.Name;
+        var group = await apiClient.GetSelectedGroupAsync(userId);
+        Console.WriteLine($"Selected group: {group}");
+        if (group != null)
+        {
+            AnaGroupName = group.Name;
         }
         else
         {

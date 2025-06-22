@@ -27,6 +27,14 @@ public class ApplicationDbContext : CosmosIdentityDbContext<IdentityUser, Identi
             .UseETagConcurrency()
             .HasNoDiscriminator();
 
+        var anaRoleBuilder = builder.Entity<AnaRole>()
+            .ToContainer("AnaRoles");
+        anaRoleBuilder.HasKey(r => r.Id);
+        anaRoleBuilder
+            .UseETagConcurrency()
+            .HasNoDiscriminator();
+
+
         var groupToUsersBuilder = builder.Entity<AnaGroupToUser>()
             .ToContainer("AnaGroupToUsers")
             .HasPartitionKey(g => g.UserId);
@@ -34,9 +42,30 @@ public class ApplicationDbContext : CosmosIdentityDbContext<IdentityUser, Identi
         groupToUsersBuilder
             .UseETagConcurrency()
             .HasNoDiscriminator();
+
+        var anaAnnivBuilder = builder.Entity<AnaAnniv>()
+            .ToContainer("AnaAnnivs");
+        anaAnnivBuilder.HasKey(r => r.Id);
+        anaAnnivBuilder
+            .UseETagConcurrency()
+            .HasNoDiscriminator();
+
+        var anaUserBuilder = builder.Entity<AnaUser>()
+            .ToContainer("AnaUsers");
+        anaUserBuilder.HasKey(r => r.Id);
+        anaUserBuilder
+            .UseETagConcurrency()
+            .HasNoDiscriminator();
     }
 
     public virtual DbSet<AnaGroup> AnaGroups { get; set; } = default!;
-    
+
     public virtual DbSet<AnaGroupToUser> AnaGroupToUsers { get; set; } = default!;
+
+    public virtual DbSet<AnaRole> AnaRoles { get; set; } = default!;
+
+    public virtual DbSet<AnaAnniv> AnaAnnivs { get; set; } = default!;
+    
+    public virtual DbSet<AnaUser> AnaUsers { get; set; } = default!;
+    
 }

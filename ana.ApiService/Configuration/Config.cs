@@ -34,6 +34,12 @@ public class Config
         public const string CertificateName = "anaidentitycert";
         //public const string IssuerName = "Ana Identity Server";
         public const string AudienceName = "ana_api";
+
+        public static class ClientId
+        {
+            public const string WebApp = "webapp";
+            public const string Blazor = "blazor";
+        }
     }
     
     public static class Resources
@@ -83,6 +89,12 @@ public class Config
                 new IdentityResources.Profile(),
                 new IdentityResources.Email()
             };
+    }
+
+    public static class Roles
+    {
+        public const string Admin = "Admin";
+        public const string User = "User";
     }
 
     // client want to access resources (aka scopes)
