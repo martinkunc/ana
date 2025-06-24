@@ -1,8 +1,67 @@
 ﻿@page "/settings"
 @layout MainLayout
+@inherits LayoutComponentBase
 @attribute [Authorize]
+@using Microsoft.AspNetCore.Components.Forms
 <PageTitle>Settings</PageTitle>
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.
+<EditForm Model="@settingsModel" OnValidSubmit="SaveSettings">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <h1>Settings</h1>    
+    <div style="margin-bottom: 1.5em;">
+        <label>Display name</label><br />
+        <InputText style="width: 320px; font-size: 1.2em; margin-top: 0.2em; margin-bottom: 1em;" @bind-Value="settingsModel.DisplayName" />
+    </div>
+
+    <div style="margin-bottom: 1.5em;">
+        <label>Phone for WhatsApp notification</label><br />
+        <InputText style="width: 320px; font-size: 1.2em; margin-top: 0.2em; margin-bottom: 1em;" @bind-Value="settingsModel.WhatsAppNumber" />
+    </div>
+
+    <div style="margin-bottom: 1.5em;">
+        <label>Preferred notification</label><br />
+        <div style="display: flex; gap: 1.5em; margin-top: 0.5em; align-items: center;">
+            <InputRadioGroup name="notification" @bind-Value="settingsModel.PreferredNotification" >
+            <label style="display: flex; align-items: center; gap: 0.5em;">
+                <InputRadio name="notification" Value="@NotificationType.Email.ToString()" />
+                <span>Email</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5em;">
+                <InputRadio name="notification" Value="@NotificationType.WhatsApp.ToString()" />
+                <span>WhatsApp</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5em;">
+                <InputRadio name="notification" Value="@NotificationType.None.ToString()" />
+                <span>None</span>
+            </label>
+            </InputRadioGroup>
+        </div>
+
+    <div style="margin-bottom: 1.5em; margin-top: 1.5em;">
+        <button type="button"
+                style="margin-top: 0.5em; border: 1px solid #fff; padding: 0.3em 1.5em; font-size: 1.1em;"
+                @onclick="SaveSettings">
+            Save settings
+        </button>
+        @if (!string.IsNullOrEmpty(saveStatusMessage))
+        {
+            <div style="color: #4caf50; margin-bottom: 1em;">@saveStatusMessage</div>
+        }
+    </div>
+        
+    </div>
+
+    <div style="margin-bottom: 1.5em; margin-top: 1.5em;">
+        <label>Cancel my account</label><br />
+        <button type="button"
+                disabled
+                title="Not implemented"
+                style="margin-top: 0.5em; border: 1px solid #fff; padding: 0.3em 1.5em; font-size: 1.1em;"
+                @onclick="CancelAccount">
+            Cancel
+        </button>
+    </div>
+</EditForm>
+

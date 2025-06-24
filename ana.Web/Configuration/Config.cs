@@ -18,6 +18,13 @@ public class Config
         public const string DefaultAdminPasswordKeyVaultSecretName = "default-admin-password";
     }
 
+    public static class PreferredNotifications
+    {
+        public const string None = "None";
+        public const string Email = "Email";
+        public const string WhatsApp = "WhatsApp";
+    }
+
     public static class KeyVault
     {
         public const string KeyVaultUrl = "https://ana-kv.vault.azure.net/";

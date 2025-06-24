@@ -38,12 +38,12 @@ public static class SeedDatabase
         {
             "Identity", "Identity_Logins", "Identity_DeviceFlowCodes", "Identity_PersistedGrant",
             "Identity_Roles",  "Identity_UserRoles","Identity_Tokens", "AnaGroups", "AnaGroupToUsers",
-            "AnaRoles", "AnaAnnivs"
+            "AnaRoles", "AnaAnnivs", "AnaUsers"
         };
         var keys = new[] {
             "Id","ProviderKey","SessionId","Key",
             "Id","UserId","UserId", "Id", "UserId",
-            "Id", "Id"
+            "Id", "Id","Id"
         };
         for (var i = 0; i < containerNames.Length; i++)
         {

@@ -63,6 +63,14 @@ public static class ApiMapper {
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status200OK);
 
+        authGroup.MapGet("user/{userId}", apiEndpoints.GetUserSettings)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status200OK);
+
+        authGroup.MapPut("user/{userId}", apiEndpoints.UpdateUserSettings)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status200OK);
+
         // group.MapGet("items/type/all/brand/{catalogBrandId:int}", (int catalogBrandId, CatalogDbContext catalogContext, int? before, int? after, int pageSize = 8)
         //     => GetCatalogItems(catalogBrandId, catalogContext, before, after, pageSize))
         //     .Produces(StatusCodes.Status400BadRequest)

@@ -1,10 +1,13 @@
 ﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@inject UserDisplayNameService DisplayNameService
 
 <AuthorizeView>
     <Authorized>
-        @context.User.Identity?.Name
+        @DisplayNameService.DisplayName
         <button class="nav-link btn btn-link" @onclick="BeginLogOut">Log out</button>
     </Authorized>
     <NotAuthorized>
@@ -13,8 +16,27 @@
 </AuthorizeView>
 
 @code{
+        protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var displayName = authState.User.Identity?.Name ?? "";
+
+        // Optionally, get from a custom claim or call your API here
+        // var displayName = authState.User.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "";
+
+        DisplayNameService.DisplayName = displayName;
+    }
     public void BeginLogOut()
     {
         Navigation.NavigateToLogout("authentication/logout");
+    }
+
+    protected override void OnInitialized()
+    {
+        DisplayNameService.OnChange += StateHasChanged;
+    }
+    public void Dispose()
+    {
+        DisplayNameService.OnChange -= StateHasChanged;
     }
 }

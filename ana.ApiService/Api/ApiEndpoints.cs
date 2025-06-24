@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -10,11 +11,9 @@ public class ApiEndpoints : IApiEndpoints
     private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
 
     public ApiEndpoints(ILogger<ApiEndpoints> logger,
-    //IServiceProvider serviceProvider,
     IDbContextFactory<ApplicationDbContext> dbContextFactory)
     {
         _logger = logger;
-        //_serviceProvider = serviceProvider;
         _dbContextFactory = dbContextFactory;
     }
 
@@ -218,6 +217,66 @@ public class ApiEndpoints : IApiEndpoints
             _logger.LogWarning("Anniversary with ID {anniversaryId} not found in group {groupId}", anniversaryId, groupId);
             throw new KeyNotFoundException($"Anniversary with ID {anniversaryId} not found in group {groupId}");
         }
+    }
+
+    public async Task<AnaUser> GetUserSettings(string userId)
+    {
+        _logger.LogInformation("Getting user settings for user {userId}", userId);
+
+        var _applicationDbContext = _dbContextFactory.CreateDbContext();
+
+        var userSettings = await _applicationDbContext.AnaUsers
+            .Where(agu => agu.Id == userId)
+            .FirstOrDefaultAsync();
+        if (userSettings == null)
+        {
+            userSettings = new AnaUser
+            {
+                Id = userId,
+                DisplayName = string.Empty,
+                SelectedGroupId = string.Empty,
+                PreferredNotification = Config.PreferredNotifications.None,
+                WhatsAppNumber = string.Empty
+            };
+        }
+        return userSettings;
+    }
+
+    public async Task UpdateUserSettings(string userId, AnaUser userSettings)
+    {
+        _logger.LogInformation("Updating user settings for user {userId}", userId);
+
+        var _applicationDbContext = _dbContextFactory.CreateDbContext();
+        
+        var idUser = await _applicationDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (idUser == null)
+        {
+            _logger.LogError("User with ID {userId} not found", userId);
+            throw new InvalidOperationException($"User with ID {userId} not found");
+        }
+        idUser.UserName = userSettings.DisplayName;
+        _applicationDbContext.Users.Update(idUser);
+
+
+
+        var existingUserSettings = await _applicationDbContext.AnaUsers
+            .Where(agu => agu.Id == userId)
+            .FirstOrDefaultAsync();
+
+        if (existingUserSettings == null)
+        {
+            _applicationDbContext.AnaUsers.Add(userSettings);
+        }
+        else
+        {
+            existingUserSettings.DisplayName = userSettings.DisplayName;
+            existingUserSettings.SelectedGroupId = userSettings.SelectedGroupId;
+            existingUserSettings.PreferredNotification = userSettings.PreferredNotification;
+            existingUserSettings.WhatsAppNumber = userSettings.WhatsAppNumber;
+
+            _applicationDbContext.AnaUsers.Update(existingUserSettings);
+        }
+        await _applicationDbContext.SaveChangesAsync();
     }
     
     public string GetAlignedDate(string date)

@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Duende.IdentityModel;
 using System.Linq;
+using ana.Web.Pages;
 
 public class LoginModel : PageModel
 {
@@ -121,6 +122,13 @@ public class LoginModel : PageModel
             _logger.LogInformation("Group {GroupName} created for user {Email}", Input.GroupName, user.Email);
 
             await _apiClient.SelectGroupAsync(createGroupResponse.UserId, createGroupResponse.Group.Id);
+            await _apiClient.UpdateUserSettingsAsync(userId, new AnaUser
+            {
+                Id = userId,
+                DisplayName = Input.DisplayName,
+                WhatsAppNumber = "",
+                PreferredNotification = NotificationType.None.ToString()
+            });
 
 
             return LocalRedirect(returnUrl ?? "/");

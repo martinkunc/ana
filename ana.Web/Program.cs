@@ -41,7 +41,7 @@ builder.Services.AddTransient<CookieHandler>();
 // set up authorization
 builder.Services.AddAuthorizationCore();
 
-
+builder.Services.AddSingleton<UserDisplayNameService>();
 
 //builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 

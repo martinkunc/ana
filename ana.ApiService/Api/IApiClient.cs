@@ -10,4 +10,6 @@ public interface IApiClient
     Task SelectGroupAsync(string userId, string groupId);
 
     Task<AnaGroup> GetSelectedGroupAsync(string userId);
+
+    Task UpdateUserSettingsAsync(string userId, AnaUser userSettings);
 }

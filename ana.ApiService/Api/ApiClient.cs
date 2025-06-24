@@ -121,6 +121,23 @@ public class ApiClient : IApiClient
         }
     }
 
+    public async Task UpdateUserSettingsAsync(string userId, AnaUser userSettings)
+    {
+        var _httpClient = await GetHttpClient();
+        _logger.LogInformation("Updating settings for user {userId}", userId);
+        var encodedUserId = Uri.EscapeDataString(userId);
+        var res = await _httpClient.PutAsJsonAsync($"api/v1/user/{encodedUserId}", userSettings);
+        if (res.IsSuccessStatusCode)
+        {
+            _logger.LogInformation("AnaUser updated successfully");
+        }
+        else
+        {
+            _logger.LogError("Failed to update AnaUser  {userId}, Status Code: {statusCode}", userId, res.StatusCode);
+            throw new Exception($"Failed to update anaUser: {res.ReasonPhrase}");
+        }
+    }
+
     
     private async Task<HttpClient> GetHttpClient()
     {

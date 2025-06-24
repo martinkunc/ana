@@ -340,9 +340,16 @@ builder.Services.AddSingleton<IApiClient>(sp =>
     return new ApiClient(httpClientFactory, externalUrl, webappClientSecret, logger);
 });
 
-
-
 builder.Services.AddSingleton<IApiEndpoints, ApiEndpoints>();
+
+builder.Services.AddHostedService(sp => sp.GetRequiredService<DailyTaskService>());
+builder.Services.AddSingleton<DailyTaskService>();
+
+if (builder.Environment.IsDevelopment())
+{
+    var ts = builder.Services.BuildServiceProvider().GetRequiredService<DailyTaskService>();
+    await ts.RunNowAsync();
+}
 
 var app = builder.Build();
 

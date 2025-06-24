@@ -230,13 +230,54 @@ public class ApiClient : IApiClient
         }
     }
 
+    public async Task<AnaUser> GetUserSettingsAsync(string userId)
+    {
+        var _httpClient = await GetHttpClient();
+        var encodedUserId = System.Net.WebUtility.UrlEncode(userId);
+        var r = await _httpClient.GetAsync($"api/v1/user/{encodedUserId}");
+        if (r.IsSuccessStatusCode)
+        {
+            _logger.LogInformation("User settings retrieved for user {userId}", userId);
+            _logger.LogInformation("Response: {response}", r);
+            var resG = await r.Content.ReadFromJsonAsync<AnaUser>();
+            _logger.LogInformation("resg: {resG}", resG);
+
+            if (resG == null)
+            {
+                _logger.LogError("Failed to deserialize AnaUser response");
+                throw new Exception("Failed to deserialize AnaUser response");
+            }
+            _logger.LogInformation("AnaUser retrieved successfully: {resG} ", resG);
+            return resG;
+        }
+        else
+        {
+            _logger.LogError("Failed to get user settings, Status Code: {statusCode}", r.StatusCode);
+            throw new Exception($"Failed to get user settings: {r.ReasonPhrase}");
+        }
+    }
+
+    public async Task UpdateUserSettingsAsync(string userId, AnaUser userSettings)
+    {
+        var _httpClient = await GetHttpClient();
+        var encodedUserId = System.Net.WebUtility.UrlEncode(userId);
+        
+        var r = await _httpClient.PutAsJsonAsync($"api/v1/user/{encodedUserId}", userSettings);
+        if (r.IsSuccessStatusCode)
+        {
+            _logger.LogInformation("AnaUser updated successfully ");
+        }
+        else
+        {
+            _logger.LogError("Failed to update AnaUser  {userId}, Status Code: {statusCode}", userId, r.StatusCode);
+            throw new Exception($"Failed to update anaUser: {r.ReasonPhrase}");
+        }
+    }
+
     private async Task<HttpClient> GetHttpClient()
     {
         var tokenResult = await _tokenProvider.RequestAccessToken();
         _logger.LogInformation("token request created...");
-        // var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        // _logger.LogInformation($"User is authenticated: {string.Join(",", authState.User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
-        //var userId = authState.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value ?? throw new InvalidOperationException("User ID not found in claims.");
 
         if (tokenResult.TryGetToken(out var token))
         {

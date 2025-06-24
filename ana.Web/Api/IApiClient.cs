@@ -18,4 +18,8 @@ public interface IApiClient
     Task DeleteAnniversaryAsync(string anniversaryId, string groupId);
 
     Task<AnaAnniv> UpdateAnniversaryAsync(AnaAnniv anniversary);
+
+    Task<AnaUser> GetUserSettingsAsync(string userId);
+
+    Task UpdateUserSettingsAsync(string userId, AnaUser userSettings);
 }
