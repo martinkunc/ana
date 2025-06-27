@@ -14,6 +14,14 @@ public class Config
     {
         public const string ConnectionStringCosmos = "ConnectionStrings:cosmos-db";
         public const string IssuerSigningKeySecretName = "issuer-signing-key";
+
+        public const string FromEmailSecretName = "from-email";
+        public const string SendGridKeySecretName = "sendgrid-key";
+        public const string TwilioAccountSidSecretName = "twilio-accountsid";
+        public const string TwilioAccountTokenSecretName = "twilio-accounttoken";
+        public const string WhatsAppFromSecretName = "whatsapp-from";
+        public const string WebAppClientSecretSecretName = "webapp-clientsecret";
+        public const string BlazorClientSecretSecretName = "blazor-clientsecret";
     }
 
     public static class Users
@@ -33,6 +41,15 @@ public class Config
         public const string KeyVaultUrl = "https://ana-kv.vault.azure.net/";
         public const string ConnectionStringSecretName = "ana-db-connectionstring";
         public const string IssuerSigningKeySecretName = "issuer-signing-key";
+
+        public const string FromEmailSecretName = "from-email";
+        public const string SendGridKeySecretName = "sendgrid-key";
+        public const string TwilioAccountSidSecretName = "twilio-accountsid";
+        public const string TwilioAccountTokenSecretName = "twilio-accounttoken";
+        public const string WhatsAppFromSecretName = "whatsapp-from";
+
+        public const string WebAppClientSecretSecretName = "webapp-clientsecret";
+        public const string BlazorClientSecretSecretName = "blazor-clientsecret";
 
     }
 

@@ -56,7 +56,7 @@ Then it can be started:
     /EnablePreviewFeatures
 ```
 
-The start takes some time and the explorer in browser should then open. Unfortunatelly once we set another generated key, the explorer still reports the build in key and cannot connect to itself.
+The start takes some time and the explorer in browser should then open. Unfortunately once we set another generated key, the explorer still reports the build in key and cannot connect to itself.
 
 We can use VSCode with CosmosDb extension which uses connection string to connect. VSCode has to be set to relax self signed certificate policy to trust them.
 Is VsCode settings under User there is `http.proxyStrictSSL` which should be unchecked and the studio would need to be restarted to take effect.
@@ -93,7 +93,7 @@ dotnet user-secrets set "DefaultAdminPassword" "123" -p ana.AppHost/ana.AppHost.
 cd ..
 ```
 
-## Add Issuser signing key to app's secrets
+## Add Issuer signing key to app's secrets
 We need to set the key used to validate Identity server's generate JWT token among clients and Api and for this we need to generate secret key. Issue these commands:
 ```
 ISSUER_SECRET_KEY=$(openssl rand -base64 32)
@@ -101,6 +101,15 @@ cd ana.AppHost
 dotnet user-secrets set "issuer-signing-key" "$ISSUER_SECRET_KEY"
 cd ..
 ```
+
+## Other secrets
+cd ana.AppHost
+FROM_EMAIL="email@domain.com"
+dotnet user-secrets set "from-email" "$FROM_EMAIL"
+
+FROM_EMAIL="email@domain.com"
+dotnet user-secrets set "from-email" "$FROM_EMAIL"
+
 
 ## Viewing the secrets
 Setup of .net user secrets for .net Aspire provisioning in dev mode

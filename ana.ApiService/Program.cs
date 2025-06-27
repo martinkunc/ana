@@ -62,7 +62,7 @@ builder.AddServiceDefaults();
 //         };
 //     });
 
-var issuerSigningKey = Convert.FromBase64String(await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.IssuerSigningKeySecretName, Config.KeyVault.IssuerSigningKeySecretName));
+//var issuerSigningKey = Convert.FromBase64String(await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.IssuerSigningKeySecretName, Config.KeyVault.IssuerSigningKeySecretName));
 
 var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
 var serviceName = "apiservice"; // Your service name as defined in Container Apps
@@ -128,7 +128,16 @@ foreach (var conf in builder.Configuration.AsEnumerable())
 }
 
 
-string connectionString = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.ConnectionStringCosmos, Config.KeyVault.ConnectionStringSecretName);
+string SecretConnectionString = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.ConnectionStringCosmos, Config.KeyVault.ConnectionStringSecretName);
+var SecretFromEmail = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.FromEmailSecretName, Config.KeyVault.FromEmailSecretName);
+var SecretSendGridKey = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.SendGridKeySecretName, Config.KeyVault.SendGridKeySecretName);
+var SecretTwilioAccountSID = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.TwilioAccountSidSecretName, Config.KeyVault.TwilioAccountSidSecretName);
+var SecretTwilioAccountToken = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.TwilioAccountTokenSecretName, Config.KeyVault.TwilioAccountTokenSecretName);
+var SecretWhatsAppFrom = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.WhatsAppFromSecretName, Config.KeyVault.WhatsAppFromSecretName);
+var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.WebAppClientSecretSecretName, Config.KeyVault.WebAppClientSecretSecretName);
+var SecretBlazorClientSecret = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.BlazorClientSecretSecretName, Config.KeyVault.BlazorClientSecretSecretName);
+
+
 
 // builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // {
@@ -170,7 +179,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     var accountEndpoint = "";
     var accountKey = "";
-    var parts = connectionString.Split(';');
+    var parts = SecretConnectionString.Split(';');
     foreach (var part in parts)
     {
         if (part.StartsWith("AccountEndpoint=", StringComparison.OrdinalIgnoreCase))
@@ -233,7 +242,7 @@ builder.Services.AddSingleton<CosmosClient>(provider =>
         ConnectionMode = ConnectionMode.Gateway,
         LimitToEndpoint = true
     };
-    return new CosmosClient(connectionString, clientOptions);
+    return new CosmosClient(SecretConnectionString, clientOptions);
 });
 
 
@@ -375,7 +384,7 @@ app.MapApiEndpoints();
 
 var builder1 = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-builder1.UseCosmos(connectionString, Config.Database.Name);
+builder1.UseCosmos(SecretConnectionString, Config.Database.Name);
 
 using (var dbContext = new ApplicationDbContext(builder1.Options))
 {
