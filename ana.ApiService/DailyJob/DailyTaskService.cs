@@ -13,6 +13,11 @@ using Twilio.Rest.Api.V2010.Account;
 public class DailyTaskService : BackgroundService
 {
     int hourToStart = 6; // 6 AM
+    private string _secretFromEmail;
+    private string _secretSendGridKey;
+    private string _secretTwilioAccountSID;
+    private string _secretTwilioAccountToken;
+    private string _secretWhatsAppFrom;
     private readonly ILogger<DailyTaskService> _logger;
     private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
 
@@ -57,6 +62,7 @@ public class DailyTaskService : BackgroundService
 
         var tomorrow = DateTime.Now.AddDays(1);
         var formattedDate = FormatDate(tomorrow);
+        var humanReadableDate = formattedDate;
         _logger.LogInformation($"Formatted date for stored procedure: {formattedDate}");
 
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
@@ -79,8 +85,6 @@ public class DailyTaskService : BackgroundService
                 groupNotifications[anniv.GroupId] = new List<string> { anniv.Name };
             }
         }
-
-
 
         _logger.LogInformation($"Anniversaries for tomorrow ({formattedDate}): {anniversariesTomorrow}");
         var distinctGroupIds = groupNotifications.Keys.ToList();
@@ -152,28 +156,62 @@ public class DailyTaskService : BackgroundService
             if (nu.PreferredNotification == NotificationType.Email.ToString() && !string.IsNullOrEmpty(nu.Email))
             {
                 var formattedMessages = "On " + formattedDate + " there are following anniversaries " + string.Join("<br/>", nu.Messages);
-                SendMail(nu.Email, formattedMessages);
+                await SendMail(nu.Email, humanReadableDate, formattedMessages);
             }
             else if (nu.PreferredNotification == NotificationType.WhatsApp.ToString() && !string.IsNullOrEmpty(nu.WhatsAppNumber))
             {
                 var formattedMessages = "On " + formattedDate + " there are following anniversaries " + string.Join("\n", nu.Messages);
-                SendWhatsAppMessage(nu.WhatsAppNumber, formattedMessages);
+                await SendWhatsAppMessage(nu.WhatsAppNumber, humanReadableDate, formattedMessages);
             }
         }
     }
 
-    private void SendWhatsAppMessage(string whatsAppNumber, string formattedMessages)
+    private async Task SendWhatsAppMessage(string whatsAppNumber, string humanReadableDate, string formattedMessages)
     {
         Console.WriteLine($"Sending WhatsApp message to {whatsAppNumber}: {formattedMessages}");
+        var subject = $"Upcoming anniversaries on {humanReadableDate}. ";
+        // Send using twilio
+        // in a trial model only sends to phones which joined my sandbox
+        TwilioClient.Init(_secretTwilioAccountSID, _secretTwilioAccountToken);
+
+        var message = await MessageResource.CreateAsync(
+            body:  subject + formattedMessages,
+            from: new Twilio.Types.PhoneNumber( _secretWhatsAppFrom),
+            // phone in format of "whatsapp:+420720123456"
+            to: new Twilio.Types.PhoneNumber("whatsapp:"+whatsAppNumber));
+
+        Console.WriteLine(message.Body);
+        Console.WriteLine(message.Status);
     }
 
-    private void SendMail(string email, string formattedMessages)
+    private async Task SendMail(string email, string humanReadableDate, string formattedMessages)
     {
         Console.WriteLine($"Sending Email message to {email}: {formattedMessages}");
+        var subject = $"Upcoming anniversaries on {humanReadableDate}";
+
+        var client = new SendGridClient(_secretSendGridKey);
+        var from = new EmailAddress(_secretFromEmail, "Anniversary Notification Application");
+        var to = new EmailAddress(email);
+        var msg = MailHelper.CreateSingleEmail(from, to, subject, formattedMessages, formattedMessages);
+        var response = await client.SendEmailAsync(msg);
+        Console.WriteLine($"Email to {email} sent with status code: {response.ToString} {JsonContent.Create(response)}");
     }
 
     private string FormatDate(DateTime inputDate)
     {
         return inputDate.Day + "/" + inputDate.Month;
+    }
+
+    internal void SetSecrets(string secretFromEmail,
+        string secretSendGridKey, 
+        string secretTwilioAccountSID,
+        string secretTwilioAccountToken,
+        string secretWhatsAppFrom)
+    {
+        _secretFromEmail = secretFromEmail;
+        _secretSendGridKey = secretSendGridKey;
+        _secretTwilioAccountSID = secretTwilioAccountSID;
+        _secretTwilioAccountToken = secretTwilioAccountToken;
+        _secretWhatsAppFrom = secretWhatsAppFrom;
     }
 }

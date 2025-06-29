@@ -1,7 +1,7 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-
+using ana.SharedNet;
 public static class SecretsExtensions
 {
 

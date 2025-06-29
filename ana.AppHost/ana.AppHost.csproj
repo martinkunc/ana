@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ana.SharedNet\ana.SharedNet.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\ana.ApiService\ana.ApiService.csproj" />
     <ProjectReference Include="..\ana.Web\ana.Web.csproj" />
   </ItemGroup>

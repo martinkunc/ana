@@ -9,7 +9,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-
+using ana.SharedNet;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,43 +26,6 @@ logger.LogError($"Starting application with Error: ");
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
 
-
-
-//builder.AddDefaultAuthentication();
-
-// builder.Services.AddAuthentication(options =>
-// {
-//     options.DefaultAuthenticateScheme = "Bearer";
-//     options.DefaultChallengeScheme = "Bearer";
-//     options.DefaultScheme = "Bearer";
-// })
-//     .AddJwtBearer("Bearer", options =>
-//     {
-//         options.Authority = builder.Configuration["Identity:Url"] ?? "https://localhost:5001"; // Set to your IdentityServer URL
-//         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-//         {
-//             ValidateAudience = false // Or set to true and configure Audience as needed
-//         };
-//         options.RequireHttpsMetadata = false; // Set to true in production
-//         options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
-//         {
-//             OnChallenge = context =>
-//             {
-//                 context.HandleResponse();
-//                 context.Response.StatusCode = 401;
-//                 context.Response.ContentType = "application/json";
-//                 return context.Response.WriteAsync("{\"error\": \"Unauthorized\"}");
-//             },
-//             OnForbidden = context =>
-//             {
-//                 context.Response.StatusCode = 403;
-//                 context.Response.ContentType = "application/json";
-//                 return context.Response.WriteAsync("{\"error\": \"Forbidden\"}");
-//             }
-//         };
-//     });
-
-//var issuerSigningKey = Convert.FromBase64String(await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.IssuerSigningKeySecretName, Config.KeyVault.IssuerSigningKeySecretName));
 
 var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
 var serviceName = "apiservice"; // Your service name as defined in Container Apps
@@ -89,9 +52,8 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuer = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            //IssuerSigningKey = new SymmetricSecurityKey(issuerSigningKey),
             ValidIssuer =  externalUrl,
-            ValidAudience = Config.IdentityServer.AudienceName
+            ValidAudience = IdentityServerConfig.IdentityServer.AudienceName
         };
         options.Events = new JwtBearerEvents
         {
@@ -128,52 +90,17 @@ foreach (var conf in builder.Configuration.AsEnumerable())
 }
 
 
-string SecretConnectionString = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.ConnectionStringCosmos, Config.KeyVault.ConnectionStringSecretName);
-var SecretFromEmail = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.FromEmailSecretName, Config.KeyVault.FromEmailSecretName);
-var SecretSendGridKey = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.SendGridKeySecretName, Config.KeyVault.SendGridKeySecretName);
-var SecretTwilioAccountSID = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.TwilioAccountSidSecretName, Config.KeyVault.TwilioAccountSidSecretName);
-var SecretTwilioAccountToken = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.TwilioAccountTokenSecretName, Config.KeyVault.TwilioAccountTokenSecretName);
-var SecretWhatsAppFrom = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.WhatsAppFromSecretName, Config.KeyVault.WhatsAppFromSecretName);
-var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.WebAppClientSecretSecretName, Config.KeyVault.WebAppClientSecretSecretName);
-var SecretBlazorClientSecret = await builder.GetFromSecretsOrVault(Config.SecretsKeyNames.BlazorClientSecretSecretName, Config.KeyVault.BlazorClientSecretSecretName);
+string SecretConnectionString = await builder.GetFromSecretsOrVault(Config.SecretNames.AnaDbConnectionString);
+var SecretFromEmail = await builder.GetFromSecretsOrVault(Config.SecretNames.FromEmail);
+var SecretSendGridKey = await builder.GetFromSecretsOrVault(Config.SecretNames.SendGridKey);
+var SecretTwilioAccountSID = await builder.GetFromSecretsOrVault(Config.SecretNames.TwilioAccountSid);
+var SecretTwilioAccountToken = await builder.GetFromSecretsOrVault(Config.SecretNames.TwilioAccountToken);
+var SecretWhatsAppFrom = await builder.GetFromSecretsOrVault(Config.SecretNames.WhatsAppFrom);
+var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.WebAppClientSecret);
+var SecretBlazorClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.BlazorClientSecret);
 
 
 
-// builder.Services.AddDbContext<ApplicationDbContext>(options =>
-// {
-//     var accountEndpoint = "";
-//     var accountKey = "";
-//     var parts = connectionString.Split(';');
-//     foreach (var part in parts)
-//     {
-//         if (part.StartsWith("AccountEndpoint=", StringComparison.OrdinalIgnoreCase))
-//             accountEndpoint = part.Substring("AccountEndpoint=".Length);
-//         else if (part.StartsWith("AccountKey=", StringComparison.OrdinalIgnoreCase))
-//             accountKey = part.Substring("AccountKey=".Length);
-//     }
-
-//     // Configure Cosmos options explicitly
-//     options.UseCosmos(
-//         accountEndpoint: accountEndpoint,
-//         accountKey: accountKey,
-//         databaseName: Config.Database.Name,
-//         cosmosOptionsAction: cosmosOptions =>
-//         {
-//             cosmosOptions.HttpClientFactory(() =>
-//             {
-//                 HttpMessageHandler httpMessageHandler = new HttpClientHandler()
-//                 {
-//                     ServerCertificateCustomValidationCallback = (req, cert, chain, errors) => true
-//                 };
-
-//                 return new HttpClient(httpMessageHandler);
-//             });
-//             cosmosOptions.LimitToEndpoint(true);
-//             cosmosOptions.ConnectionMode(Microsoft.Azure.Cosmos.ConnectionMode.Gateway);
-//         }
-//         );
-
-// });
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
@@ -213,19 +140,6 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 
 
 
-// builder.Services.AddDefaultIdentity<IdentityUser>(options =>
-// {
-//     // Configure identity options
-// })
-// .AddEntityFrameworkStores<ApplicationDbContext>();
-
-// builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-//         .AddEntityFrameworkStores<ApplicationDbContext>()
-//         .AddDefaultTokenProviders();
-
-
-
-
 builder.Services.AddSingleton<CosmosClient>(provider =>
 {
     CosmosClientOptions clientOptions = new()
@@ -250,7 +164,6 @@ builder.Services.AddCosmosIdentity<ApplicationDbContext, IdentityUser, IdentityR
 
       options => options.SignIn.RequireConfirmedAccount = false
     )
-    //.AddDefaultUI() // Use this if Identity Scaffolding is in use
     .AddDefaultTokenProviders();
 
 builder.Services.Configure<IdentityOptions>(options =>
@@ -289,10 +202,10 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
     options.KeyManagement.Enabled = false;
     options.IssuerUri = externalUrl;
 })
-.AddInMemoryIdentityResources(Config.GetResources())
-.AddInMemoryApiScopes(Config.GetApiScopes())
-.AddInMemoryApiResources(Config.GetApis())
-.AddInMemoryClients(Config.GetClients(builder.Configuration, externalUrl))
+.AddInMemoryIdentityResources(IdentityServerConfig.GetResources())
+.AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
+.AddInMemoryApiResources(IdentityServerConfig.GetApis())
+.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, externalUrl, SecretWebAppClientSecret))
 //.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
 .AddAspNetIdentity<IdentityUser>();
 
@@ -315,7 +228,7 @@ if (identityServerKeyPath != null)
 else
 {
     var client = new SecretClient(new Uri(Config.KeyVault.KeyVaultUrl), new DefaultAzureCredential());
-    KeyVaultSecret secret = await client.GetSecretAsync(Config.IdentityServer.CertificateName);
+    KeyVaultSecret secret = await client.GetSecretAsync(IdentityServerConfig.IdentityServer.CertificateName);
 
     // The secret value should be the Base64 encoded PFX
     var pfxBytes = Convert.FromBase64String(secret.Value);
@@ -345,7 +258,7 @@ builder.Services.AddSingleton<IApiClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var logger = sp.GetRequiredService<ILogger<ApiClient>>();
-    var webappClientSecret = "secret"; // TODO
+    var webappClientSecret = SecretWebAppClientSecret; // TODO
     return new ApiClient(httpClientFactory, externalUrl, webappClientSecret, logger);
 });
 
@@ -353,12 +266,9 @@ builder.Services.AddSingleton<IApiEndpoints, ApiEndpoints>();
 
 builder.Services.AddHostedService(sp => sp.GetRequiredService<DailyTaskService>());
 builder.Services.AddSingleton<DailyTaskService>();
+var taskService = builder.Services.BuildServiceProvider().GetRequiredService<DailyTaskService>();
+taskService.SetSecrets(SecretFromEmail, SecretSendGridKey, SecretTwilioAccountSID, SecretTwilioAccountToken, SecretWhatsAppFrom);
 
-if (builder.Environment.IsDevelopment())
-{
-    var ts = builder.Services.BuildServiceProvider().GetRequiredService<DailyTaskService>();
-    await ts.RunNowAsync();
-}
 
 var app = builder.Build();
 
@@ -393,6 +303,10 @@ using (var dbContext = new ApplicationDbContext(builder1.Options))
 
 }
 
+if (builder.Environment.IsDevelopment())
+{
+    await taskService.RunNowAsync();
+}
 
 app.Run();
 

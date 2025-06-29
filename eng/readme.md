@@ -8,6 +8,10 @@ Windows:
 winget install microsoft.azd
 ```
 
+Linux has instructions at https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd?tabs=winget-windows%2Cbrew-mac%2Cscript-linux&pivots=os-linux
+
+
+
 Create/update resources:
 ```
 azd up
@@ -24,17 +28,33 @@ Windows:
 winget install --exact --id Microsoft.AzureCLI
 ```
 
+Linux has instructions on https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?view=azure-cli-latest&pivots=apt
+
+To authenticate then:
+```
+az auth
+```
+
+
 Bicep:
 ```
 winget install -e --id Microsoft.Bicep
 ```
 
+Node:
+Use install instructions from: https://nodejs.org/en/download
+I tested it with v22.17.0.
+```
+cd ana.react
+npm ci
+```
+
 
 
 ## CosmosDb Emulator configuration
-This application requires Windows based Cosmos Db. The best way to run it on MacOs or linux is to use a Windows VM. Fortunatelly the emulator works on Windows ARM.
+This application requires Windows based Cosmos Db. The best way to run it on MacOs or Linux is to use a Windows VM. Fortunatelly the emulator works on Windows ARM.
 The limitation is because EF query with contains for Identity Role is not parsed correctly by Linux based Preview emulator.
-To connect in either user Port forwarding forwarding from local 58081 (or other) to 8081 in machine, or setup Bridged networking. I was using Parallels port forwarding.
+To connect in either user Port forwarding forwarding from local 58081 (or other) to 8081 in machine, or setup Bridged networking. I was using port forwarding with Paralels on MacOs and Port forwarding in VirtualBox on Linux.
 
 
 CosmosDb emulator in the Windows machine has to be set for remote access.
@@ -88,27 +108,45 @@ cd ..
 Default user is admin. His password shall be set locally by using this command, where instead of "123", specify the password.
 
 ```
-cd ana.AppHost
-dotnet user-secrets set "DefaultAdminPassword" "123" -p ana.AppHost/ana.AppHost.csproj
-cd ..
+dotnet user-secrets set "ana-default-admin-password" "123" -p ana.AppHost/ana.AppHost.csproj
+```
+
+If the default admin password should be empty, it needs to be set explicitly using:
+```
+dotnet user-secrets set "ana-default-admin-password-is-empty" "true" -p ana.AppHost/ana.AppHost.csproj
 ```
 
 ## Add Issuer signing key to app's secrets
-We need to set the key used to validate Identity server's generate JWT token among clients and Api and for this we need to generate secret key. Issue these commands:
+We need to generate secrets for Identity server clients blazor and webapp. Issue these commands:
 ```
-ISSUER_SECRET_KEY=$(openssl rand -base64 32)
-cd ana.AppHost
-dotnet user-secrets set "issuer-signing-key" "$ISSUER_SECRET_KEY"
-cd ..
+WEBAPP_SECRET_KEY=$(openssl rand -base64 32)
+dotnet user-secrets set "ana-webapp-clientsecret" "$WEBAPP_SECRET_KEY" -p ana.AppHost/ana.AppHost.csproj
+
+BLAZOR_SECRET_KEY=$(openssl rand -base64 32)
+dotnet user-secrets set "ana-blazor-clientsecret" "$BLAZOR_SECRET_KEY" -p ana.AppHost/ana.AppHost.csproj
 ```
 
-## Other secrets
-cd ana.AppHost
+## SendGrid secrets
+```
 FROM_EMAIL="email@domain.com"
-dotnet user-secrets set "from-email" "$FROM_EMAIL"
+dotnet user-secrets set "ana-from-email" "$FROM_EMAIL" -p ana.AppHost/ana.AppHost.csproj
 
-FROM_EMAIL="email@domain.com"
-dotnet user-secrets set "from-email" "$FROM_EMAIL"
+SENDGRID_KEY="SG.WY-xxxxx"
+dotnet user-secrets set "ana-sendgrid-key" "$SENDGRID_KEY" -p ana.AppHost/ana.AppHost.csproj
+```
+
+## Twilio WhatsApp secrets
+```
+TWILIO_ACCOUNTSID="AC-xxxxx"
+dotnet user-secrets set "ana-twilio-accountsid" "$TWILIO_ACCOUNTSID" -p ana.AppHost/ana.AppHost.csproj
+
+TWILIO_ACCOUNTTOKEN="ccxxxxxx"
+dotnet user-secrets set "ana-twilio-accounttoken" "$TWILIO_ACCOUNTTOKEN" -p ana.AppHost/ana.AppHost.csproj
+
+WHATSAPP_FROM="whatsapp:+xxx"
+dotnet user-secrets set "ana-whatsapp-from" "$WHATSAPP_FROM" -p ana.AppHost/ana.AppHost.csproj
+
+```
 
 
 ## Viewing the secrets
@@ -122,3 +160,30 @@ On Linux and Mac:
 ```
 code ~/.microsoft/usersecrets/03fad75d-f8ce-4083-8bf8-cb8ef785cf37/secrets.json
 ```
+
+## Making the self signed development certificate trusted for local web development
+Execute:
+```
+dotnet dev-certs https --trust
+```
+
+If using CHrome, then import the certificate to Chrome using:
+1. Export the .NET dev certificate:
+```
+dotnet dev-certs https --export-path ~/aspnet-dev-cert.crt --format PEM
+```
+2. Open Chrome settings:
+Go to Settings → Privacy and security → Security → Manage certificates → Authorities.
+
+3. Import the certificate:
+
+Click “Import” and select ~/aspnet-dev-cert.crt.
+Trust it for identifying websites.
+
+## Received email notifications
+The email notifications are for development purposes send from an gmail account, which by default
+is mostly classified as a spam. Please check your spam folder an if you don't see a notification you should.
+
+## Whatsapp sandbox
+My Twilio subscription is still being verified, so, it can only send messages to verified numbers, which joined a sandbox.
+

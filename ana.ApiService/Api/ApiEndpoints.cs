@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using ana.SharedNet;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -235,7 +236,7 @@ public class ApiEndpoints : IApiEndpoints
                 Id = userId,
                 DisplayName = string.Empty,
                 SelectedGroupId = string.Empty,
-                PreferredNotification = Config.PreferredNotifications.None,
+                PreferredNotification = PreferredNotifications.None,
                 WhatsAppNumber = string.Empty
             };
         }

@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ana.SharedNet\ana.SharedNet.csproj" />
     <ProjectReference Include="..\ana.ServiceDefaults\ana.ServiceDefaults.csproj" />
     <ProjectReference Include="..\ana.Web\ana.Web.csproj" />
   </ItemGroup>

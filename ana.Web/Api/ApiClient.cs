@@ -6,7 +6,7 @@ using System.Security.Claims;
 using System.Security.Principal;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
-
+using ana.SharedNet;
 public class ApiClient : IApiClient
 {
     //private readonly string _baseAddress;

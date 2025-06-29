@@ -3,55 +3,9 @@ using Duende.IdentityServer.Models;
 using Microsoft.Azure.Cosmos;
 using OpenTelemetry.Context;
 
-public class Config
+public class IdentityServerConfig
 {
-    public static class Database
-    {
-        public const string Name = "ana-db";
-    }
 
-    public static class SecretsKeyNames
-    {
-        public const string ConnectionStringCosmos = "ConnectionStrings:cosmos-db";
-        public const string IssuerSigningKeySecretName = "issuer-signing-key";
-
-        public const string FromEmailSecretName = "from-email";
-        public const string SendGridKeySecretName = "sendgrid-key";
-        public const string TwilioAccountSidSecretName = "twilio-accountsid";
-        public const string TwilioAccountTokenSecretName = "twilio-accounttoken";
-        public const string WhatsAppFromSecretName = "whatsapp-from";
-        public const string WebAppClientSecretSecretName = "webapp-clientsecret";
-        public const string BlazorClientSecretSecretName = "blazor-clientsecret";
-    }
-
-    public static class Users
-    {
-        public const string DefaultAdminPasswordKeyVaultSecretName = "default-admin-password";
-    }
-
-    public static class PreferredNotifications
-    {
-        public const string None = "None";
-        public const string Email = "Email";
-        public const string WhatsApp = "WhatsApp";
-    }
-
-    public static class KeyVault
-    {
-        public const string KeyVaultUrl = "https://ana-kv.vault.azure.net/";
-        public const string ConnectionStringSecretName = "ana-db-connectionstring";
-        public const string IssuerSigningKeySecretName = "issuer-signing-key";
-
-        public const string FromEmailSecretName = "from-email";
-        public const string SendGridKeySecretName = "sendgrid-key";
-        public const string TwilioAccountSidSecretName = "twilio-accountsid";
-        public const string TwilioAccountTokenSecretName = "twilio-accounttoken";
-        public const string WhatsAppFromSecretName = "whatsapp-from";
-
-        public const string WebAppClientSecretSecretName = "webapp-clientsecret";
-        public const string BlazorClientSecretSecretName = "blazor-clientsecret";
-
-    }
 
     public static class IdentityServer
     {
@@ -115,14 +69,12 @@ public class Config
             };
     }
 
-    public static class Roles
-    {
-        public const string Admin = "Admin";
-        public const string User = "User";
-    }
+
+
+
 
     // client want to access resources (aka scopes)
-    public static IEnumerable<Client> GetClients(IConfiguration configuration, string externalUrl)
+    public static IEnumerable<Client> GetClients(IConfiguration configuration, string externalUrl, string webAppClientSecret)
     {
         return new List<Client>
             {
@@ -151,9 +103,9 @@ public class Config
                     ClientName = "WebApp Client",
                     ClientSecrets = new List<Secret>
                     {
-                        new Secret("secret".Sha256()) // change
+                        new Secret(webAppClientSecret.Sha256())
                     },
-                    ClientUri = $"{configuration["WebAppClient"]}",                             // public uri of the client
+                    ClientUri = $"{configuration["WebAppClient"]}", // public uri of the client
                     AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
                     AllowAccessTokensViaBrowser = false,
                     RequireConsent = false,

@@ -160,9 +160,9 @@ public class ApiClient : IApiClient
         var tokenResponse = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
         {
             Address = disco.TokenEndpoint,
-            ClientId = Config.IdentityServer.ClientId.WebApp,
+            ClientId = IdentityServerConfig.IdentityServer.ClientId.WebApp,
             ClientSecret = _webAppClientSecret,
-            Scope = Config.Scopes.anaApi
+            Scope = IdentityServerConfig.Scopes.anaApi
         });
         if (tokenResponse.IsError) throw new Exception(tokenResponse.Error);
         var token = tokenResponse.AccessToken;

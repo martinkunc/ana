@@ -19,7 +19,7 @@ public partial class Home : LayoutComponentBase
     
     public List<AnaAnniv> Anniversaries { get; set; }
     public string AnniversariesLoadingStatus { get; set; }
-    protected newAnniversary newAnniversary { get; set; } = new newAnniversary();
+    protected NewAnniversary newAnniversary { get; set; } = new NewAnniversary();
     protected EditContext editContext { get; set; }
     public string AddAnniversarySummary { get; set; } = string.Empty;
 
@@ -82,7 +82,7 @@ public partial class Home : LayoutComponentBase
     private async Task RefreshAnniversaries(string groupId)
     {
         // await apiClient.CreateAnniversaryAsync(group.Id, na);
-        newAnniversary = new newAnniversary{ GroupId = groupId };
+        newAnniversary = new NewAnniversary{ GroupId = groupId };
         editContext = new EditContext(newAnniversary);
 
         AnniversariesLoadingStatus = "Loading anniversaries...";
@@ -101,7 +101,7 @@ public partial class Home : LayoutComponentBase
     {
         Console.WriteLine($"Editing anniversary: {name} on {date}");
 
-        newAnniversary = new newAnniversary
+        newAnniversary = new NewAnniversary
         {
             Id = id,
             GroupId = groupId,

@@ -3,7 +3,7 @@ using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Azure.Cosmos;
-using Microsoft.VisualBasic;
+using ana.SharedNet;
 
 public static class SeedDatabase
 {
@@ -76,16 +76,16 @@ public static class SeedDatabase
 
     private static async Task<string> GetDefaultAdminPassword(IConfiguration configuration)
     {
-        var defaultAdminPassword = configuration["DefaultAdminPassword"];
-        var defaultAdminPasswordIsEmpty = configuration["DefaultAdminPasswordIsEmpty"];
-        if (defaultAdminPasswordIsEmpty == true.ToString())
+        var defaultAdminPassword = configuration[Config.SecretNames.DefaultAdminPassword];
+        var defaultAdminPasswordIsEmpty = configuration[Config.SecretNames.DefaultAdminPasswordIsEmpty ];
+        if (defaultAdminPasswordIsEmpty == "true")
         {
             defaultAdminPassword = "";
         }
         if (defaultAdminPassword == null)
         {
             var client = new SecretClient(new Uri(Config.KeyVault.KeyVaultUrl), new DefaultAzureCredential());
-            KeyVaultSecret secret = await client.GetSecretAsync(Config.Users.DefaultAdminPasswordKeyVaultSecretName);
+            KeyVaultSecret secret = await client.GetSecretAsync(Config.SecretNames.DefaultAdminPassword);
             defaultAdminPassword = secret.Value;
         }
         if (defaultAdminPassword == null)
@@ -228,47 +228,5 @@ public static class SeedDatabase
             }
         }
 
-        // if (await context.Set<AnaGroupToUser>().FirstOrDefaultAsync() == null)
-        // {
-        //     // var adminRole = await context.AnaGroups.FirstOrDefaultAsync(r => r.Name == "Admin");
-        //     // var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
-        //     var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin");
-        //     var adminsGroup = await context.AnaGroups.FirstOrDefaultAsync(u => u. == "admin");
-        //     if (adminUser != null)
-        //     {
-        //         var adminsGroup = new AnaGroup
-        //         {
-        //             Id = Guid.NewGuid().ToString(),
-        //             Name = "Admin's group",
-        //         };
-        //         context.AnaGroups.Add(adminsGroup);
-
-        //         context.AnaGroupToUsers.Add(new AnaGroupToUser
-        //         {
-        //             UserId = adminUser.Id,
-        //             GroupId = adminsGroup.Id
-        //         });
-        //     }
-        //     await context.SaveChangesAsync();
-
-        // }
-
     }
-
-
-
-    // // Seed data if necessary
-    // if (!context.WeatherForecasts.Any())
-    // {
-    //     context.WeatherForecasts.AddRange(
-    //         Enumerable.Range(1, 5).Select(index => new WeatherForecast
-    //         {
-    //             Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-    //             TemperatureC = Random.Shared.Next(-20, 55),
-    //             Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-    //         })
-    //     );
-    //     context.SaveChanges();
-    // }
-    //     }
 }

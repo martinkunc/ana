@@ -4,7 +4,8 @@ using Azure.Provisioning.CosmosDB;
 using Microsoft.Extensions.Hosting;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
-
+using Microsoft.Extensions.Configuration;
+using ana.SharedNet;
 
 var builder = DistributedApplication.CreateBuilder(args);
 //IResourceBuilder<AzureCosmosDBResource> cosmosResource = null;
@@ -17,16 +18,22 @@ if (defaultAdminPassword != null && defaultAdminPassword == "")
 {
     defaultAdminPasswordIsEmpty = true.ToString();
 }
-var connString = builder.Configuration["ConnectionStrings:cosmos-db"];
 
-Console.WriteLine($"MY: Connection string: { connString}");
+var connString = await builder.GetFromSecretsOrVault(Config.SecretNames.AnaDbConnectionString);
 
-if (connString != null)
+Console.WriteLine($"MY: Connection string: {connString}");
+
+var isLocalCosmosDb = EnvExtensions.IsCosmosDbLocal(connString);
+IResourceBuilder<IResourceWithConnectionString> cosmosResourceBuilder = null;
+if (isLocalCosmosDb)
 {
-    Console.WriteLine("Using Cosmos from connection string: ");
+    Console.WriteLine("Using Local Cosmos from connection string: ");
+    // First, add the connection string to the Configuration
+    builder.Configuration["ConnectionStrings:cosmos-db"] = connString;
+    
     // In development, we can use a local Cosmos DB emulator
-    localCosmosResource = builder.AddConnectionString("cosmos-db");
-
+    localCosmosResource = builder.AddConnectionString("cosmos-db");  // Let it pull from Configuration
+    cosmosResourceBuilder = localCosmosResource;
 }
 else
 {
@@ -50,32 +57,30 @@ else
             Name = "EnableServerless"
         }));
 
-        // ? location
-        //account.AssignProperty(x => x.DatabaseAccountOfferType, $"'{CosmosDBAccountOfferType.Standard}'");
-        //account.AssignProperty(x => x.Locations[0].LocationName, $"'{AzureLocation.UKWest.Name}'");
     });
-    //cosmosDb = cr.AddCosmosDatabase("ana-db");
-    var vaultUrl = "https://ana-kv.vault.azure.net/";
-    var connectionStringSecret = "ana-db-connectionstring";
-    var client = new SecretClient(new Uri(vaultUrl), new DefaultAzureCredential());
-    KeyVaultSecret secret = await client.GetSecretAsync(connectionStringSecret);
-    connString = secret.Value;
+    cosmosResourceBuilder = cosmosDb;
 }
 
 Console.WriteLine($"MY: Connection string: { connString}");
 
-var cosmosResource = localCosmosResource ?? cosmosDb;
-if (cosmosResource == null)
+
+if (cosmosResourceBuilder == null)
 {
     throw new InvalidOperationException("Cosmos DB resource is not configured. Please check your connection string or Azure Cosmos DB setup.");
 }
 
 var apiServiceBuilder = builder.AddProject<Projects.ana_ApiService>("apiservice")
-    .WithReference(cosmosResource)
-    .WithEnvironment("DefaultAdminPassword", defaultAdminPassword)
-    .WithEnvironment("DefaultAdminPasswordIsEmpty", defaultAdminPasswordIsEmpty)
-    .WithEnvironment("issuer-signing-key", builder.Configuration["issuer-signing-key"])
-    .WaitFor(cosmosResource);
+    .WithReference(cosmosResourceBuilder)
+    .WaitFor(cosmosResourceBuilder);
+
+var variables = builder.Configuration.AsEnumerable()
+        .Where(kvp => kvp.Key.StartsWith("ana-"))
+        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+foreach (var variable in variables)
+{
+    Console.WriteLine($"MY: Variable: {variable.Key} = {variable.Value}");
+    apiServiceBuilder.WithEnvironment(variable.Key, variable.Value);
+}
 
 var apiService = apiServiceBuilder.WithExternalHttpEndpoints();
 
@@ -105,30 +110,6 @@ Console.WriteLine($"MY: Environment: {builder.Environment.EnvironmentName}");
 
 
 
-//var cosmosDbConnection = builder.ExecutionContext.IsPublishMode ?
-//	builder.AddAzureCosmosDB("cosmosDb", (cosmos, construct, account, databases) =>
-//	{
-//		account.AssignProperty(x => x.ConsistencyPolicy.DefaultConsistencyLevel, $"'Session'");
-//		account.AssignProperty(x => x.DatabaseAccountOfferType, $"'{CosmosDBAccountOfferType.Standard}'");
-//		account.AssignProperty(x => x.Locations[0].LocationName, $"'{AzureLocation.UKWest.Name}'");
-
-//		var capabilities = account.Properties.Capabilities ?? [];
-//		capabilities.Add(new CosmosDBAccountCapability()
-//		{
-//			Name = "EnableServerless"
-//		});
-
-//		var capabilitiesString = string.Join(",", capabilities.Select(c => $"{{name: '{c.Name}'}}"));
-
-//		account.AssignProperty(x => x.Capabilities, $"[{capabilitiesString}]");
-//	})
-
-//cosmosResource.AddCosmosDatabase("anaDb");
-
-// var cosmos = builder.AddConnectionString("cosmos-db");
-
-// builder.AddConnectionString("cosmosDb");
-//#pragma warning restore AZPROVISION001
 
 
 builder.Build().Run();

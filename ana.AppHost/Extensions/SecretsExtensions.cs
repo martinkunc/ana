@@ -1,12 +1,13 @@
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Microsoft.Extensions.Hosting;
 using ana.SharedNet;
 
 public static class SecretsExtensions
 {
 
     public static async Task<string> GetFromSecretsOrVault(
-        this WebApplicationBuilder builder, string secretKeyName)
+        this IDistributedApplicationBuilder builder, string secretKeyName)
     {
         var secretValue = builder.Configuration[secretKeyName];
 
@@ -24,7 +25,7 @@ public static class SecretsExtensions
 
         if (string.IsNullOrEmpty(secretValue))
         {
-            throw new InvalidOperationException("Cosmos DB connection string is not configured.");
+            throw new InvalidOperationException($"{secretKeyName} is not configured.");
         }
 
         return secretValue;
