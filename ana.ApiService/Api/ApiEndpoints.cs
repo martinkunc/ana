@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using ana.SharedNet;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -34,10 +35,17 @@ public class ApiEndpoints : IApiEndpoints
 
         _applicationDbContext.AnaGroups.Add(group);
 
+        var adminRole = await _applicationDbContext.AnaRoles
+                .Where(r => r.Name == AnaRoleNames.Admin)
+                .FirstOrDefaultAsync();
+        if (adminRole == null)
+            return null;
+
         _applicationDbContext.AnaGroupToUsers.Add(new AnaGroupToUser
         {
             UserId = request.userId,
-            GroupId = group.Id
+            GroupId = group.Id,
+            RoleId = adminRole.Id
         });
         await _applicationDbContext.SaveChangesAsync();
 
@@ -65,11 +73,20 @@ public class ApiEndpoints : IApiEndpoints
         return new GetUserGroupsResponse { UserId = userId, Groups = groups };
     }
 
+    public async Task CreateUser(AnaUser user)
+    {
+        _logger.LogInformation("Creating user {userId}", user.Id);
+
+        var _applicationDbContext = _dbContextFactory.CreateDbContext();
+        var existingUser = await _applicationDbContext.AnaUsers
+            .Where(agu => agu.Id == user.Id)
+            .FirstOrDefaultAsync();
+        if (existingUser != null) throw new InvalidOperationException("The user already exists.");
+        _applicationDbContext.AnaUsers.Add(user);
+    }
     public async Task SelectGroup(string userId, string groupId)
     {
         _logger.LogInformation("Selecting group {groupId} for user {userId}", groupId, userId);
-
-        //var userId = user.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("User ID not found in claims.");
 
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
 
@@ -78,22 +95,16 @@ public class ApiEndpoints : IApiEndpoints
             .FirstOrDefaultAsync();
         if (userGroupToUsers == null)
         {
-            _applicationDbContext.AnaUsers.Add(new AnaUser
-            {
-                Id = userId,
-                SelectedGroupId = groupId
-            });
+            throw new InvalidOperationException("The user doesn't exist.");
         }
-        else
-        {
-            userGroupToUsers.SelectedGroupId = groupId;
-            _applicationDbContext.AnaUsers.Update(userGroupToUsers);
-        }
+
+        userGroupToUsers.SelectedGroupId = groupId;
+        _applicationDbContext.AnaUsers.Update(userGroupToUsers);
         await _applicationDbContext.SaveChangesAsync();
         _logger.LogInformation("Group {groupId} selected successfully for user {userId}", groupId, userId);
     }
 
-    public async Task<AnaGroup> GetSelectedGroup(string userId)
+    public async Task<GetSelectedGroupResponse?> GetSelectedGroup(string userId)
     {
         _logger.LogInformation("Getting selected group for user {userId}", userId);
 
@@ -105,27 +116,57 @@ public class ApiEndpoints : IApiEndpoints
 
         if (user == null || string.IsNullOrEmpty(user.SelectedGroupId))
         {
-            var userGroups = await _applicationDbContext.AnaGroupToUsers
+            var userGroup = await _applicationDbContext.AnaGroupToUsers
                 .Where(u => u.UserId == userId)
                 .FirstOrDefaultAsync();
 
-            if (userGroups == null)
+            if (userGroup == null)
             {
                 return null;
             }
 
-            var firstGroupId = userGroups.GroupId;
+            var firstGroupId = userGroup.GroupId;
+            var firstGroupRid = userGroup.RoleId;
 
             var firstGroup = await _applicationDbContext.AnaGroups
                 .Where(u => u.Id == firstGroupId)
                 .FirstOrDefaultAsync();
-            return firstGroup;
+            if (firstGroup == null)
+                return null;
+
+            var role = await _applicationDbContext.AnaRoles
+                .Where(r => r.Id == firstGroupRid)
+                .FirstOrDefaultAsync();
+            if (role == null)
+                return null;
+
+            return new GetSelectedGroupResponse { AnaGroup = firstGroup, UserRole =role.Name };
         }
 
         var group = await _applicationDbContext.AnaGroups
             .Where(g => g.Id == user.SelectedGroupId)
             .FirstOrDefaultAsync();
-        return group;
+        if (group ==null)
+        {
+            _logger.LogWarning("Group with ID {groupId} not found for user {userId}", user.SelectedGroupId, userId);
+            return null;
+        }
+        var selectedUserGroup = await _applicationDbContext.AnaGroupToUsers
+                .Where(u => u.UserId == userId && u.GroupId == user.SelectedGroupId)
+                .FirstOrDefaultAsync();
+        var selectedGroupRid = selectedUserGroup?.RoleId;
+        if (selectedGroupRid == null)
+        {
+            return null;
+        }
+
+        var selectedRole = await _applicationDbContext.AnaRoles
+            .Where(r => r.Id == selectedGroupRid)
+            .FirstOrDefaultAsync();
+        if (selectedRole == null)
+            return null;
+
+        return new GetSelectedGroupResponse { AnaGroup = group, UserRole = selectedRole.Name };
     }
 
     public async Task<List<AnaAnniv>> GetAnniversaries(string groupId)
@@ -140,6 +181,127 @@ public class ApiEndpoints : IApiEndpoints
             .ToListAsync();
 
         return anniversaries;
+    }
+
+    public async Task<List<AnaGroupMember>> GetGroupMembers(string groupId)
+    {
+        _logger.LogInformation("Getting members for group {groupId}", groupId);
+
+        var _applicationDbContext = _dbContextFactory.CreateDbContext();
+
+        var groupToUsers = await _applicationDbContext.AnaGroupToUsers
+            .Where(agu => agu.GroupId == groupId)
+            .ToListAsync();
+        
+        if (groupToUsers == null || !groupToUsers.Any())
+            return new List<AnaGroupMember>();
+
+        var groupMembers = await _applicationDbContext.AnaUsers
+            .Where(agu => groupToUsers.Select(g => g.UserId).Contains(agu.Id))
+            .ToListAsync();
+        
+        var roleIdMap = await _applicationDbContext.AnaRoles
+            .ToDictionaryAsync(r => r.Id, r => r.Name);
+
+        var mappedgroupMembers = groupMembers.Select(u => new AnaGroupMember
+        {
+            UserId = u.Id,
+            GroupId = groupId,
+            Role = roleIdMap[groupToUsers.FirstOrDefault(gtu => gtu.UserId == u.Id && gtu.GroupId == groupId)?.RoleId ?? string.Empty],
+            DisplayName = u.DisplayName,
+        }).ToList();
+
+        if (groupMembers == null || !groupMembers.Any())
+            return new List<AnaGroupMember>();
+
+        return mappedgroupMembers;
+    }
+
+    public async Task CreateGroupMember(string groupId, AnaGroupMember newMember)
+    { 
+        _logger.LogInformation("Create member for group {groupId}", groupId);
+
+        var _applicationDbContext = _dbContextFactory.CreateDbContext();
+
+        var existingUser = await _applicationDbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == newMember.Email);
+        
+        if (existingUser == null)
+            throw new InvalidOperationException($"User with email {newMember.Email} does not exist.");
+
+        var newUserRoleId = await _applicationDbContext.AnaRoles
+            .Where(r => r.Name == newMember.Role)
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync();
+
+        var newGroupToUser = new AnaGroupToUser
+        {
+            UserId = existingUser.Id,
+            GroupId = groupId,
+            RoleId = newUserRoleId
+        };
+
+        var existingGtoupToUser = await _applicationDbContext.AnaGroupToUsers
+            .FirstOrDefaultAsync(agu => agu.UserId == existingUser.Id && agu.GroupId == groupId);
+
+        if (existingGtoupToUser != null)
+        {
+            _logger.LogWarning("User {userId} is already a member of group {groupId}", existingUser.Id, groupId);
+            throw new InvalidOperationException($"User {existingUser.Email} is already a member of group {groupId}");
+        }
+
+        _applicationDbContext.AnaGroupToUsers.Add(newGroupToUser);
+        await _applicationDbContext.SaveChangesAsync();
+    }
+
+    public async Task ChangeGroupMemberRole(string groupId, string userId, ChangeGroupMemberRoleRequest req)
+    {
+        _logger.LogInformation("Create member for group {groupId}", groupId);
+
+        var _applicationDbContext = _dbContextFactory.CreateDbContext();
+
+        var newRoleId = await _applicationDbContext.AnaRoles
+            .Where(r => r.Name == req.RoleName)
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync();
+
+        var groupToUser = await _applicationDbContext.AnaGroupToUsers
+            .FirstOrDefaultAsync(agu => agu.UserId == userId && agu.GroupId == groupId);
+
+        if (groupToUser == null)
+        {
+            groupToUser = new AnaGroupToUser
+            {
+                UserId = userId,
+                GroupId = groupId,
+                RoleId = newRoleId
+            };
+            _applicationDbContext.AnaGroupToUsers.Add(groupToUser);
+        } else
+        {
+            groupToUser.RoleId = newRoleId;
+            _applicationDbContext.AnaGroupToUsers.Update(groupToUser);
+        }
+        await _applicationDbContext.SaveChangesAsync();
+    }
+
+    public async Task DeleteGroupMember(string groupId, string userId)
+    {
+        _logger.LogInformation("Create member for group {groupId}", groupId);
+
+        var _applicationDbContext = _dbContextFactory.CreateDbContext();
+
+        var groupToUser = await _applicationDbContext.AnaGroupToUsers
+            .FirstOrDefaultAsync(agu => agu.UserId == userId && agu.GroupId == groupId);
+
+        if (groupToUser == null)
+        {
+            _logger.LogWarning("User {userId} isn't present in group {groupId}",userId, groupId);
+            throw new InvalidOperationException($"User {userId} is not present in group {groupId}");
+        }
+
+        _applicationDbContext.AnaGroupToUsers.Remove(groupToUser);
+        await _applicationDbContext.SaveChangesAsync();
     }
 
     public async Task<CreateAnniversaryResponse> CreateAnniversary(string groupId, AnaAnniv anniversary)
@@ -266,17 +428,69 @@ public class ApiEndpoints : IApiEndpoints
 
         if (existingUserSettings == null)
         {
-            _applicationDbContext.AnaUsers.Add(userSettings);
+            throw new InvalidOperationException("The user already exists");
         }
-        else
-        {
-            existingUserSettings.DisplayName = userSettings.DisplayName;
-            existingUserSettings.SelectedGroupId = userSettings.SelectedGroupId;
-            existingUserSettings.PreferredNotification = userSettings.PreferredNotification;
-            existingUserSettings.WhatsAppNumber = userSettings.WhatsAppNumber;
 
-            _applicationDbContext.AnaUsers.Update(existingUserSettings);
+        existingUserSettings.DisplayName = userSettings.DisplayName;
+        existingUserSettings.SelectedGroupId = userSettings.SelectedGroupId;
+        existingUserSettings.PreferredNotification = userSettings.PreferredNotification;
+        existingUserSettings.WhatsAppNumber = userSettings.WhatsAppNumber;
+
+        _applicationDbContext.AnaUsers.Update(existingUserSettings);
+        await _applicationDbContext.SaveChangesAsync();
+    }
+
+    public async Task DeleteUser(string userId)
+    {
+        _logger.LogInformation("Deleting user {userId}", userId);
+
+        var _applicationDbContext = _dbContextFactory.CreateDbContext();
+        
+        var user = await _applicationDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            _logger.LogError("User with ID {userId} not found", userId);
+            throw new InvalidOperationException($"User with ID {userId} not found");
         }
+        _applicationDbContext.Users.Remove(user);
+        var anaUser = await _applicationDbContext.AnaUsers.FirstOrDefaultAsync(u => u.Id == userId);
+        if (anaUser == null)
+        {
+            _logger.LogError("AnaUser with ID {userId} not found", userId);
+            throw new InvalidOperationException($"AnaUser with ID {userId} not found");
+        }
+        _applicationDbContext.AnaUsers.Remove(anaUser);
+
+        // Will remove groups where I am last user. For removed groups, remove their anniversaries first.
+        var groupToUsers = await _applicationDbContext.AnaGroupToUsers
+            .Where(gu => gu.UserId == anaUser.Id).ToListAsync();
+        var groupsToUsersRemove = new List<AnaGroupToUser>();
+        foreach (var gtu in groupToUsers) {
+            var otherGroupMembersCount = await _applicationDbContext.AnaGroupToUsers
+            .Where(gu => gu.GroupId == gtu.GroupId && gu.UserId != anaUser.Id)
+            .CountAsync();
+            if (otherGroupMembersCount == 0) {
+                groupsToUsersRemove.Add(gtu);
+            }
+        }
+        foreach (var gtur in groupsToUsersRemove) {
+            var atr = await _applicationDbContext.AnaAnnivs
+                .Where(an => an.GroupId == gtur.GroupId)
+                .ToListAsync();
+            _logger.LogInformation($"Removing Anniversaries for cancelled user [{string.Join(",", atr.Select(a => a.Id))}]");
+            _applicationDbContext.AnaAnnivs.RemoveRange(atr.ToArray());
+        }
+        _logger.LogInformation($"Removing AnaGroupToUsers for cancelled user [{string.Join(",", groupsToUsersRemove.Select(a => a.GroupId + "-"+ a.UserId))}]");
+        _applicationDbContext.AnaGroupToUsers.RemoveRange(groupsToUsersRemove.ToArray());
+
+        var groupsToRemoveList = groupsToUsersRemove.Select(gtu => gtu.GroupId).Distinct();
+        _logger.LogInformation($"Removing AnaGroups for cancelled user [{string.Join(",", groupsToRemoveList)}]");
+        var groupsToRemove = await _applicationDbContext.AnaGroups
+                .Where(g => groupsToRemoveList.Contains(g.Id))
+                .ToListAsync();
+
+        _applicationDbContext.AnaGroups.RemoveRange(groupsToRemove.ToArray());
+        
         await _applicationDbContext.SaveChangesAsync();
     }
     

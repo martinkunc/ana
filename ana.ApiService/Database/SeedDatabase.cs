@@ -4,6 +4,7 @@ using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Azure.Cosmos;
 using ana.SharedNet;
+using ana.Web.Pages;
 
 public static class SeedDatabase
 {
@@ -19,19 +20,12 @@ public static class SeedDatabase
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         string? defaultAdminPassword = await GetDefaultAdminPassword(configuration);
 
-        //await cosmosClient.CreateDatabaseIfNotExistsAsync("IdentityDatabase");
-
-        //await context.Database.EnsureCreatedAsync();
         Console.WriteLine("Creating Cosmos DB database and containers...");
 
         await cosmosClient.CreateDatabaseIfNotExistsAsync(Config.Database.Name);
 
         var database = cosmosClient
             .GetDatabase(Config.Database.Name);
-
-        //await context.Database.EnsureCreatedAsync();
-
-        //var container = await database.CreateContainerIfNotExistsAsync("Identity","/id");
 
 
         var containerNames = new[]
@@ -54,11 +48,6 @@ public static class SeedDatabase
                 partitionKeyPath: "/" + key
             );
 
-
-
-            // Set the partition key kind to Hash
-            //containerProperties.PartitionKeyDefinition.Kind = PartitionKeyKind.Hash;
-            //containerProperties.PartitionKeyDefinitionVersion = Cosmos.PartitionKeyDefinitionVersion.V1;
             bool exists = await DoesContainerExist(database, containerName);
 
             if (exists)
@@ -69,9 +58,6 @@ public static class SeedDatabase
         }
 
         await PopulateContainer(context, passwordHasher, defaultAdminPassword);
-
-        //await context.Database.EnsureCreatedAsync();
-
     }
 
     private static async Task<string> GetDefaultAdminPassword(IConfiguration configuration)
@@ -133,6 +119,19 @@ public static class SeedDatabase
                });
             await context.SaveChangesAsync();
         }
+        if (await context.Set<AnaUser>().FirstOrDefaultAsync() == null)
+        {
+            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin") ??
+                throw new InvalidOperationException("Admin was not found");
+            context.AnaUsers.Add(
+               new AnaUser
+               {
+                   DisplayName = adminUser.UserName,
+                   Id = adminUser.Id,
+                   PreferredNotification = NotificationType.None.ToString(),
+               });
+            await context.SaveChangesAsync();
+        }
 
         if (await context.Set<IdentityUserLogin<string>>().FirstOrDefaultAsync() == null)
         {
@@ -186,11 +185,11 @@ public static class SeedDatabase
                     new AnaRole
                     {
                         Id = Guid.NewGuid().ToString(),
-                        Name = Config.Roles.Admin,
+                        Name = AnaRoleNames.Admin,
                     }, new AnaRole
                     {
                         Id = Guid.NewGuid().ToString(),
-                        Name = Config.Roles.Admin,
+                        Name = AnaRoleNames.User,
                     });
                 await context.SaveChangesAsync();
         }
@@ -201,7 +200,7 @@ public static class SeedDatabase
             // var adminRole = await context.AnaGroups.FirstOrDefaultAsync(r => r.Name == "Admin");
             // var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
             var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin");
-            var adminRole = await context.AnaRoles.FirstOrDefaultAsync(u => u.Name == Config.Roles.Admin);
+            var adminRole = await context.AnaRoles.FirstOrDefaultAsync(u => u.Name == AnaRoleNames.Admin);
             if (adminUser != null && adminRole != null)
             {
                 var adminsGroup = new AnaGroup

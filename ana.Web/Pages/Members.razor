@@ -1,0 +1,64 @@
+﻿@page "/members"
+@layout MainLayout
+@inherits LayoutComponentBase
+@attribute [Authorize]
+<PageTitle>Members</PageTitle>
+
+
+<h1>@MembersOfGroupTitle</h1>
+
+@if (MembersLoadingStatus != null)
+{
+    <p><em>@MembersLoadingStatus</em></p>
+}
+else
+{
+<table style="width:100%; table-layout:fixed;">
+    <colgroup>
+        <col style="width: auto;" />
+        @if(isAdmin)
+        {
+        <col style="width: 20em;" />    <!-- Edit button column -->
+        }
+    </colgroup>
+    <tbody>
+        @foreach (var m in GroupMembers)
+        {
+            <tr>
+                <td>@m.DisplayName</td>
+                    @if (isAdmin)
+                    {
+                <td style="display: flex; align-items: center; justify-content: space-between;">
+                    <div><input type="checkbox" checked="@(m.Role == AnaRoleNames.Admin)" 
+                      @onchange="(e) => CheckAdminChanged(e.Value, m.UserId, m.GroupId)"/>
+                      Administrator
+                    </div>
+                    <button type="button" @onclick="() => RemoveMember(displayedGroupId, m.UserId)">Remove</button>
+                </td>
+                    }
+            </tr>
+        }
+    </tbody>
+</table>
+}
+
+<div style="margin-top: 2em;">
+    <div>Add user to group</div>
+    <div style="display: flex; gap: 0.5em; margin-top: 0.5em;">
+        <span style="flex: 1;">Existing Anniversary Notification application user's Email</span>
+    </div>
+    <EditForm EditContext="@editContext" OnValidSubmit="AddGroupMember">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div style="display: flex; gap: 0.5em; margin-top: 0.5em;">
+            <InputText style="flex: 1;" @bind-Value="newUser.Email" placeholder="user@domain.com" />
+        </div>
+        <div style="margin-top: 0.5em;">
+            <button type="submit">Add</button>
+        </div>
+        @if (!string.IsNullOrEmpty(addMemberStatusMessage))
+        {
+            <div style="color: #4caf50; margin-bottom: 1em;">@addMemberStatusMessage</div>
+        }
+    </EditForm>
+</div>

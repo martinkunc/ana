@@ -79,8 +79,9 @@ builder.Services.AddSingleton<IApiClient>(sp =>
     var accessTokenProvider = sp.GetRequiredService<IAccessTokenProvider>();
     var authenticationStateProvider = sp.GetRequiredService<AuthenticationStateProvider>();
     var logger = sp.GetRequiredService<ILogger<ApiClient>>();
+    var loggerFac = sp.GetRequiredService<ILogger<WebHttpClientFactory>>();
 
-    return new ApiClient(httpClientFactory, accessTokenProvider, authenticationStateProvider, logger);
+    return new ApiClient(new WebHttpClientFactory(httpClientFactory, baseAddress, accessTokenProvider, loggerFac), logger);
 });
 
 await builder.Build().RunAsync();

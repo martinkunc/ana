@@ -258,8 +258,8 @@ builder.Services.AddSingleton<IApiClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var logger = sp.GetRequiredService<ILogger<ApiClient>>();
-    var webappClientSecret = SecretWebAppClientSecret; // TODO
-    return new ApiClient(httpClientFactory, externalUrl, webappClientSecret, logger);
+    var loggerFac = sp.GetRequiredService<ILogger<ApiHttpClientFactory>>();
+    return new ApiClient(new ApiHttpClientFactory(httpClientFactory, externalUrl, SecretWebAppClientSecret, loggerFac), logger);
 });
 
 builder.Services.AddSingleton<IApiEndpoints, ApiEndpoints>();
@@ -303,10 +303,10 @@ using (var dbContext = new ApplicationDbContext(builder1.Options))
 
 }
 
-if (builder.Environment.IsDevelopment())
-{
-    await taskService.RunNowAsync();
-}
+// if (builder.Environment.IsDevelopment())
+// {
+//     await taskService.RunNowAsync();
+// }
 
 app.Run();
 

@@ -29,16 +29,6 @@ public partial class Config
         public const string TwilioAccountToken = "ana-twilio-accounttoken";
         public const string WhatsAppFrom = "ana-whatsapp-from";
 
-    }
-
-
-
-    public static class Roles
-    {
-        public const string Admin = "Admin";
-        public const string User = "User";
-    }
-
-    
+    }   
     
 }

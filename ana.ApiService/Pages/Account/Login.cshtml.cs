@@ -121,14 +121,23 @@ public class LoginModel : PageModel
             var createGroupResponse = await _apiClient.CreateGroupAsync(userId, Input.GroupName);
             _logger.LogInformation("Group {GroupName} created for user {Email}", Input.GroupName, user.Email);
 
-            await _apiClient.SelectGroupAsync(createGroupResponse.UserId, createGroupResponse.Group.Id);
-            await _apiClient.UpdateUserSettingsAsync(userId, new AnaUser
+            await _apiClient.CreateUserAsync(new AnaUser
             {
                 Id = userId,
                 DisplayName = Input.DisplayName,
                 WhatsAppNumber = "",
-                PreferredNotification = NotificationType.None.ToString()
+                PreferredNotification = NotificationType.None.ToString(),
+                SelectedGroupId = createGroupResponse.Group.Id
             });
+
+            // await _apiClient.SelectGroupAsync(createGroupResponse.UserId, createGroupResponse.Group.Id);
+            // await _apiClient.UpdateUserSettingsAsync(userId, new AnaUser
+            // {
+            //     Id = userId,
+            //     DisplayName = Input.DisplayName,
+            //     WhatsAppNumber = "",
+            //     PreferredNotification = NotificationType.None.ToString()
+            // });
 
 
             return LocalRedirect(returnUrl ?? "/");
