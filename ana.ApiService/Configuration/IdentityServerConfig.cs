@@ -74,19 +74,19 @@ public class IdentityServerConfig
 
 
     // client want to access resources (aka scopes)
-    public static IEnumerable<Client> GetClients(IConfiguration configuration, string externalUrl, string webAppClientSecret)
+    public static IEnumerable<Client> GetClients(IConfiguration configuration, string[] externalUris, string webAppClientSecret)
     {
         return new List<Client>
             {
                 new Client
                 {
-                    ClientId = "blazor",
+                    ClientId =IdentityServer.ClientId.Blazor,
                     AllowedGrantTypes = GrantTypes.Code,
                     RequirePkce = true,
                     RequireClientSecret = false,
 
-                    RedirectUris = {   $"{externalUrl}/authentication/login-callback" },
-                    PostLogoutRedirectUris = { $"{externalUrl}/authentication/login" }, // $"{externalUrl}/authentication/logout-callback" 
+                    RedirectUris = CreateRedirectUris(externalUris, "/authentication/login-callback" ),
+                    PostLogoutRedirectUris = CreateRedirectUris(externalUris, "/authentication/login" ),
 
                     AllowedScopes = new List<string>
                     {
@@ -99,7 +99,7 @@ public class IdentityServerConfig
                 },
                 new Client
                 {
-                    ClientId = "webapp",
+                    ClientId = IdentityServer.ClientId.WebApp,
                     ClientName = "WebApp Client",
                     ClientSecrets = new List<Secret>
                     {
@@ -132,5 +132,10 @@ public class IdentityServerConfig
                     IdentityTokenLifetime= 60*60*2 // 2 hours
                 },
             };
+    }
+
+    private static ICollection<string> CreateRedirectUris(string[] externalUris, string suffix)
+    {
+        return externalUris.Select(u => u + suffix).ToList();
     }
 }

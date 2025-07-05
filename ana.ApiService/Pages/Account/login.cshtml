@@ -5,7 +5,11 @@
 }
 <div class="login-container">
     <h2>Anniversary notifications</h2>
-
+    @if (Model.ShowRegistrationFields) {
+        <div class="form-group">
+            <span>Application is storing personal identifiable records. By registering you are giving us a consent to store your records.</span>
+        </div>
+    }
     <form method="post" novalidate>
         @Html.AntiForgeryToken()
 

@@ -66,7 +66,7 @@ public class ApiClient : IApiClient
         HttpClient _httpClient = await _anaHttpClientFactory.GetHttpClient();
         _logger.LogInformation("Cancelling user: {Id}", userId);
         var encodedUserId = System.Net.WebUtility.UrlEncode(userId);
-        var res = await _httpClient.DeleteAsync("api/v1/user/{encodedUserId}");
+        var res = await _httpClient.DeleteAsync($"api/v1/user/{encodedUserId}");
         if (res.IsSuccessStatusCode)
         {
             _logger.LogInformation("User cancelled successfully: {userId}", userId);
@@ -157,9 +157,9 @@ public class ApiClient : IApiClient
     public async Task DeleteGroupMemberAsync(string groupId, string userId)
     {
         HttpClient _httpClient = await _anaHttpClientFactory.GetHttpClient();
-        var encodedGroupId = System.Net.WebUtility.UrlEncode(groupId);
-        var encodedUserId = System.Net.WebUtility.UrlEncode(userId);
-        var r = await _httpClient.DeleteAsync($"api/v1/group/{encodedGroupId}/member/{encodedUserId}");
+        groupId = System.Net.WebUtility.UrlEncode(groupId);
+        userId = System.Net.WebUtility.UrlEncode(userId);
+        var r = await _httpClient.DeleteAsync($"api/v1/group/{groupId}/member/{userId}");
         if (r.IsSuccessStatusCode)
         {
             _logger.LogInformation("Member deleted successfully from group {groupId}", groupId);

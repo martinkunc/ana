@@ -6,6 +6,7 @@ using ana.Web.Layout;
 using ana.SharedNet;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections;
+using Azure.Core.Pipeline;
 
 namespace ana.Web.Pages;
 
@@ -33,7 +34,12 @@ public partial class Members : LayoutComponentBase
     protected NewGroupUser newUser { get; set; } = new NewGroupUser();
     protected EditContext editContext { get; set; }
     public string AddGroupUserSummary { get; set; } = string.Empty;
-
+    public static class Colors
+    {
+        public static string Red = "red";
+        public static string Green = "#4caf50";
+    }
+    private string addMemberStatusColor { get; set; }  = Colors.Green;
     protected override async Task OnInitializedAsync()
     {
         editContext = new EditContext(newUser);
@@ -74,11 +80,13 @@ public partial class Members : LayoutComponentBase
         {
             await apiClient.CreateGroupMemberAsync(newUser.GroupId, newUser.Email);
             addMemberStatusMessage = "User was successfully added.";
+            addMemberStatusColor = Colors.Green;
         }
         catch (Exception e)
         {
-            addMemberStatusMessage = "Adding user was unsuccessful!";
-            Console.WriteLine($"Adding member was unsuccessfull: {e.Message}");
+            addMemberStatusMessage = "Failed to add user!";
+            addMemberStatusColor = Colors.Red;
+            Console.WriteLine($"Adding member was unsuccessful: {e.Message}");
         }
 
         Console.WriteLine($"Added member: {newUser.Email}");

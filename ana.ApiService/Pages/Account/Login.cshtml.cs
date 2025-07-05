@@ -114,8 +114,6 @@ public class LoginModel : PageModel
             {
                 throw new InvalidOperationException("User identity is null after sign-in.");
             }
-
-
             _logger.LogInformation("Generated JWT token for user {Email} with Identity {Identity}", user.Email, User.Identity);
             var userId = User.FindFirst(JwtClaimTypes.Subject)?.Value ?? throw new InvalidOperationException("User ID not found in claims.");
             var createGroupResponse = await _apiClient.CreateGroupAsync(userId, Input.GroupName);
@@ -155,29 +153,28 @@ public class LoginModel : PageModel
     {
         var result = await _signInManager.PasswordSignInAsync(Input.Email ?? "", Input.Password ?? "", false, lockoutOnFailure: false);
 
-        // 
-        var userId = User.FindFirst("sub")?.Value ?? throw new InvalidOperationException("User ID not found in claims.");
-        var groups = await _apiClient.GetGroupsAsync(userId);
-        // just test
-        //
+
 
         if (result.Succeeded)
         {
             return LocalRedirect(returnUrl ?? "/");
         }
-        ErrorMessage = "Invalid login attempt.";
-        if (result.IsLockedOut)
-        {
-            ErrorMessage = "User account locked out.";
-        }
-        else if (result.IsNotAllowed)
-        {
-            ErrorMessage = "User account not allowed to sign in.";
-        }
         else
         {
             ErrorMessage = "Invalid login attempt.";
+            if (result.IsLockedOut)
+            {
+                ErrorMessage = "User account locked out.";
+            }
+            else if (result.IsNotAllowed)
+            {
+                ErrorMessage = "User account not allowed to sign in.";
+            }
+            else
+            {
+                ErrorMessage = "Invalid login attempt.";
+            }
+            return Page();
         }
-        return Page();
     }
 }

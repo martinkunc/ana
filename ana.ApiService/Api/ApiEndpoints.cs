@@ -11,12 +11,15 @@ public class ApiEndpoints : IApiEndpoints
     private readonly ILogger<ApiEndpoints> _logger;
 
     private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public ApiEndpoints(ILogger<ApiEndpoints> logger,
-    IDbContextFactory<ApplicationDbContext> dbContextFactory)
+        IDbContextFactory<ApplicationDbContext> dbContextFactory,
+        IHttpContextAccessor httpContextAccessor)
     {
         _logger = logger;
         _dbContextFactory = dbContextFactory;
+        _httpContextAccessor = httpContextAccessor;
     }
 
 
@@ -83,6 +86,9 @@ public class ApiEndpoints : IApiEndpoints
             .FirstOrDefaultAsync();
         if (existingUser != null) throw new InvalidOperationException("The user already exists.");
         _applicationDbContext.AnaUsers.Add(user);
+        await _applicationDbContext.SaveChangesAsync();
+        _logger.LogInformation("User {userId} created  successfully ", user.Id);
+
     }
     public async Task SelectGroup(string userId, string groupId)
     {
@@ -220,14 +226,29 @@ public class ApiEndpoints : IApiEndpoints
     public async Task CreateGroupMember(string groupId, AnaGroupMember newMember)
     { 
         _logger.LogInformation("Create member for group {groupId}", groupId);
+        var creatingUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
-
         var existingUser = await _applicationDbContext.Users
             .FirstOrDefaultAsync(u => u.Email == newMember.Email);
         
         if (existingUser == null)
             throw new InvalidOperationException($"User with email {newMember.Email} does not exist.");
+
+        var creatingUserUserGroup = await _applicationDbContext.AnaGroupToUsers
+                .Where(u => u.UserId == creatingUserId && u.GroupId == groupId)
+                .FirstOrDefaultAsync();
+
+        if (creatingUserUserGroup == null)
+            throw new InvalidOperationException("The creating user doesn't exist in the group to where member is being added.");
+        var adminRole = await _applicationDbContext.AnaRoles
+                .Where(r => r.Name == AnaRoleNames.Admin)
+                .FirstOrDefaultAsync();
+        if (adminRole == null)
+            throw new InvalidOperationException("The Admin role was not found in the system");
+        if (creatingUserUserGroup.RoleId != adminRole.Id)
+            throw new InvalidOperationException("The user adding the new member is not an admin of the group");
+
 
         var newUserRoleId = await _applicationDbContext.AnaRoles
             .Where(r => r.Name == newMember.Role)
@@ -241,10 +262,10 @@ public class ApiEndpoints : IApiEndpoints
             RoleId = newUserRoleId
         };
 
-        var existingGtoupToUser = await _applicationDbContext.AnaGroupToUsers
+        var existingGroupToUser = await _applicationDbContext.AnaGroupToUsers
             .FirstOrDefaultAsync(agu => agu.UserId == existingUser.Id && agu.GroupId == groupId);
 
-        if (existingGtoupToUser != null)
+        if (existingGroupToUser != null)
         {
             _logger.LogWarning("User {userId} is already a member of group {groupId}", existingUser.Id, groupId);
             throw new InvalidOperationException($"User {existingUser.Email} is already a member of group {groupId}");
@@ -257,8 +278,23 @@ public class ApiEndpoints : IApiEndpoints
     public async Task ChangeGroupMemberRole(string groupId, string userId, ChangeGroupMemberRoleRequest req)
     {
         _logger.LogInformation("Create member for group {groupId}", groupId);
+        var creatingUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
+
+        var creatingUserUserGroup = await _applicationDbContext.AnaGroupToUsers
+                .Where(u => u.UserId == creatingUserId && u.GroupId == groupId)
+                .FirstOrDefaultAsync();
+
+        if (creatingUserUserGroup == null)
+            throw new InvalidOperationException("The creating user doesn't exist in the group where the role of member is being changed.");
+        var adminRole = await _applicationDbContext.AnaRoles
+                .Where(r => r.Name == AnaRoleNames.Admin)
+                .FirstOrDefaultAsync();
+        if (adminRole == null)
+            throw new InvalidOperationException("The Admin role was not found in the system");
+        if (creatingUserUserGroup.RoleId != adminRole.Id)
+            throw new InvalidOperationException("The user changing the member role is not an admin of the group");
 
         var newRoleId = await _applicationDbContext.AnaRoles
             .Where(r => r.Name == req.RoleName)
@@ -288,8 +324,23 @@ public class ApiEndpoints : IApiEndpoints
     public async Task DeleteGroupMember(string groupId, string userId)
     {
         _logger.LogInformation("Create member for group {groupId}", groupId);
-
+        var creatingUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
+
+        var creatingUserUserGroup = await _applicationDbContext.AnaGroupToUsers
+                .Where(u => u.UserId == creatingUserId && u.GroupId == groupId)
+                .FirstOrDefaultAsync();
+
+        if (creatingUserUserGroup == null)
+            throw new InvalidOperationException("The creating user doesn't exist in the group from where the member is being removed.");
+        var adminRole = await _applicationDbContext.AnaRoles
+                .Where(r => r.Name == AnaRoleNames.Admin)
+                .FirstOrDefaultAsync();
+        if (adminRole == null)
+            throw new InvalidOperationException("The Admin role was not found in the system");
+        if (creatingUserUserGroup.RoleId != adminRole.Id)
+            throw new InvalidOperationException("The user removing the member is not an admin of the group");
+
 
         var groupToUser = await _applicationDbContext.AnaGroupToUsers
             .FirstOrDefaultAsync(agu => agu.UserId == userId && agu.GroupId == groupId);

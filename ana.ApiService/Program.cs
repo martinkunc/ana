@@ -187,7 +187,7 @@ builder.Services.Configure<IdentityOptions>(options =>
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>,
     UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
 
-
+var externalPublicUri = "https://anniversarynotification.com";
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
     options.Events.RaiseErrorEvents = true;
@@ -205,7 +205,7 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 .AddInMemoryIdentityResources(IdentityServerConfig.GetResources())
 .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
 .AddInMemoryApiResources(IdentityServerConfig.GetApis())
-.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, externalUrl, SecretWebAppClientSecret))
+.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, new[] { externalUrl, externalPublicUri }, SecretWebAppClientSecret))
 //.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
 .AddAspNetIdentity<IdentityUser>();
 
@@ -254,6 +254,8 @@ builder.Services.AddHttpClient(
     opt => opt.BaseAddress = new Uri(externalUrl))
     .AddHttpMessageHandler<CookieHandler>();
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddSingleton<IApiClient>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
@@ -262,7 +264,13 @@ builder.Services.AddSingleton<IApiClient>(sp =>
     return new ApiClient(new ApiHttpClientFactory(httpClientFactory, externalUrl, SecretWebAppClientSecret, loggerFac), logger);
 });
 
-builder.Services.AddSingleton<IApiEndpoints, ApiEndpoints>();
+builder.Services.AddSingleton<IApiEndpoints>(sp =>
+{
+    var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+    var logger = sp.GetRequiredService<ILogger<ApiEndpoints>>();
+    var dbContextFactory = sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+    return new ApiEndpoints(logger, dbContextFactory, httpContextAccessor);
+});
 
 builder.Services.AddHostedService(sp => sp.GetRequiredService<DailyTaskService>());
 builder.Services.AddSingleton<DailyTaskService>();
@@ -303,10 +311,10 @@ using (var dbContext = new ApplicationDbContext(builder1.Options))
 
 }
 
-// if (builder.Environment.IsDevelopment())
-// {
-//     await taskService.RunNowAsync();
-// }
+if (builder.Environment.IsDevelopment())
+{
+    await taskService.RunNowAsync();
+}
 
 app.Run();
 

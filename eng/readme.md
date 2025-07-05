@@ -1,7 +1,7 @@
 ## Installation
 ## Requirements
 
-Azd (Azure Developer CLI)
+### Azd (Azure Developer CLI)
 
 Windows:
 ```
@@ -10,6 +10,11 @@ winget install microsoft.azd
 
 Linux has instructions at https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd?tabs=winget-windows%2Cbrew-mac%2Cscript-linux&pivots=os-linux
 
+### Azd configuration
+When azd is used to deploy Azure Kubernets Apps with custom domains set previously in Portal, the custom domain gets overwritten by the deployment. This can be prevented by configuring azd using:
+```
+azd config set alpha.aca.persistDomains on
+```
 
 
 Create/update resources:
@@ -36,7 +41,7 @@ az auth
 ```
 
 
-Bicep:
+Bicep (optional):
 ```
 winget install -e --id Microsoft.Bicep
 ```

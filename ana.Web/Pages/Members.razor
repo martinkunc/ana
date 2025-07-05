@@ -42,6 +42,8 @@ else
 </table>
 }
 
+@if (isAdmin)
+{
 <div style="margin-top: 2em;">
     <div>Add user to group</div>
     <div style="display: flex; gap: 0.5em; margin-top: 0.5em;">
@@ -58,7 +60,8 @@ else
         </div>
         @if (!string.IsNullOrEmpty(addMemberStatusMessage))
         {
-            <div style="color: #4caf50; margin-bottom: 1em;">@addMemberStatusMessage</div>
+            <div style="color: @addMemberStatusColor; margin-bottom: 1em;">@addMemberStatusMessage</div>
         }
     </EditForm>
 </div>
+}

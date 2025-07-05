@@ -63,7 +63,7 @@ public class DailyTaskService : BackgroundService
         var tomorrow = DateTime.Now.AddDays(1);
         var formattedDate = FormatDate(tomorrow);
         var humanReadableDate = formattedDate;
-        _logger.LogInformation($"Formatted date for stored procedure: {formattedDate}");
+        _logger.LogInformation($"Formatted date: {formattedDate}");
 
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
         var annivs = await _applicationDbContext
@@ -160,8 +160,9 @@ public class DailyTaskService : BackgroundService
             }
             else if (nu.PreferredNotification == NotificationType.WhatsApp.ToString() && !string.IsNullOrEmpty(nu.WhatsAppNumber))
             {
-                var formattedMessages = "On " + formattedDate + " there are following anniversaries " + string.Join("\n", nu.Messages);
-                await SendWhatsAppMessage(nu.WhatsAppNumber, humanReadableDate, formattedMessages);
+                //var formattedMessages = "On " + formattedDate + " there are following anniversaries " + string.Join("\n", nu.Messages);
+                var fm = $"The upcoming anniversaries on {humanReadableDate} are the following anniversaries: {string.Join(" ", nu.Messages)}";
+                await SendWhatsAppMessage(nu.WhatsAppNumber, humanReadableDate, fm);
             }
         }
     }
@@ -175,7 +176,7 @@ public class DailyTaskService : BackgroundService
         TwilioClient.Init(_secretTwilioAccountSID, _secretTwilioAccountToken);
 
         var message = await MessageResource.CreateAsync(
-            body:  subject + formattedMessages,
+            body:  formattedMessages,
             from: new Twilio.Types.PhoneNumber( _secretWhatsAppFrom),
             // phone in format of "whatsapp:+420720123456"
             to: new Twilio.Types.PhoneNumber("whatsapp:"+whatsAppNumber));

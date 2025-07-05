@@ -1,8 +1,54 @@
 ﻿@page "/mygroups"
 @layout MainLayout
+@inherits LayoutComponentBase
 @attribute [Authorize]
 <PageTitle>My other groups</PageTitle>
+<h1>My other groups</h1>
+@if (GroupsLoadingStatus != null)
+{
+    <p><em>@GroupsLoadingStatus</em></p>
+}
+else
+{
+<table style="width:100%; table-layout:fixed;">
+    <colgroup>
+        <col style="width: 20em;" />
+        <col style="width: auto;" />
+    </colgroup>
+    <tbody>
+        @foreach (var g in MyGroupsList)
+        {
+            <tr>
+                <td style="display: flex; align-items: center; justify-content: space-between;">
+                @if (g.Id != selectedGroup?.Id)
+                {
+                <div><button type="button"
+                    @onclick="(e) => SwitchGroup(g.Id, displayedUserId)">
+                    Switch</button>
+                </div>
+                }
+                </td>
+                <td>@g.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>
+}
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+<div style="margin-top: 2em;">
+    <div>Create a new group</div>
+    <EditForm EditContext="@editContext" OnValidSubmit="AddGroup">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div style="display: flex; gap: 0.5em; margin-top: 0.5em;">
+            <InputText style="flex: 1;" @bind-Value="newGroup.Name"  />
+        </div>
+        <div style="margin-top: 0.5em;">
+            <button type="submit">Create</button>
+        </div>
+        @if (!string.IsNullOrEmpty(addGroupStatusMessage))
+        {
+            <div style="color: #4caf50; margin-bottom: 1em;">@addGroupStatusMessage</div>
+        }
+    </EditForm>
+</div>

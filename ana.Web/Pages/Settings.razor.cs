@@ -55,7 +55,7 @@ public partial class Settings : LayoutComponentBase
 
     private async Task CancelAccount()
     {
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to remove this anniversary?");
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to cancel your account?");
         if (!confirmed)
             return;
         try
