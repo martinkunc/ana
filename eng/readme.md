@@ -11,10 +11,12 @@ winget install microsoft.azd
 Linux has instructions at https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd?tabs=winget-windows%2Cbrew-mac%2Cscript-linux&pivots=os-linux
 
 ### Azd configuration
-When azd is used to deploy Azure Kubernets Apps with custom domains set previously in Portal, the custom domain gets overwritten by the deployment. This can be prevented by configuring azd using:
+When azd is used to deploy Azure Kubernets Apps with custom domains set previously in Portal, the custom domain gets overwritten by the deployment. This can be prevented by configuring azd using the following command. This setting seems to be stored in $HOME/.azd/config.json on Linux/Mac.
 ```
 azd config set alpha.aca.persistDomains on
 ```
+In Azure portal, Custom domain is set for particular Kubernetes App (apiservice) under Networking/Custom Domains. Before creating a domain, the Kubernetes App has to have added a certificate, which can be done under Container Apps Environments / Certificates.
+Add a domain name and certificate has to be recreated after the change. Change shouldn't be removed with the azd setting above.
 
 
 Create/update resources:

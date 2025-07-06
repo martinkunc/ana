@@ -29,13 +29,16 @@ public class DailyTaskService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _logger.LogInformation($"Schedulling the daily task for regular execution");
         // Calculate initial delay until next 6AM
         var now = DateTime.Now;
         var nextHourToStart = now.Date.AddHours(hourToStart);
         if (now > nextHourToStart)
             nextHourToStart = nextHourToStart.AddDays(1);
+        _logger.LogInformation($"Next hour to start is at {nextHourToStart}");
 
         var initialDelay = nextHourToStart - now;
+        _logger.LogInformation($"Initial delay is {initialDelay}");
         await Task.Delay(initialDelay, stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -169,7 +172,7 @@ public class DailyTaskService : BackgroundService
 
     private async Task SendWhatsAppMessage(string whatsAppNumber, string humanReadableDate, string formattedMessages)
     {
-        Console.WriteLine($"Sending WhatsApp message to {whatsAppNumber}: {formattedMessages}");
+        _logger.LogInformation($"Sending WhatsApp message to {whatsAppNumber}: {formattedMessages}");
         var subject = $"Upcoming anniversaries on {humanReadableDate}. ";
         // Send using twilio
         // in a trial model only sends to phones which joined my sandbox
@@ -181,21 +184,21 @@ public class DailyTaskService : BackgroundService
             // phone in format of "whatsapp:+420720123456"
             to: new Twilio.Types.PhoneNumber("whatsapp:"+whatsAppNumber));
 
-        Console.WriteLine(message.Body);
-        Console.WriteLine(message.Status);
+        _logger.LogInformation($"Body: {message.Body}");
+        _logger.LogInformation($"message.Status: {message.Status}");
     }
 
     private async Task SendMail(string email, string humanReadableDate, string formattedMessages)
     {
-        Console.WriteLine($"Sending Email message to {email}: {formattedMessages}");
+        _logger.LogInformation($"Sending Email message to {email}: {formattedMessages}");
         var subject = $"Upcoming anniversaries on {humanReadableDate}";
-
+        _logger.LogInformation($"Sending email notification from: {_secretFromEmail}");
         var client = new SendGridClient(_secretSendGridKey);
         var from = new EmailAddress(_secretFromEmail, "Anniversary Notification Application");
         var to = new EmailAddress(email);
         var msg = MailHelper.CreateSingleEmail(from, to, subject, formattedMessages, formattedMessages);
         var response = await client.SendEmailAsync(msg);
-        Console.WriteLine($"Email to {email} sent with status code: {response.ToString} {JsonContent.Create(response)}");
+        _logger.LogInformation($"Email to {email} sent with status code: {response.ToString} {JsonContent.Create(response)}");
     }
 
     private string FormatDate(DateTime inputDate)

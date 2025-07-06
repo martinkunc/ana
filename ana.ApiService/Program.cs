@@ -311,7 +311,7 @@ using (var dbContext = new ApplicationDbContext(builder1.Options))
 
 }
 
-if (builder.Environment.IsDevelopment())
+//if (builder.Environment.IsDevelopment())
 {
     await taskService.RunNowAsync();
 }
