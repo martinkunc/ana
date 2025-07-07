@@ -20,16 +20,18 @@ properties:
     registries:
       - server: {{ .Env.AZURE_CONTAINER_REGISTRY_ENDPOINT }}
         identity: {{ .Env.AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID }}
+    secrets:
+      - name: connectionstrings--cosmos-db
+        value: '{{ securedParameter "cosmos_db" }}'
   template:
     containers:
       - image: {{ .Image }}
         name: apiservice
-        resources:
-          cpu: 0.25
-          memory: 0.5Gi
         env:
           - name: AZURE_CLIENT_ID
             value: {{ .Env.MANAGED_IDENTITY_CLIENT_ID }}
+          - name: ASPNETCORE_EXTERNAL_URL
+            value: https://apiservice.{{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN }}
           - name: ASPNETCORE_FORWARDEDHEADERS_ENABLED
             value: "true"
           - name: HTTP_PORTS
@@ -40,9 +42,10 @@ properties:
             value: "true"
           - name: OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY
             value: in_memory
+          - name: ConnectionStrings__cosmos-db
+            secretRef: connectionstrings--cosmos-db
     scale:
       minReplicas: 1
-      maxReplicas: 1
 tags:
   azd-service-name: apiservice
   aspire-resource-name: apiservice

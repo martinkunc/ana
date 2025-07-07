@@ -31,4 +31,6 @@ public interface IApiClient
     Task ChangeGroupMemberRoleAsync(string groupId, string userId, string roleName);
 
     Task DeleteGroupMemberAsync(string groupId, string userId);
+
+    Task RunDailyTasksAsync();
 }

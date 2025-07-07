@@ -1,3 +1,4 @@
+using ana.SharedNet;
 using Duende.IdentityServer;
 using Duende.IdentityServer.Models;
 using Microsoft.Azure.Cosmos;
@@ -13,11 +14,7 @@ public class IdentityServerConfig
         //public const string IssuerName = "Ana Identity Server";
         public const string AudienceName = "ana_api";
 
-        public static class ClientId
-        {
-            public const string WebApp = "webapp";
-            public const string Blazor = "blazor";
-        }
+
     }
     
     public static class Resources
@@ -26,12 +23,7 @@ public class IdentityServerConfig
         // Add other resources as needed
     }
 
-    public static class Scopes
-    {
-        public const string ana = "ana";
-        public const string anaApi = "ana_api";
-        // Add other scopes as needed
-    }
+
 
     // ApiResources define the apis in your system
     public static IEnumerable<ApiResource> GetApis()
@@ -39,9 +31,9 @@ public class IdentityServerConfig
         return new List<ApiResource>
             {
                 new ApiResource(Resources.ana, "Ana Service"),
-                new ApiResource(Scopes.anaApi, "Ana API Service")
+                new ApiResource(Config.IdentityServer.Scopes.anaApi, "Ana API Service")
                 {
-                    Scopes = { Scopes.anaApi }
+                    Scopes = { Config.IdentityServer.Scopes.anaApi }
                 }
             };
     }
@@ -52,8 +44,8 @@ public class IdentityServerConfig
     {
         return new List<ApiScope>
             {
-                new ApiScope(Scopes.ana, "ana Service"), // blazor
-                new ApiScope(Scopes.anaApi, "ana Api Service"),
+                new ApiScope(Config.IdentityServer.Scopes.ana, "ana Service"), // blazor
+                new ApiScope(Config.IdentityServer.Scopes.anaApi, "ana Api Service"),
             };
     }
 
@@ -80,7 +72,7 @@ public class IdentityServerConfig
             {
                 new Client
                 {
-                    ClientId =IdentityServer.ClientId.Blazor,
+                    ClientId = Config.IdentityServer.ClientId.Blazor,
                     AllowedGrantTypes = GrantTypes.Code,
                     RequirePkce = true,
                     RequireClientSecret = false,
@@ -93,13 +85,13 @@ public class IdentityServerConfig
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.Email,
-                        Scopes.ana,
-                        Scopes.anaApi,
+                        Config.IdentityServer.Scopes.ana,
+                        Config.IdentityServer.Scopes.anaApi,
                     }
                 },
                 new Client
                 {
-                    ClientId = IdentityServer.ClientId.WebApp,
+                    ClientId = Config.IdentityServer.ClientId.WebApp,
                     ClientName = "WebApp Client",
                     ClientSecrets = new List<Secret>
                     {
@@ -125,8 +117,8 @@ public class IdentityServerConfig
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.OfflineAccess,
-                        Scopes.ana,
-                        Scopes.anaApi,
+                        Config.IdentityServer.Scopes.ana,
+                        Config.IdentityServer.Scopes.anaApi,
                     },
                     AccessTokenLifetime = 60*60*2, // 2 hours
                     IdentityTokenLifetime= 60*60*2 // 2 hours

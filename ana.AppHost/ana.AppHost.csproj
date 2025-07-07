@@ -15,11 +15,13 @@
     <ProjectReference Include="..\ana.SharedNet\ana.SharedNet.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\ana.ApiService\ana.ApiService.csproj" />
     <ProjectReference Include="..\ana.Web\ana.Web.csproj" />
+    <ProjectReference Include="..\ana.Functions\ana.Functions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="9.3.0" />
     <PackageReference Include="Aspire.Hosting.Azure.CosmosDB" Version="9.3.0" />
+    <PackageReference Include="Aspire.Hosting.Azure.Functions" Version="9.3.1-preview.1.25305.6" />
 	<PackageReference Include="Aspire.Hosting.NodeJs" Version="9.3.0" />
 	<PackageReference Include="Azure.Identity" Version="1.14.0" />
 	<PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.7.0" />

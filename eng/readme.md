@@ -29,11 +29,16 @@ Deployment
 azd deploy
 ```
 
-az cli
+## Azure CLI
 Windows:
 ```
 winget install --exact --id Microsoft.AzureCLI
 ```
+MacOs:
+```
+brew install azure-cli
+```
+
 
 Linux has instructions on https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?view=azure-cli-latest&pivots=apt
 
@@ -56,12 +61,24 @@ cd ana.react
 npm ci
 ```
 
+## Azure functions Core tools
+On Macos:
+```
+brew tap azure/functions
+brew install azure-functions-core-tools@4
+```
+
+## VSCode extension for Azure functions:
+```
+Install extension `Azure Functions`
+```
+
 
 
 ## CosmosDb Emulator configuration
-This application requires Windows based Cosmos Db. The best way to run it on MacOs or Linux is to use a Windows VM. Fortunatelly the emulator works on Windows ARM.
+This application requires Windows based Cosmos Db. The best way to run it on MacOs or Linux is to use a Windows VM. Fortunately the emulator works on Windows ARM.
 The limitation is because EF query with contains for Identity Role is not parsed correctly by Linux based Preview emulator.
-To connect in either user Port forwarding forwarding from local 58081 (or other) to 8081 in machine, or setup Bridged networking. I was using port forwarding with Paralels on MacOs and Port forwarding in VirtualBox on Linux.
+To connect in either user Port forwarding forwarding from local 58081 (or other) to 8081 in machine, or setup Bridged networking. I was using port forwarding with Parallels on MacOs and Port forwarding in VirtualBox on Linux.
 
 
 CosmosDb emulator in the Windows machine has to be set for remote access.

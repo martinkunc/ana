@@ -24,9 +24,6 @@ properties:
     containers:
       - image: {{ .Image }}
         name: reactapp
-        resources:
-          cpu: 0.25
-          memory: 0.5Gi
         env:
           - name: AZURE_CLIENT_ID
             value: {{ .Env.MANAGED_IDENTITY_CLIENT_ID }}
@@ -34,11 +31,18 @@ properties:
             value: none
           - name: NODE_ENV
             value: development
+          - name: SOME_TEST
+            value: CONTENT
+          - name: VITE_API_URL
+            value: https://apiservice.{{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN }}
           - name: VITE_PORT
             value: "8000"
+          - name: services__apiservice__http__0
+            value: http://apiservice.{{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN }}
+          - name: services__apiservice__https__0
+            value: https://apiservice.{{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN }}
     scale:
       minReplicas: 1
-      maxReplicas: 1
 tags:
   azd-service-name: reactapp
   aspire-resource-name: reactapp

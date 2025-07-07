@@ -12,14 +12,17 @@ public class ApiEndpoints : IApiEndpoints
 
     private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly DailyTaskService _dailyTaskService;
 
     public ApiEndpoints(ILogger<ApiEndpoints> logger,
         IDbContextFactory<ApplicationDbContext> dbContextFactory,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        DailyTaskService dailyTaskService)
     {
         _logger = logger;
         _dbContextFactory = dbContextFactory;
         _httpContextAccessor = httpContextAccessor;
+        _dailyTaskService = dailyTaskService;
     }
 
 
@@ -543,6 +546,12 @@ public class ApiEndpoints : IApiEndpoints
         _applicationDbContext.AnaGroups.RemoveRange(groupsToRemove.ToArray());
         
         await _applicationDbContext.SaveChangesAsync();
+    }
+
+    public async Task DailyTask()
+    {
+        _logger.LogInformation("Starting daily task");
+        await _dailyTaskService.RunNowAsync();
     }
     
     public string GetAlignedDate(string date)

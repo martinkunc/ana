@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ana.Web", "ana.Web\ana.Web.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ana.SharedNet", "ana.SharedNet\ana.SharedNet.csproj", "{8BCF3F5D-4412-4045-966C-1D7E1A643BDB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ana.Functions", "ana.Functions\ana.Functions.csproj", "{34E52E29-7399-4247-BA24-F10E5653488F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{8BCF3F5D-4412-4045-966C-1D7E1A643BDB}.Release|x64.Build.0 = Release|Any CPU
 		{8BCF3F5D-4412-4045-966C-1D7E1A643BDB}.Release|x86.ActiveCfg = Release|Any CPU
 		{8BCF3F5D-4412-4045-966C-1D7E1A643BDB}.Release|x86.Build.0 = Release|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Debug|x64.Build.0 = Debug|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Debug|x86.Build.0 = Debug|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Release|x64.ActiveCfg = Release|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Release|x64.Build.0 = Release|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Release|x86.ActiveCfg = Release|Any CPU
+		{34E52E29-7399-4247-BA24-F10E5653488F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

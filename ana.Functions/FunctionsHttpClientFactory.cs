@@ -1,18 +1,18 @@
-
-using Microsoft.Extensions.Logging;
-using Duende.IdentityModel.Client;
 using ana.SharedNet;
-public class ApiHttpClientFactory : IAnaHttpClientFactory
+using Duende.IdentityModel.Client;
+using Microsoft.Extensions.Logging;
+
+public class FunctionsHttpClientFactory : IAnaHttpClientFactory
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly string _baseAddress;
     private readonly string _webAppClientSecret;
-    private readonly ILogger<ApiHttpClientFactory> _logger;
+    private readonly ILogger<FunctionsHttpClientFactory> _logger;
 
-    public ApiHttpClientFactory(IHttpClientFactory httpClientFactory,
+    public FunctionsHttpClientFactory(IHttpClientFactory httpClientFactory,
         string baseAddress,
         string clientSecret,
-        ILogger<ApiHttpClientFactory> logger)
+        ILogger<FunctionsHttpClientFactory> logger)
     {
         _httpClientFactory = httpClientFactory;
         _baseAddress = baseAddress;
@@ -43,7 +43,7 @@ public class ApiHttpClientFactory : IAnaHttpClientFactory
         var tokenResponse = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
         {
             Address = disco.TokenEndpoint,
-            ClientId = ana.SharedNet.Config.IdentityServer.ClientId.WebApp,
+            ClientId = Config.IdentityServer.ClientId.WebApp,
             ClientSecret = _webAppClientSecret,
             Scope = Config.IdentityServer.Scopes.anaApi
         });

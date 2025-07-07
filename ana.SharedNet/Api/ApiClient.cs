@@ -377,4 +377,20 @@ public class ApiClient : IApiClient
         }
     }
 
+    public async Task RunDailyTasksAsync()
+    {
+        HttpClient _httpClient = await _anaHttpClientFactory.GetHttpClient();
+        _logger.LogInformation("Running daily tasks");
+        var res = await _httpClient.PostAsync($"api/v1/daily-task", null);
+        if (res.IsSuccessStatusCode)
+        {
+            _logger.LogInformation("Daily task was executed successfully ");
+        }
+        else
+        {
+            _logger.LogError("Failed to start daily task, Status Code: {statusCode}", res.StatusCode);
+            throw new Exception($"Failed to start daily task: {res.ReasonPhrase}");
+        }
+    }
+
 }

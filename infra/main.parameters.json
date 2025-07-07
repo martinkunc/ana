@@ -5,6 +5,9 @@
       "principalId": {
         "value": "${AZURE_PRINCIPAL_ID}"
       },
+      "cosmos_db": {
+        "value": "${AZURE_COSMOS_DB}"
+      },
       "environmentName": {
         "value": "${AZURE_ENV_NAME}"
       },

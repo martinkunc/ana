@@ -1,5 +1,6 @@
 
 namespace ana.SharedNet;
+
 public partial class Config
 {
     public static class Database
@@ -29,6 +30,22 @@ public partial class Config
         public const string TwilioAccountToken = "ana-twilio-accounttoken";
         public const string WhatsAppFrom = "ana-whatsapp-from";
 
-    }   
+    }
+
+    public static class IdentityServer
+    {
+        public static class ClientId
+        {
+            public const string WebApp = "webapp";
+            public const string Blazor = "blazor";
+        }
+
+        public static class Scopes
+        {
+            public const string ana = "ana";
+            public const string anaApi = "ana_api";
+            // Add other scopes as needed
+        }
+    }
     
 }

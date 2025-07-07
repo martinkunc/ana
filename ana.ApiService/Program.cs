@@ -264,18 +264,20 @@ builder.Services.AddSingleton<IApiClient>(sp =>
     return new ApiClient(new ApiHttpClientFactory(httpClientFactory, externalUrl, SecretWebAppClientSecret, loggerFac), logger);
 });
 
+//builder.Services.AddHostedService(sp => sp.GetRequiredService<DailyTaskService>());
+builder.Services.AddSingleton<DailyTaskService>();
+var taskService = builder.Services.BuildServiceProvider().GetRequiredService<DailyTaskService>();
+taskService.SetSecrets(SecretFromEmail, SecretSendGridKey, SecretTwilioAccountSID, SecretTwilioAccountToken, SecretWhatsAppFrom);
+
+
 builder.Services.AddSingleton<IApiEndpoints>(sp =>
 {
     var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
     var logger = sp.GetRequiredService<ILogger<ApiEndpoints>>();
     var dbContextFactory = sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
-    return new ApiEndpoints(logger, dbContextFactory, httpContextAccessor);
+    return new ApiEndpoints(logger, dbContextFactory, httpContextAccessor, taskService);
 });
 
-builder.Services.AddHostedService(sp => sp.GetRequiredService<DailyTaskService>());
-builder.Services.AddSingleton<DailyTaskService>();
-var taskService = builder.Services.BuildServiceProvider().GetRequiredService<DailyTaskService>();
-taskService.SetSecrets(SecretFromEmail, SecretSendGridKey, SecretTwilioAccountSID, SecretTwilioAccountToken, SecretWhatsAppFrom);
 
 
 var app = builder.Build();
@@ -309,11 +311,6 @@ using (var dbContext = new ApplicationDbContext(builder1.Options))
     await SeedDatabase.Initialize(app.Services);
 
 
-}
-
-//if (builder.Environment.IsDevelopment())
-{
-    await taskService.RunNowAsync();
 }
 
 app.Run();

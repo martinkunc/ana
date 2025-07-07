@@ -30,4 +30,6 @@ public interface IApiEndpoints
     Task UpdateUserSettings(string userId, AnaUser userSettings);
 
     Task DeleteUser(string userId);
+
+    Task DailyTask();
 }
