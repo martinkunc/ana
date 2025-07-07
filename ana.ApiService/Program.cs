@@ -264,7 +264,7 @@ builder.Services.AddSingleton<IApiClient>(sp =>
     return new ApiClient(new ApiHttpClientFactory(httpClientFactory, externalUrl, SecretWebAppClientSecret, loggerFac), logger);
 });
 
-//builder.Services.AddHostedService(sp => sp.GetRequiredService<DailyTaskService>());
+
 builder.Services.AddSingleton<DailyTaskService>();
 var taskService = builder.Services.BuildServiceProvider().GetRequiredService<DailyTaskService>();
 taskService.SetSecrets(SecretFromEmail, SecretSendGridKey, SecretTwilioAccountSID, SecretTwilioAccountToken, SecretWhatsAppFrom);

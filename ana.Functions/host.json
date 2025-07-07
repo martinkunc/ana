@@ -6,13 +6,6 @@
         "Function": "Debug",
         "Host.Results": "Debug",
         "Host.Aggregator": "Debug"
-      } //,
-      // "applicationInsights": {
-      //   "samplingSettings": {
-      //       "isEnabled": true,
-      //       "excludedTypes": "Request"
-      //   },
-      //   "enableLiveMetricsFilters": true
-      // }
+      } 
     }
 }
