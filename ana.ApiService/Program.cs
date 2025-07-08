@@ -21,17 +21,27 @@ var logger = LoggerFactory.Create(config =>
 
 logger.LogInformation($"Starting application with INFO: ");
 logger.LogDebug($"Starting application with Debug: ");
-logger.LogError($"Starting application with Error: ");
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
 
+string SecretConnectionString = await builder.GetFromSecretsOrVault(Config.SecretNames.AnaDbConnectionString);
+var SecretFromEmail = await builder.GetFromSecretsOrVault(Config.SecretNames.FromEmail);
+var SecretSendGridKey = await builder.GetFromSecretsOrVault(Config.SecretNames.SendGridKey);
+var SecretTwilioAccountSID = await builder.GetFromSecretsOrVault(Config.SecretNames.TwilioAccountSid);
+var SecretTwilioAccountToken = await builder.GetFromSecretsOrVault(Config.SecretNames.TwilioAccountToken);
+var SecretWhatsAppFrom = await builder.GetFromSecretsOrVault(Config.SecretNames.WhatsAppFrom);
+var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.WebAppClientSecret);
+var SecretBlazorClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.BlazorClientSecret);
+
 
 var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
 var serviceName = "apiservice"; // Your service name as defined in Container Apps
+var isRunningOnAzureContainerApps = !string.IsNullOrEmpty(envDnsSuffix);
 
+var externalPublicDomain = "https://anniversarynotification.com";
+var externalUrl = !isRunningOnAzureContainerApps ? builder.Configuration["ASPNETCORE_EXTERNAL_URL"] : externalPublicDomain;
 
-var externalUrl = builder.Configuration["ASPNETCORE_EXTERNAL_URL"] ?? $"https://{serviceName}.{envDnsSuffix}";
 
 Console.WriteLine($"MY: External URL: {externalUrl}");
 
@@ -90,14 +100,7 @@ foreach (var conf in builder.Configuration.AsEnumerable())
 }
 
 
-string SecretConnectionString = await builder.GetFromSecretsOrVault(Config.SecretNames.AnaDbConnectionString);
-var SecretFromEmail = await builder.GetFromSecretsOrVault(Config.SecretNames.FromEmail);
-var SecretSendGridKey = await builder.GetFromSecretsOrVault(Config.SecretNames.SendGridKey);
-var SecretTwilioAccountSID = await builder.GetFromSecretsOrVault(Config.SecretNames.TwilioAccountSid);
-var SecretTwilioAccountToken = await builder.GetFromSecretsOrVault(Config.SecretNames.TwilioAccountToken);
-var SecretWhatsAppFrom = await builder.GetFromSecretsOrVault(Config.SecretNames.WhatsAppFrom);
-var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.WebAppClientSecret);
-var SecretBlazorClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.BlazorClientSecret);
+
 
 
 
@@ -187,7 +190,7 @@ builder.Services.Configure<IdentityOptions>(options =>
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>,
     UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
 
-var externalPublicUri = "https://anniversarynotification.com";
+
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
     options.Events.RaiseErrorEvents = true;
@@ -205,7 +208,7 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 .AddInMemoryIdentityResources(IdentityServerConfig.GetResources())
 .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
 .AddInMemoryApiResources(IdentityServerConfig.GetApis())
-.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, new[] { externalUrl, externalPublicUri }, SecretWebAppClientSecret))
+.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, new[] { externalUrl }, SecretWebAppClientSecret))
 //.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
 .AddAspNetIdentity<IdentityUser>();
 
