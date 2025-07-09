@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ana.SharedNet;
+using System.Security.Policy;
 
 
 var builder = FunctionsApplication.CreateBuilder(args);
@@ -20,6 +21,12 @@ var externalUrl = builder.Configuration["ApiService:Url"]
     ?? throw new InvalidOperationException("API URL not configured");
 
 logger.LogInformation("API URL configured as: {ApiUrl}", externalUrl);
+var localUrl = new Uri(externalUrl);
+var runningOnAzure = !localUrl.IsLoopback;
+Console.WriteLine($"MY: Running on Azure: {runningOnAzure}");
+
+var externalPublicDomain = "https://anniversarynotification.com";
+externalUrl = !runningOnAzure ? externalUrl : externalPublicDomain;
 
 var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.WebAppClientSecret);
 
