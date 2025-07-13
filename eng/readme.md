@@ -67,6 +67,11 @@ On Macos:
 brew tap azure/functions
 brew install azure-functions-core-tools@4
 ```
+On Windows, instructions are here: 
+
+https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=windows%2Cisolated-process%2Cnode-v4%2Cpython-v2%2Chttp-trigger%2Ccontainer-apps&pivots=programming-language-csharp
+
+
 
 ## VSCode extension for Azure functions:
 ```
@@ -178,7 +183,7 @@ Setup of .net user secrets for .net Aspire provisioning in dev mode
 ana.AppHost is configured to use user secret `03fad75d-f8ce-4083-8bf8-cb8ef785cf37`
 You can see the secrets using.
 ```
-code %APPDATA%\Microsoft\UserSecrets\03fad75d-f8ce-4083-8bf8-cb8ef785cf37\secrets.js
+code %APPDATA%\Microsoft\UserSecrets\03fad75d-f8ce-4083-8bf8-cb8ef785cf37\secrets.json
 ```
 On Linux and Mac:
 ```
