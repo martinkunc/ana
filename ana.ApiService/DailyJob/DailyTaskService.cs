@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Twilio;
@@ -163,26 +164,33 @@ public class DailyTaskService : BackgroundService
             }
             else if (nu.PreferredNotification == NotificationType.WhatsApp.ToString() && !string.IsNullOrEmpty(nu.WhatsAppNumber))
             {
-                //var formattedMessages = "On " + formattedDate + " there are following anniversaries " + string.Join("\n", nu.Messages);
+                var anniversaries = string.Join(" ", nu.Messages);
                 var fm = $"The upcoming anniversaries on {humanReadableDate} are the following anniversaries: {string.Join(" ", nu.Messages)}";
-                await SendWhatsAppMessage(nu.WhatsAppNumber, humanReadableDate, fm);
+                await SendWhatsAppMessage(nu.WhatsAppNumber, humanReadableDate, anniversaries);
             }
         }
     }
 
-    private async Task SendWhatsAppMessage(string whatsAppNumber, string humanReadableDate, string formattedMessages)
+    private async Task SendWhatsAppMessage(string whatsAppNumber, string humanReadableDate, string anniversaries)
     {
-        _logger.LogInformation($"Sending WhatsApp message to {whatsAppNumber}: {formattedMessages}");
-        var subject = $"Upcoming anniversaries on {humanReadableDate}. ";
+        _logger.LogInformation($"Sending WhatsApp message to {whatsAppNumber}: {anniversaries}");
         // Send using twilio
-        // in a trial model only sends to phones which joined my sandbox
         TwilioClient.Init(_secretTwilioAccountSID, _secretTwilioAccountToken);
 
         var message = await MessageResource.CreateAsync(
-            body:  formattedMessages,
-            from: new Twilio.Types.PhoneNumber( _secretWhatsAppFrom),
-            // phone in format of "whatsapp:+420720123456"
-            to: new Twilio.Types.PhoneNumber("whatsapp:"+whatsAppNumber));
+            from: new Twilio.Types.PhoneNumber(_secretWhatsAppFrom),
+            to: new Twilio.Types.PhoneNumber("whatsapp:" + whatsAppNumber),
+            contentSid: "HXd4d1fc17f54fa1e0d76951629323a8db",
+            contentVariables: JsonSerializer.Serialize(new Dictionary<string, object>
+            {
+                ["1"] = humanReadableDate,
+                ["2"] = anniversaries,
+            }, new JsonSerializerOptions
+            {
+                WriteIndented = true 
+            }),
+            messagingServiceSid:"MG51f74f879a04bb15f550cc83d54b6b72"
+        );
 
         _logger.LogInformation($"Body: {message.Body}");
         _logger.LogInformation($"message.Status: {message.Status}");

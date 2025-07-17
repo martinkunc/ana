@@ -272,6 +272,7 @@ builder.Services.AddSingleton<DailyTaskService>();
 var taskService = builder.Services.BuildServiceProvider().GetRequiredService<DailyTaskService>();
 taskService.SetSecrets(SecretFromEmail, SecretSendGridKey, SecretTwilioAccountSID, SecretTwilioAccountToken, SecretWhatsAppFrom);
 
+//await taskService.RunNowAsync();
 
 builder.Services.AddSingleton<IApiEndpoints>(sp =>
 {

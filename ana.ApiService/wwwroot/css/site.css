@@ -50,3 +50,19 @@
     background-color: #007bff;
     color: white;
 }
+
+.modal { position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background: rgba(0,0,0,0.4);}
+.modal-content { background: #fff; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px;}
+.close { float: right; font-size: 28px; font-weight: bold; cursor: pointer;}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+.form-check-input {
+    margin-right: 0.5em;
+    width: 2em;
+    min-width: 2em;
+    max-width: 2em;
+}

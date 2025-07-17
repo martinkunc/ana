@@ -16,17 +16,20 @@ public class LoginModel : PageModel
     private readonly UserManager<IdentityUser> _userManager;
 
     private readonly ILogger<LoginModel> _logger;
+    private readonly IWebHostEnvironment _environment;
 
     public LoginModel(
         SignInManager<IdentityUser> signInManager,
         UserManager<IdentityUser> userManager,
         IApiClient apiClient,
-        ILogger<LoginModel> logger)
+        ILogger<LoginModel> logger,
+        IWebHostEnvironment environment)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _apiClient = apiClient;
         _logger = logger;
+        _environment = environment;
     }
 
     [BindProperty]
@@ -47,17 +50,24 @@ public class LoginModel : PageModel
 
         [Display(Name = "Group Name")]
         public string GroupName { get; set; }
-        
-        public string? IsRegistration { get; set; }
-    }
 
-    [BindProperty]
-    public bool ShowRegistrationFields { get; set; }
+        public string? IsRegistration { get; set; }
+
+        [Display(Name = "I consent to the use of essential cookies")]
+        [Required(ErrorMessage = "You must consent to the use of essential cookies.")]
+        public bool ConsentCookies { get; set; }
+
+        [Display(Name = "I am at least 13 years old and agree to the data handling policy")]
+        [Required(ErrorMessage = "You must confirm your age and agree to the data policy.")]
+        public bool ConsentAgeAndPolicy { get; set; }
+        
+        public string? InvitationCode { get; set; }
+    }
 
     public void OnGet(string? returnUrl = null)
     {
         Console.WriteLine($"OnGet called with returnUrl: {returnUrl}");
-
+        Input = new InputModel();
         ReturnUrl = returnUrl ?? Url.Content("~/");
     }
 
@@ -65,15 +75,45 @@ public class LoginModel : PageModel
     {
         if (Input?.IsRegistration != "1")
         {
-            ShowRegistrationFields = true;
+            if (Input != null)
+            {
+                Input.IsRegistration = "1";
+            }
             return Page();
         }
 
         if (ModelState.IsValid)
         {
+            if (!Input.ConsentCookies || !Input.ConsentAgeAndPolicy)
+            {
+                ErrorMessage = "For your registration you have to agree with use of Cookies and the Data handling policy. Please check your consents.";
+                return Page();
+            }
+
+            if (!IsValidInvitationCode(Input.InvitationCode))
+            {
+                ErrorMessage = "Invalid invitation code";
+                return Page();
+            }
+
             return await RegisterUser(returnUrl ?? "/");
         }
         return Page();
+    }
+
+    private bool IsValidInvitationCode(string invitationCode)
+    {
+        if (_environment.IsDevelopment())
+        {
+            // In development, allow any code
+            return true;
+        }
+        if (int.TryParse(invitationCode, out var code))
+        {
+            if (code == int.Parse(DateTime.Now.ToString("yyyyMMdd")) + 2)
+                return true;
+        }
+        return false;
     }
 
     public async Task<IActionResult> OnPostBackToLoginAsync(string? returnUrl = null)
@@ -127,15 +167,6 @@ public class LoginModel : PageModel
                 PreferredNotification = NotificationType.None.ToString(),
                 SelectedGroupId = createGroupResponse.Group.Id
             });
-
-            // await _apiClient.SelectGroupAsync(createGroupResponse.UserId, createGroupResponse.Group.Id);
-            // await _apiClient.UpdateUserSettingsAsync(userId, new AnaUser
-            // {
-            //     Id = userId,
-            //     DisplayName = Input.DisplayName,
-            //     WhatsAppNumber = "",
-            //     PreferredNotification = NotificationType.None.ToString()
-            // });
 
 
             return LocalRedirect(returnUrl ?? "/");
