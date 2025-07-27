@@ -26,8 +26,27 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
-    <script src="_framework/blazor.webassembly.js"></script>
+    <script>
+        // for development only
+        if (window.location.hostname.includes("localhost") && window.location.origin !== "https://localhost:7003") {
+            window.location.href = "https://localhost:7003";
+        }
+    </script>
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script>
+        // Load browser refresh script only in development (localhost)
+        if (window.location.hostname.includes("localhost")) {
+            const script = document.createElement('script');
+            script.src = '/_framework/aspnetcore-browser-refresh.js';
+            document.head.appendChild(script);
+        }
+    </script>
     <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
+    <script type="module">
+        Blazor.start({
+            environment: window.location.hostname.includes("localhost") ? "Development" : "Production",
+        });
+    </script>
 </body>
 
 </html>

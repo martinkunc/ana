@@ -34,7 +34,7 @@ IResourceBuilder<Aspire.Hosting.Azure.AzureStorageResource> storage = null;
 IResourceBuilder<Aspire.Hosting.Azure.AzureBlobStorageResource> blobs = null;
 IResourceBuilder<Aspire.Hosting.Azure.AzureTableStorageResource> tables = null;
 
-if (isLocalCosmosDb)
+if (isLocalCosmosDb && !isAspireManifestGeneration)
 {
     Console.WriteLine("Using Local Cosmos from connection string: ");
     // First, add the connection string to the Configuration
@@ -91,6 +91,12 @@ var apiServiceBuilder = builder.AddProject<Projects.ana_ApiService>("apiservice"
     .WithReference(cosmosResourceBuilder)
     .WaitFor(cosmosResourceBuilder);
 
+// Only set Development environment for local development
+if (!isAspireManifestGeneration)
+{
+    apiServiceBuilder.WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development");
+}
+
 var variables = builder.Configuration.AsEnumerable()
         .Where(kvp => kvp.Key.StartsWith("ana-"))
         .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -110,13 +116,27 @@ else
 
 var apiService = apiServiceBuilder.WithExternalHttpEndpoints();
 
-
 var apiUrlHttps = apiService.GetEndpoint("https");
 
 Console.WriteLine($"MY: API URL HTTPS: {apiUrlHttps}");
 
-
 apiServiceBuilder.WithEnvironment("ASPNETCORE_EXTERNAL_URL", apiUrlHttps);
+
+// Only attach as extra resource in development because of debugging
+// in production Blazor app is hosted by api service
+if (builder.Environment.IsDevelopment() && !isAspireManifestGeneration)
+{
+    // Add Blazor WebAssembly app to Aspire host
+    var webApp = builder.AddProject<Projects.ana_Web>("webapp")
+        .WithReference(apiService)
+        .WaitFor(apiService)
+        .WithExternalHttpEndpoints()
+        .WithEnvironment("ApiService__Url", apiUrlHttps);
+    var webUrlHttps = webApp.GetEndpoint("https");
+    //webUrlHttps
+        apiServiceBuilder.WithEnvironment("WebApp__Url", webUrlHttps);
+    //apiServiceBuilder.WithEnvironment("WebApp__Url", "https://localhost:7003");
+}
 
 builder.AddNpmApp("reactapp", "../ana.react")
     .WithReference(apiService)

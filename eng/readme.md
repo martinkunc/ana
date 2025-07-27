@@ -211,3 +211,21 @@ is mostly classified as a spam. Please check your spam folder an if you don't se
 ## Whatsapp sandbox
 My Twilio subscription is still being verified, so, it can only send messages to verified numbers, which joined a sandbox.
 
+
+## Use puppeteer based script to download and run chrome 128
+cd .\scripts\puppeteer\
+npm run start
+
+## Checking of a browser is started with remote debugging
+In Powershell:
+```
+Get-CimInstance Win32_Process |
+>>     Where-Object { $_.Name -eq "chrome.exe" -and $_.CommandLine -like "*--remote-debugging-port*" } |
+>>     Select-Object ProcessId, CommandLine
+```
+
+## Start dotnet watch for hotreload with debugging
+Note: ana.Host and ana.ApiService has to be started upfront
+```
+dotnet watch --project .\ana.Web\ --configuration Debug --launch-profile "BlazorWeb"
+```

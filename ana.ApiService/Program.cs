@@ -17,6 +17,7 @@ var logger = LoggerFactory.Create(config =>
 {
     config.AddConsole();
     config.AddDebug();
+    config.SetMinimumLevel(LogLevel.Information);
 }).CreateLogger<Program>();
 
 logger.LogInformation($"Starting application with INFO: ");
@@ -24,6 +25,17 @@ logger.LogDebug($"Starting application with Debug: ");
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
+
+// Configure detailed logging for development
+if (builder.Environment.IsDevelopment())
+{
+    builder.Logging.SetMinimumLevel(LogLevel.Information);
+    builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Information);
+    builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting", LogLevel.Information);
+    builder.Logging.AddFilter("Microsoft.AspNetCore.Routing", LogLevel.Information);
+}
+
+var webAppUrl = Environment.GetEnvironmentVariable("WebApp__Url");
 
 string SecretConnectionString = await builder.GetFromSecretsOrVault(Config.SecretNames.AnaDbConnectionString);
 var SecretFromEmail = await builder.GetFromSecretsOrVault(Config.SecretNames.FromEmail);
@@ -34,20 +46,37 @@ var SecretWhatsAppFrom = await builder.GetFromSecretsOrVault(Config.SecretNames.
 var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.WebAppClientSecret);
 var SecretBlazorClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.BlazorClientSecret);
 
+string env = builder.Environment.EnvironmentName;
+Console.WriteLine($"Environment: {env}");
 
 var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
 var serviceName = "apiservice"; // Your service name as defined in Container Apps
 var isRunningOnAzureContainerApps = !string.IsNullOrEmpty(envDnsSuffix);
-
+Console.WriteLine($"isRunningOnAzureContainerApps: {isRunningOnAzureContainerApps}");
 var externalPublicDomain = "https://anniversarynotification.com";
 var externalUrl = !isRunningOnAzureContainerApps ? builder.Configuration["ASPNETCORE_EXTERNAL_URL"] : externalPublicDomain;
 
-
+// Currently on Azure it detects isRunningOnAzureContainerApps as true and uses externalPublicDomain,
+// but that means it doesn't work directly in Azure Container Apps
 Console.WriteLine($"MY: External URL: {externalUrl}");
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowBlazorWeb", policy =>
+        {
+            policy.WithOrigins(webAppUrl)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+    });
+}
 
 builder.Services.AddAuthentication(options =>
-{ 
+{
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
@@ -98,11 +127,6 @@ foreach (var conf in builder.Configuration.AsEnumerable())
 
     logger.LogInformation($"Config: {conf.Key} = {conf.Value}");
 }
-
-
-
-
-
 
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
@@ -190,7 +214,11 @@ builder.Services.Configure<IdentityOptions>(options =>
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>,
     UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
 
-
+var allowedRedirectUrls = new List<string> { externalUrl };
+if (builder.Environment.IsDevelopment())
+{
+    allowedRedirectUrls.Add(webAppUrl);
+}
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
     options.Events.RaiseErrorEvents = true;
@@ -208,9 +236,15 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 .AddInMemoryIdentityResources(IdentityServerConfig.GetResources())
 .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
 .AddInMemoryApiResources(IdentityServerConfig.GetApis())
-.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, new[] { externalUrl }, SecretWebAppClientSecret))
+.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, allowedRedirectUrls, SecretWebAppClientSecret))
 //.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
 .AddAspNetIdentity<IdentityUser>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromHours(1); // Set to match or exceed your JWT lifetime
+    options.SlidingExpiration = true; // Optional: extends session on activity
+});
 
 builder.Services.AddRazorPages();
 
@@ -292,19 +326,63 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseWebAssemblyDebugging();
+    app.UseDeveloperExceptionPage();
+    
+    // Add detailed request logging for debugging
+    app.Use(async (context, next) =>
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("REQUEST: {Method} {Path} {QueryString}", 
+            context.Request.Method, 
+            context.Request.Path, 
+            context.Request.QueryString);
+        
+        await next();
+        
+        logger.LogInformation("RESPONSE: {Method} {Path} -> {StatusCode}", 
+            context.Request.Method, 
+            context.Request.Path, 
+            context.Response.StatusCode);
+    });
 }
 
 app.UseIdentityServer();
-app.UseAuthentication();
-app.UseAuthorization();
+
+app.UseRouting();
+
+// Configure authentication to skip debugging endpoints
+app.UseWhen(context => 
+{
+    var isDebugPath = context.Request.Path.StartsWithSegments("/_framework/debug") ||
+                     context.Request.Path.StartsWithSegments("/_framework/debug/") ||
+                     context.Request.Path.StartsWithSegments("/_framework/debug/ws-proxy");
+    
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    if (isDebugPath)
+    {
+        logger.LogInformation("SKIPPING AUTH for debug path: {Path}", context.Request.Path);
+    }
+    
+    return !isDebugPath;
+}, 
+appBuilder =>
+{
+    appBuilder.UseAuthentication();
+    appBuilder.UseAuthorization();
+});
+
 app.UseFileServer();
 app.UseBlazorFrameworkFiles();
-app.MapRazorPages();
 
+app.MapRazorPages();
+app.MapApiEndpoints();
 app.MapFallbackToFile("index.html");
 
-app.MapApiEndpoints();
-
+if (builder.Environment.IsDevelopment())
+{
+    app.UseCors("AllowBlazorWeb");
+}
 
 var builder1 = new DbContextOptionsBuilder<ApplicationDbContext>();
 
@@ -313,8 +391,6 @@ builder1.UseCosmos(SecretConnectionString, Config.Database.Name);
 using (var dbContext = new ApplicationDbContext(builder1.Options))
 {
     await SeedDatabase.Initialize(app.Services);
-
-
 }
 
 app.Run();

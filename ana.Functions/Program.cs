@@ -27,10 +27,10 @@ Console.WriteLine($"MY: External URL: {externalUrl}");
 
 builder.ConfigureFunctionsWebApplication();
 
-builder.Services
-    .AddApplicationInsightsTelemetryWorkerService()
-    .ConfigureFunctionsApplicationInsights()
-    .AddLogging();
+//builder.Services
+//    .AddApplicationInsightsTelemetryWorkerService()
+//    .ConfigureFunctionsApplicationInsights()
+//    .AddLogging();
 
 builder.Services.AddHttpClient();
 

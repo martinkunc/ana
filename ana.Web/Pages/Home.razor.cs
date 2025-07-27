@@ -6,7 +6,14 @@ using ana.Web.Layout;
 
 namespace ana.Web.Pages;
 
-public partial class Home : LayoutComponentBase
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+
+
+public partial class Home : LayoutComponentBase, IDisposable
 {
     [Inject]
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; }
@@ -16,6 +23,9 @@ public partial class Home : LayoutComponentBase
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; }
+
+    [Inject]
+    private ITokenService TokenService { get; set; }
     
     public List<AnaAnniv> Anniversaries { get; set; }
     public string AnniversariesLoadingStatus { get; set; }
@@ -25,25 +35,76 @@ public partial class Home : LayoutComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        editContext = new EditContext(newAnniversary);
-        AnniversariesLoadingStatus = "Loading anniversaries...";
-
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        Console.WriteLine($"User is authenticated: {string.Join(",", authState.User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
-        var userId = authState.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value ?? throw new InvalidOperationException("User ID not found in claims.");
-
-        var selectedGroup = await apiClient.GetSelectedGroupAsync(userId);
-        var group = selectedGroup?.AnaGroup;
-        Console.WriteLine($"Selected group: {group}");
-        var groupId = group?.Id ?? throw new InvalidOperationException("Group ID not found in claims.");
-        newAnniversary.GroupId = groupId;
-        editContext = new EditContext(newAnniversary);
-
-
-        Anniversaries = await apiClient.GetAnniversariesAsync(groupId);
-        if (!Anniversaries.Any())
+        // Subscribe to token expiration events
+        TokenService.TokenExpired += OnTokenExpired;
+        
+        try
         {
-            AnniversariesLoadingStatus = "No anniversaries exists yet in your group.";
+            editContext = new EditContext(newAnniversary);
+            AnniversariesLoadingStatus = "Loading anniversaries...";
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            Console.WriteLine($"User is authenticated: {string.Join(",", authState.User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
+            
+            if (!authState.User.Identity.IsAuthenticated)
+            {
+                AnniversariesLoadingStatus = "Please log in to view anniversaries.";
+                return;
+            }
+
+            var userId = authState.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value ?? 
+                throw new InvalidOperationException("User ID not found in claims.");
+
+            var selectedGroup = await apiClient.GetSelectedGroupAsync(userId);
+            var group = selectedGroup?.AnaGroup;
+            Console.WriteLine($"Selected group: {group}");
+            var groupId = group?.Id ?? throw new InvalidOperationException("Group ID not found in claims.");
+            newAnniversary.GroupId = groupId;
+            editContext = new EditContext(newAnniversary);
+
+            Anniversaries = await apiClient.GetAnniversariesAsync(groupId);
+            if (!Anniversaries.Any())
+            {
+                AnniversariesLoadingStatus = "No anniversaries exists yet in your group.";
+            }
+            else
+            {
+                AnniversariesLoadingStatus = null;
+            }
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during initialization: {ex.Message}");
+            AnniversariesLoadingStatus = "Error loading data. Please try refreshing the page or log in again.";
+        }
+    }
+
+    private async void OnTokenExpired(object sender, TokenExpiredEventArgs e)
+    {
+        await InvokeAsync(() =>
+        {
+            if (e.RequiresRedirect)
+            {
+                AnniversariesLoadingStatus = "Session expired. Please log in again.";
+                StateHasChanged();
+            }
+            else
+            {
+                AnniversariesLoadingStatus = "Authentication issue. Please refresh the page.";
+                StateHasChanged();
+            }
+        });
+    }
+
+    public void Dispose()
+    {
+        if (TokenService != null)
+        {
+            TokenService.TokenExpired -= OnTokenExpired;
         }
         else
         {

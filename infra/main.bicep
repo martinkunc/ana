@@ -12,8 +12,6 @@ param location string
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
 
-@secure()
-param cosmos_db string
 
 var tags = {
   'azd-env-name': environmentName
@@ -34,6 +32,22 @@ module resources 'resources.bicep' = {
   }
 }
 
+module cosmos_db 'cosmos-db/cosmos-db.module.bicep' = {
+  name: 'cosmos-db'
+  scope: rg
+  params: {
+    location: location
+  }
+}
+module cosmos_db_roles 'cosmos-db-roles/cosmos-db-roles.module.bicep' = {
+  name: 'cosmos-db-roles'
+  scope: rg
+  params: {
+    cosmos_db_outputs_name: cosmos_db.outputs.name
+    location: location
+    principalId: resources.outputs.MANAGED_IDENTITY_PRINCIPAL_ID
+  }
+}
 module storage 'storage/storage.module.bicep' = {
   name: 'storage'
   scope: rg
@@ -61,6 +75,7 @@ output AZURE_CONTAINER_REGISTRY_NAME string = resources.outputs.AZURE_CONTAINER_
 output AZURE_CONTAINER_APPS_ENVIRONMENT_NAME string = resources.outputs.AZURE_CONTAINER_APPS_ENVIRONMENT_NAME
 output AZURE_CONTAINER_APPS_ENVIRONMENT_ID string = resources.outputs.AZURE_CONTAINER_APPS_ENVIRONMENT_ID
 output AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN string = resources.outputs.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN
+output COSMOS_DB_CONNECTIONSTRING string = cosmos_db.outputs.connectionString
 output STORAGE_BLOBENDPOINT string = storage.outputs.blobEndpoint
 output STORAGE_QUEUEENDPOINT string = storage.outputs.queueEndpoint
 output STORAGE_TABLEENDPOINT string = storage.outputs.tableEndpoint

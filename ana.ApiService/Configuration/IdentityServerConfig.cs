@@ -66,7 +66,7 @@ public class IdentityServerConfig
 
 
     // client want to access resources (aka scopes)
-    public static IEnumerable<Client> GetClients(IConfiguration configuration, string[] externalUris, string webAppClientSecret)
+    public static IEnumerable<Client> GetClients(IConfiguration configuration, List<string> externalUris, string webAppClientSecret)
     {
         return new List<Client>
             {
@@ -79,7 +79,7 @@ public class IdentityServerConfig
 
                     RedirectUris = CreateRedirectUris(externalUris, "/authentication/login-callback" ),
                     PostLogoutRedirectUris = CreateRedirectUris(externalUris, "/authentication/login" ),
-
+                    AllowedCorsOrigins = externalUris,
                     AllowedScopes = new List<string>
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
@@ -126,7 +126,7 @@ public class IdentityServerConfig
             };
     }
 
-    private static ICollection<string> CreateRedirectUris(string[] externalUris, string suffix)
+    private static ICollection<string> CreateRedirectUris(List<string> externalUris, string suffix)
     {
         return externalUris.Select(u => u + suffix).ToList();
     }
