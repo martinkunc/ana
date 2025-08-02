@@ -71,9 +71,4 @@ public partial class Settings : LayoutComponentBase
             Console.WriteLine($"User wasn't cancelled: {e.Message}");
         }
     }
-
-
-
 }
-
-

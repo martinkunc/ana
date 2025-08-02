@@ -6,17 +6,13 @@ using OpenTelemetry.Context;
 
 public class IdentityServerConfig
 {
-
-
     public static class IdentityServer
     {
         public const string CertificateName = "anaidentitycert";
         //public const string IssuerName = "Ana Identity Server";
         public const string AudienceName = "ana_api";
-
-
     }
-    
+
     public static class Resources
     {
         public const string ana = "ana";
@@ -60,9 +56,6 @@ public class IdentityServerConfig
                 new IdentityResources.Email()
             };
     }
-
-
-
 
 
     // client want to access resources (aka scopes)

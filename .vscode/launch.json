@@ -35,7 +35,7 @@
             ],
         },
         {
-            "name": "Watch: Products.Frontend.WasmForDebugging",
+            "name": "Watch: ana.Web",
             "type": "coreclr",
             "request": "launch",
             "cwd": "${workspaceFolder}\\ana.Web",
@@ -49,5 +49,27 @@
                 "--verbose"
             ]
         },
+        {
+            "name": "Launch for react debugging",
+            "type": "chrome",
+            "request": "launch",
+            "webRoot": "${workspaceFolder}/ana.react/src",
+            "url": "http://localhost:7004",
+            "sourceMapPathOverrides": {
+                "webpack:///src/*": "${webRoot}/*",
+                "webpack:///./*": "${webRoot}/*",
+                "webpack:///*": "${webRoot}/*",
+                "webpack:///src/components/*": "${webRoot}/components/*",
+                "webpack:///src/assets/*": "${webRoot}/assets/*",
+                "webpack:///src/*": "${webRoot}/*",
+                "webpack:///src/*": "${webRoot}/*",
+                "webpack:///src/components/*": "${webRoot}/components/*",
+                "webpack:///src/assets/*": "${webRoot}/assets/*",
+                "webpack:///src/App.tsx": "${webRoot}/App.tsx",
+                "webpack:///src/components/NavMenu.tsx": "${webRoot}/components/NavMenu.tsx",
+                "webpack:///src/components/MainLayout.tsx": "${webRoot}/components/MainLayout.tsx"
+            },
+            "port": 9222
+        }
     ],
 }

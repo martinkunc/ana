@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
@@ -130,8 +130,6 @@ public partial class Members : LayoutComponentBase
         await RefreshGroupMembersAsync(groupId);
         StateHasChanged();
     }
-
-
 
     private async Task RemoveMember(string groupId, string userId)
     {

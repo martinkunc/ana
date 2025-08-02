@@ -76,14 +76,15 @@ else
     tables = storage.AddTables("tables");
 }
 
-Console.WriteLine($"MY: Connection string: { connString}");
+Console.WriteLine($"MY: Connection string: {connString}");
 
 
 if (cosmosResourceBuilder == null)
 {
     throw new InvalidOperationException("Cosmos DB resource is not configured. Please check your connection string or Azure Cosmos DB setup.");
 }
-if (storage == null || blobs == null || tables == null) {
+if (storage == null || blobs == null || tables == null)
+{
     throw new InvalidOperationException("Azure storage for Azure functions has to be set.");
 }
 
@@ -133,12 +134,10 @@ if (builder.Environment.IsDevelopment() && !isAspireManifestGeneration)
         .WithExternalHttpEndpoints()
         .WithEnvironment("ApiService__Url", apiUrlHttps);
     var webUrlHttps = webApp.GetEndpoint("https");
-    //webUrlHttps
-        apiServiceBuilder.WithEnvironment("WebApp__Url", webUrlHttps);
-    //apiServiceBuilder.WithEnvironment("WebApp__Url", "https://localhost:7003");
+    apiServiceBuilder.WithEnvironment("WebApp__Url", webUrlHttps);
 }
 
-builder.AddNpmApp("reactapp", "../ana.react")
+var nodeBuilder = builder.AddNpmApp("reactapp", "../ana.react")
     .WithReference(apiService)
     .WaitFor(apiService)
     //.WithEnvironment("VITE_API_URL", apiService.Resource.GetEndpoints() GetHttpEndpointUrl())
@@ -147,9 +146,22 @@ builder.AddNpmApp("reactapp", "../ana.react")
     .WithEnvironment("VITE_API_URL", apiUrlHttps)
     .WithEnvironment("SOME_TEST", "CONTENT")
     .WithEnvironment("BROWSER", "none")
-    .WithHttpEndpoint(env: "VITE_PORT")
     .WithExternalHttpEndpoints()
     .PublishAsDockerFile();
+
+if (builder.Environment.IsDevelopment() && !isAspireManifestGeneration)
+{
+    Console.WriteLine("Setting VITE_PORT to 7004 for React app in development.");
+    nodeBuilder.WithHttpEndpoint(port: 7004, env: "VITE_PORT");
+    var reactAppUrl = nodeBuilder.GetEndpoint("http");
+    //webUrlHttps
+    apiServiceBuilder.WithEnvironment("ReactApp__Url", reactAppUrl);
+
+}
+else
+{
+    nodeBuilder.WithHttpEndpoint(env: "VITE_PORT");
+}
 
 var functions = builder.AddAzureFunctionsProject<Projects.ana_Functions>("functions")
        .WithReference(apiService)

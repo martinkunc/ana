@@ -62,4 +62,3 @@ builder.Services.AddScoped<IApiClient>(sp =>
 });
 
 await builder.Build().RunAsync();
-

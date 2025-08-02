@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
-
 public class WebHttpClientFactory : IAnaHttpClientFactory
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -49,5 +48,4 @@ public class WebHttpClientFactory : IAnaHttpClientFactory
             throw new Exception("Failed to retrieve access token", ex);
         }
     }
-
 }

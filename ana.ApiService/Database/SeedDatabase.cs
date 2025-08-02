@@ -226,6 +226,5 @@ public static class SeedDatabase
                 }
             }
         }
-
     }
 }

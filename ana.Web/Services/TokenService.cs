@@ -9,7 +9,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Timers;
 
-
 public class TokenService : ITokenService, IDisposable
 {
     private readonly IAccessTokenProvider _tokenProvider;

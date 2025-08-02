@@ -30,7 +30,7 @@ public static class EnvExtensions
                     return true;
                 if (IsWslHostAddress(endpoint))
                     return true;
-                if (endpoint.Contains("host.docker.internal") || 
+                if (endpoint.Contains("host.docker.internal") ||
                     endpoint.Contains(".local") ||
                     endpoint.Contains("emulator"))
                     return true;
@@ -38,7 +38,7 @@ public static class EnvExtensions
         }
         return false;
     }
-    
+
     private static bool IsWslHostAddress(string endpoint)
     {
         try
@@ -49,17 +49,17 @@ public static class EnvExtensions
             if (System.Net.IPAddress.TryParse(host, out var ip))
             {
                 var bytes = ip.GetAddressBytes();
-                
+
                 if (bytes.Length == 4) // IPv4
                 {
                     // 172.16.0.0/12 range (WSL commonly uses 172.x.x.x)
                     if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31)
                         return true;
-                    
+
                     // 192.168.0.0/16 range
                     if (bytes[0] == 192 && bytes[1] == 168)
                         return true;
-                    
+
                     // 10.0.0.0/8 range
                     if (bytes[0] == 10)
                         return true;

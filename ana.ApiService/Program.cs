@@ -36,6 +36,7 @@ if (builder.Environment.IsDevelopment())
 }
 
 var webAppUrl = Environment.GetEnvironmentVariable("WebApp__Url");
+var reactAppUrl = Environment.GetEnvironmentVariable("ReactApp__Url");
 
 string SecretConnectionString = await builder.GetFromSecretsOrVault(Config.SecretNames.AnaDbConnectionString);
 var SecretFromEmail = await builder.GetFromSecretsOrVault(Config.SecretNames.FromEmail);
@@ -64,9 +65,9 @@ if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddCors(options =>
     {
-        options.AddPolicy("AllowBlazorWeb", policy =>
+        options.AddPolicy("AllowWeb", policy =>
         {
-            policy.WithOrigins(webAppUrl)
+            policy.WithOrigins(webAppUrl, reactAppUrl)
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -166,7 +167,6 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 });
 
 
-
 builder.Services.AddSingleton<CosmosClient>(provider =>
 {
     CosmosClientOptions clientOptions = new()
@@ -218,6 +218,7 @@ var allowedRedirectUrls = new List<string> { externalUrl };
 if (builder.Environment.IsDevelopment())
 {
     allowedRedirectUrls.Add(webAppUrl);
+    allowedRedirectUrls.Add(reactAppUrl);
 }
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
@@ -346,7 +347,10 @@ if (app.Environment.IsDevelopment())
             context.Response.StatusCode);
     });
 }
-
+if (builder.Environment.IsDevelopment())
+{
+    app.UseCors("AllowWeb");
+}
 app.UseIdentityServer();
 
 app.UseRouting();
@@ -379,10 +383,7 @@ app.MapRazorPages();
 app.MapApiEndpoints();
 app.MapFallbackToFile("index.html");
 
-if (builder.Environment.IsDevelopment())
-{
-    app.UseCors("AllowBlazorWeb");
-}
+
 
 var builder1 = new DbContextOptionsBuilder<ApplicationDbContext>();
 

@@ -4,7 +4,6 @@ using ana.SharedNet;
 
 public static class SecretsExtensions
 {
-
     public static async Task<string> GetFromSecretsOrVault(
         this WebApplicationBuilder builder, string secretKeyName)
     {
