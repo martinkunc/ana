@@ -1,125 +1,216 @@
-import { HttpClientService, ApiResponse } from '../services/HttpClientService';
-
-export interface AnaGroup {
+export interface AnaGroup { // ok
   id: string;
   name: string;
   description?: string;
 }
 
-export interface AnaUser {
+export interface AnaUser { // ok
   id: string;
-  email: string;
-  name: string;
+  displayName: string;
   selectedGroupId?: string;
+  preferredNotification: string;
+  whatsAppNumber:string;
 }
 
-export interface Anniversary {
-  id: string;
-  title: string;
-  date: string;
-  description?: string;
-  groupId: string;
+export interface AnaAnniv { // ok
+  id?: string;
+  groupId?: string;
+  name?: string;
+  date?: string;
+  alignedDate?: string;
 }
 
-export interface SelectedGroupResponse {
+export interface SelectedGroupResponse { // ok
   anaGroup: AnaGroup;
+  userRole: string;
 }
 
-export interface GroupMember {
+export interface AnaGroupMember { // ok
   userId: string;
-  userName: string;
+  groupId: string;
+  role: string;
   email: string;
-  role?: string;
-}
-
-export interface NotificationSettings {
-  emailNotifications: boolean;
-  reminderDays: number;
+  displayName: string;
 }
 
 export class ApiClient {
-  constructor(private httpClient: HttpClientService) {}
+  private baseUrl: string;
+  private getAccessToken: () => string | null;
 
-  async getUserGroups(userId: string): Promise<ApiResponse<any>> {
-    return this.httpClient.get(`/api/v1/user/groups/${userId}`);
+  constructor(baseUrl: string, getAccessToken: () => string | null) {
+    this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    this.getAccessToken = getAccessToken;
   }
 
-  async getUserSelectedGroup(userId: string): Promise<ApiResponse<SelectedGroupResponse>> {
-    return this.httpClient.get<SelectedGroupResponse>(`/api/v1/user/select-group/${userId}`);
-  }
+  private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    const token = this.getAccessToken();
 
-  async selectUserGroup(userId: string, groupId: string): Promise<ApiResponse<void>> {
-    return this.httpClient.post<void>(`/api/v1/user/select-group/${userId}/${groupId}`);
-  }
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string>),
+    };
 
-  async createUser(userData: any): Promise<ApiResponse<void>> {
-    return this.httpClient.post<void>('/api/v1/user', userData);
-  }
-
-  async getUserSettings(userId: string): Promise<ApiResponse<any>> {
-    return this.httpClient.get(`/api/v1/user/${userId}`);
-  }
-
-  async updateUserSettings(userId: string, settings: any): Promise<ApiResponse<void>> {
-    return this.httpClient.put<void>(`/api/v1/user/${userId}`, settings);
-  }
-
-  async deleteUser(userId: string): Promise<ApiResponse<void>> {
-    return this.httpClient.delete<void>(`/api/v1/user/${userId}`);
-  }
-
-  async createGroup(group: any): Promise<ApiResponse<any>> {
-    return this.httpClient.post('/api/v1/group', group);
-  }
-
-  async getGroupMembers(groupId: string): Promise<ApiResponse<GroupMember[]>> {
-    return this.httpClient.get<GroupMember[]>(`/api/v1/group/${groupId}/members`);
-  }
-
-  async createGroupMember(groupId: string, memberData: any): Promise<ApiResponse<void>> {
-    return this.httpClient.post<void>(`/api/v1/group/${groupId}/member`, memberData);
-  }
-
-  async changeGroupMemberRole(groupId: string, userId: string, roleData: any): Promise<ApiResponse<void>> {
-    return this.httpClient.put<void>(`/api/v1/group/${groupId}/member/${userId}/role`, roleData);
-  }
-
-  async deleteGroupMember(groupId: string, userId: string): Promise<ApiResponse<void>> {
-    return this.httpClient.delete<void>(`/api/v1/group/${groupId}/member/${userId}`);
-  }
-
-  async getGroupAnniversaries(groupId: string): Promise<ApiResponse<Anniversary[]>> {
-    return this.httpClient.get<Anniversary[]>(`/api/v1/group/${groupId}/anniversaries`);
-  }
-
-  async createAnniversary(groupId: string, anniversary: Partial<Anniversary>): Promise<ApiResponse<void>> {
-    return this.httpClient.post<void>(`/api/v1/group/${groupId}/anniversary`, anniversary);
-  }
-
-  async updateAnniversary(groupId: string, anniversaryId: string, anniversary: Partial<Anniversary>): Promise<ApiResponse<void>> {
-    return this.httpClient.put<void>(`/api/v1/group/${groupId}/anniversary/${anniversaryId}`, anniversary);
-  }
-
-  async deleteAnniversary(groupId: string, anniversaryId: string): Promise<ApiResponse<void>> {
-    return this.httpClient.delete<void>(`/api/v1/group/${groupId}/anniversary/${anniversaryId}`);
-  }
-
-  async runDailyTask(): Promise<ApiResponse<void>> {
-    return this.httpClient.post<void>('/api/v1/daily-task');
-  }
-
-  async getAnniversaries(groupId?: string): Promise<ApiResponse<Anniversary[]>> {
-    if (groupId) {
-      return this.getGroupAnniversaries(groupId);
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
-    throw new Error('Group ID is required for getting anniversaries');
+
+    console.log(`${options.method || 'GET'} ${url}`);
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      
+      try {
+        const errorText = await response.text();
+        if (errorText) {
+          const errorData = JSON.parse(errorText);
+          if (typeof errorData === 'object' && errorData.message) {
+            errorMessage = errorData.message;
+          } else if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          }
+        }
+      } catch {
+        // Keep the default error message if we can't parse the error response
+      }
+      
+      console.error(`API Error ${response.status}:`, errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    // Handle empty responses (204 No Content, etc.)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return undefined as T;
+    }
+
+    // Parse JSON response
+    const text = await response.text();
+    if (!text) {
+      return undefined as T;
+    }
+
+    try {
+      return JSON.parse(text) as T;
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError);
+      throw new Error('Invalid JSON response from server');
+    }
   }
 
-  async addGroupMember(groupId: string, memberData: any): Promise<ApiResponse<void>> {
+  // User methods
+  async getUserGroups(userId: string): Promise<AnaGroup[]> {
+    return this.makeRequest<AnaGroup[]>(`/api/v1/user/groups/${userId}`);
+  }
+
+  async getUserSelectedGroup(userId: string): Promise<SelectedGroupResponse> {
+    return this.makeRequest<SelectedGroupResponse>(`/api/v1/user/select-group/${userId}`);
+  }
+
+  async selectUserGroup(userId: string, groupId: string): Promise<void> {
+    return this.makeRequest<void>(`/api/v1/user/select-group/${userId}/${groupId}`, {
+      method: 'POST'
+    });
+  }
+
+  async createUser(userData: any): Promise<void> {
+    return this.makeRequest<void>('/api/v1/user', {
+      method: 'POST',
+      body: JSON.stringify(userData)
+    });
+  }
+
+  async getUserSettings(userId: string): Promise<AnaUser> {
+    return this.makeRequest<AnaUser>(`/api/v1/user/${userId}`);
+  }
+
+  async updateUserSettings(userId: string, settings: any): Promise<void> {
+    return this.makeRequest<void>(`/api/v1/user/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(settings)
+    });
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    return this.makeRequest<void>(`/api/v1/user/${userId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Group methods
+  async createGroup(group: any): Promise<AnaGroup> {
+    return this.makeRequest<AnaGroup>('/api/v1/group', {
+      method: 'POST',
+      body: JSON.stringify(group)
+    });
+  }
+
+  async getGroupMembers(groupId: string): Promise<AnaGroupMember[]> {
+    return this.makeRequest<AnaGroupMember[]>(`/api/v1/group/${groupId}/members`);
+  }
+
+  async createGroupMember(groupId: string, memberData: any): Promise<void> {
+    return this.makeRequest<void>(`/api/v1/group/${groupId}/member`, {
+      method: 'POST',
+      body: JSON.stringify(memberData)
+    });
+  }
+
+  async changeGroupMemberRole(groupId: string, userId: string, roleData: any): Promise<void> {
+    return this.makeRequest<void>(`/api/v1/group/${groupId}/member/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify(roleData)
+    });
+  }
+
+  async deleteGroupMember(groupId: string, userId: string): Promise<void> {
+    return this.makeRequest<void>(`/api/v1/group/${groupId}/member/${userId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Anniversary methods
+  async getAnniversaries(groupId: string): Promise<AnaAnniv[]> {
+    return this.makeRequest<AnaAnniv[]>(`/api/v1/group/${groupId}/anniversaries`);
+  }
+
+  async createAnniversary(groupId: string, anniversary: Partial<AnaAnniv>): Promise<void> {
+    return this.makeRequest<void>(`/api/v1/group/${groupId}/anniversary`, {
+      method: 'POST',
+      body: JSON.stringify(anniversary)
+    });
+  }
+
+  async updateAnniversary(groupId: string, anniversaryId: string, anniversary: Partial<AnaAnniv>): Promise<void> {
+    return this.makeRequest<void>(`/api/v1/group/${groupId}/anniversary/${anniversaryId}`, {
+      method: 'PUT',
+      body: JSON.stringify(anniversary)
+    });
+  }
+
+  async deleteAnniversary(groupId: string, anniversaryId: string): Promise<void> {
+    return this.makeRequest<void>(`/api/v1/group/${groupId}/anniversary/${anniversaryId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Utility methods
+  async runDailyTask(): Promise<void> {
+    return this.makeRequest<void>('/api/v1/daily-task', {
+      method: 'POST'
+    });
+  }
+
+  // Alias methods for consistency
+  async addGroupMember(groupId: string, memberData: any): Promise<void> {
     return this.createGroupMember(groupId, memberData);
   }
 
-  async removeGroupMember(groupId: string, userId: string): Promise<ApiResponse<void>> {
+  async removeGroupMember(groupId: string, userId: string): Promise<void> {
     return this.deleteGroupMember(groupId, userId);
   }
 }

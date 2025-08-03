@@ -1,14 +1,13 @@
 import { useMemo } from 'react';
-import { useHttpClient } from './useHttpClient';
 import { ApiClient } from '../services/ApiClient';
-
+import { PUBLIC_URLS } from '../config/config';
+import { useAuth } from '../contexts/AuthContext';
 
 export const useApiClient = () => {
-  const httpClient = useHttpClient();
-
+  const { getAccessToken } = useAuth();
   const apiClient = useMemo(() => {
-    return new ApiClient(httpClient);
-  }, [httpClient]);
+    return new ApiClient(PUBLIC_URLS.API_BASE, getAccessToken);
+  }, [getAccessToken]);
 
   return apiClient;
 };

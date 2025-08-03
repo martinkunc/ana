@@ -20,20 +20,9 @@ export const useUserDisplayName = () => {
       try {
         const userId = user.profile?.sub;
         if (userId) {
-          const response = await apiClient.getUserSettings(userId);
-          if (response.success && response.data?.displayName) {
-            setDisplayName(response.data.displayName);
-            return;
-          }
+          const anaUser = await apiClient.getUserSettings(userId);
+          setDisplayName(anaUser.displayName);
         }
-        
-        
-        const fallbackName = user.profile?.name || 
-                            user.profile?.preferred_username || 
-                            user.profile?.email || 
-                            'User';
-        setDisplayName(fallbackName);
-        
       } catch (error) {
         console.error('Failed to fetch display name:', error);
         

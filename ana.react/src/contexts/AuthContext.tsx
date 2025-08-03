@@ -124,15 +124,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async () => {
-    if (userManager) {
-      try {
-        await userManager.signoutRedirect();
-      } catch (error) {
-        console.error('Logout failed:', error);
-      }
+const logout = async () => {
+  if (userManager) {
+    try {
+      // Clear local state immediately
+      setUser(null);
+      setIsAuthenticated(false);
+      
+      // Clear any stored tokens
+      await userManager.removeUser();
+      
+      // Then redirect to identity server for complete logout
+      await userManager.signoutRedirect({
+        post_logout_redirect_uri: AUTH_URLS.LOGOUT_REDIRECT
+      });
+      console.log('Logout successful');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Ensure local state is cleared even if logout fails
+      setUser(null);
+      setIsAuthenticated(false);
     }
-  };
+  }
+};
 
   const getAccessToken = () => {
     return user?.access_token || null;

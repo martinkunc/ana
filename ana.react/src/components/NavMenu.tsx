@@ -71,15 +71,13 @@ const NavMenu: React.FC<NavMenuProps> = ({ className = ''}) => {
 
       console.log(`Fetching selected group for user: ${userId}`);
       
-      const response = await apiClient.getUserSelectedGroup(userId);
-      
-      if (response.success && response.data?.anaGroup) {
-        setAnaGroupName(response.data.anaGroup.name);
-        console.log(`Set group name to: ${response.data.anaGroup.name}`);
+      const selectedGroup = await apiClient.getUserSelectedGroup(userId);
+      if (selectedGroup) {
+        setAnaGroupName(selectedGroup.anaGroup.name);
       } else {
-        console.error('Failed to fetch selected group:', response.error);
-        setAnaGroupName(response.error || 'Error loading group');
+        setAnaGroupName('No group selected');
       }
+        console.log(`Set group name to: ${selectedGroup?.anaGroup?.name}`);
     } catch (error) {
       console.error('Error refreshing selected group:', error);
       setAnaGroupName('Error loading');

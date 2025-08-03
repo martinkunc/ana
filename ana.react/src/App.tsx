@@ -5,6 +5,8 @@ import Authentication from './components/Authentication';
 import ProtectedRoute from './components/ProtectedRoute'; 
 import MainLayout from './components/MainLayout'; 
 import NotFound from './components/NotFound'; 
+import Home from './pages/Home';
+import Members from './pages/Members';
 
 const App = () => {
   return (
@@ -21,8 +23,8 @@ const App = () => {
               <ProtectedRoute>
                 <MainLayout>
                   <Routes>
-                    <Route path="/" element={<div>Home Page</div>} />
-
+                    <Route path="/" element={<Home />} />
+                    <Route path="/members" element={<Members />} />
                   </Routes>
                 </MainLayout>
               </ProtectedRoute>
