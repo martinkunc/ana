@@ -59,7 +59,7 @@ public class IdentityServerConfig
 
 
     // client want to access resources (aka scopes)
-    public static IEnumerable<Client> GetClients(IConfiguration configuration, List<string> externalUris, string webAppClientSecret)
+    public static IEnumerable<Client> GetClients(IConfiguration configuration, string apiUrl, List<string> webClientsUrls, string webAppClientSecret)
     {
         return new List<Client>
             {
@@ -70,9 +70,9 @@ public class IdentityServerConfig
                     RequirePkce = true,
                     RequireClientSecret = false,
 
-                    RedirectUris = CreateRedirectUris(externalUris, "/authentication/login-callback" ),
-                    PostLogoutRedirectUris = CreateRedirectUris(externalUris, "/authentication/login" ),
-                    AllowedCorsOrigins = externalUris,
+                    RedirectUris = CreateRedirectUris(webClientsUrls, "/authentication/login-callback" ),
+                    PostLogoutRedirectUris = CreatePostLogoutRedirectUris(apiUrl, webClientsUrls, "/account/login"),
+                    AllowedCorsOrigins = new[] { apiUrl }.Concat(webClientsUrls).ToList(),
                     AllowedScopes = new List<string>
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
@@ -119,8 +119,14 @@ public class IdentityServerConfig
             };
     }
 
-    private static ICollection<string> CreateRedirectUris(List<string> externalUris, string suffix)
+    private static ICollection<string> CreateRedirectUris(List<string> externalUris, string path)
     {
-        return externalUris.Select(u => u + suffix).ToList();
+        var baseUrls = externalUris.Select(u => u + path);
+        return baseUrls.ToList();
+    }
+
+    private static ICollection<string> CreatePostLogoutRedirectUris(string apiUrl, List<string> webClientsUris, string path)
+    {
+        return webClientsUris.Select(u => apiUrl + path + "?returnUrl=" + u).ToList();
     }
 }

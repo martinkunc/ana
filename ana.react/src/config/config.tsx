@@ -55,10 +55,10 @@ export const APP_CONFIG = {
 
 export const AUTH_URLS = {
   LOGIN_CALLBACK: `${window.location.origin}/authentication/login-callback`,
-  LOGOUT_CALLBACK: `${window.location.origin}/authentication/logout-callback`,
+  LOGOUT_CALLBACK: `${PUBLIC_URLS.API_BASE}/account/login`,
   SILENT_CALLBACK: `${window.location.origin}/authentication/silent-callback`,
-  LOGIN_REDIRECT: `${window.location.origin}/authentication/login`,
-  LOGOUT_REDIRECT: `${window.location.origin}/authentication/logout`,
+  LOGIN_REDIRECT: `${PUBLIC_URLS.API_BASE}/account/login?returnUrl=${window.location.origin}`,
+  LOGOUT_REDIRECT: `${PUBLIC_URLS.API_BASE}/authentication/login`,
 } as const;
 
 export const API_ENDPOINTS = {

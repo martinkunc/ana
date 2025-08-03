@@ -1,6 +1,13 @@
 ## Installation
 ## Requirements
 
+## Used versions:
+Node v22.17.1
+.Net runtime 9.0.7
+.Net Sdk 9.0.302
+React 19.1.0
+azd 1.18.0
+
 ### Azd (Azure Developer CLI)
 
 Windows:

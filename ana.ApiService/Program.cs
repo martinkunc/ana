@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using ana.SharedNet;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -214,11 +215,12 @@ builder.Services.Configure<IdentityOptions>(options =>
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>,
     UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
 
-var allowedRedirectUrls = new List<string> { externalUrl };
+var apiUrl = externalUrl;
+var webClientsUrls = new List<string>();
 if (builder.Environment.IsDevelopment())
 {
-    allowedRedirectUrls.Add(webAppUrl);
-    allowedRedirectUrls.Add(reactAppUrl);
+    webClientsUrls.Add(webAppUrl);
+    webClientsUrls.Add(reactAppUrl);
 }
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
@@ -237,9 +239,27 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 .AddInMemoryIdentityResources(IdentityServerConfig.GetResources())
 .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
 .AddInMemoryApiResources(IdentityServerConfig.GetApis())
-.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, allowedRedirectUrls, SecretWebAppClientSecret))
+.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, apiUrl, webClientsUrls, SecretWebAppClientSecret))
 //.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
 .AddAspNetIdentity<IdentityUser>();
+
+
+// if (!builder.Environment.IsDevelopment())
+// {
+//     // Production: Use Azure Key Vault for data protection
+// // Todo:
+//     // builder.Services.AddDataProtection()
+//     //     .PersistKeysToAzureBlobStorage(new Uri($"{builder.Configuration["DataProtection:BlobStorage:ContainerUri"]}/keys.xml"))
+//     //     .ProtectKeysWithAzureKeyVault(new Uri($"{Config.KeyVault.KeyVaultUrl}/keys/dataprotection-key"), new DefaultAzureCredential())
+//     //     .SetApplicationName("ana-identityserver");
+// }
+// else
+// {
+//     // Development: Use local file system
+//     builder.Services.AddDataProtection()
+//         .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Path.GetTempPath(), "ana-dataprotection-keys")))
+//         .SetApplicationName("ana-identityserver");
+// }
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

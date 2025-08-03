@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from 'react-router-dom';
 
 const ProtectedRoute: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
-  const { isAuthenticated, isLoading, login } = useAuth();
+  const { isAuthenticated, isLoading, login, isLoggingOut } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -15,6 +15,10 @@ const ProtectedRoute: React.FC<React.PropsWithChildren<{}>> = ({ children }) => 
         <p>Authorizing...</p>
       </div>
     );
+  }
+
+  if (isLoggingOut) {
+    return <div>Logging out...</div>; // Or return null to show nothing
   }
 
   if (!isAuthenticated) {

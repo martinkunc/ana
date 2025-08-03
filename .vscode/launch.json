@@ -5,16 +5,16 @@
     "version": "0.2.0",
     "configurations": [
        
-        // {
-        //     "name": "Launch Chrome for blazor debugging",
-        //     "type": "blazorwasm",
-        //     "request": "launch",
-        //     "cwd": "${workspaceFolder}/ana.Web/",
-        //     "url": "https://localhost:7003/",
-        //     "timeout": 75000,
-        //     "browser": "chrome",
-        //     "webRoot": "${workspaceFolder}/ana.Web",
-        // },        
+        {
+            "name": "Launch Chrome for blazor debugging",
+            "type": "blazorwasm",
+            "request": "attach",
+            "cwd": "${workspaceFolder}/ana.Web/",
+            "url": "https://localhost:7003/",
+            "timeout": 75000,
+            "browser": "edge",
+            "webRoot": "${workspaceFolder}/ana.Web",
+        },        
 
         {
             "name": "Launch Chrome for Wasm debugging",
@@ -59,10 +59,6 @@
                 "webpack:///src/*": "${webRoot}/*",
                 "webpack:///./*": "${webRoot}/*",
                 "webpack:///*": "${webRoot}/*",
-                "webpack:///src/components/*": "${webRoot}/components/*",
-                "webpack:///src/assets/*": "${webRoot}/assets/*",
-                "webpack:///src/*": "${webRoot}/*",
-                "webpack:///src/*": "${webRoot}/*",
                 "webpack:///src/components/*": "${webRoot}/components/*",
                 "webpack:///src/assets/*": "${webRoot}/assets/*",
                 "webpack:///src/App.tsx": "${webRoot}/App.tsx",

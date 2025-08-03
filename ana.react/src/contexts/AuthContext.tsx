@@ -6,6 +6,7 @@ interface AuthContextType {
   user: any;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isLoggingOut: boolean;
   userManager: UserManager | null;
   login: (returnUrl?: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -29,14 +30,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userManager, setUserManager] = useState<UserManager | null>(null);
+   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
+  const handleUserLoaded = async (user: User) => {
+    console.log('User loaded:', user);
+    setUser(user);
+    setIsAuthenticated(!!user && !user.expired);
+  };
+
+  const handleUserUnloaded = () => {
+    console.log('User unloaded');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  const handleAccessTokenExpired = () => {
+    console.log('Access token expired');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  const handleAccessTokenExpiring = () => {
+    console.log('Access token expiring, attempting silent renew');
+  };
+
+  const handleSilentRenewError = (error: Error) => {
+    console.warn('Silent renew failed:', error);
+  };
+
   useEffect(() => {
     
     const oidcConfig = {
       authority: PUBLIC_URLS.OIDC_AUTHORITY,
       client_id: APP_CONFIG.OIDC_CLIENT_ID,
       redirect_uri: `${window.location.origin}/authentication/login-callback`,
-      post_logout_redirect_uri: `${window.location.origin}/authentication/logout-callback`,
       response_type: 'code',
       scope: APP_CONFIG.OIDC_SCOPES,
       automaticSilentRenew: true,
@@ -49,32 +76,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const manager = new UserManager(oidcConfig);
     setUserManager(manager);
 
-    // Event handlers
-    const handleUserLoaded = async (user: User) => {
-      console.log('User loaded:', user);
-      setUser(user);
-      setIsAuthenticated(!!user && !user.expired);
-    };
-
-    const handleUserUnloaded = () => {
-      console.log('User unloaded');
-      setUser(null);
-      setIsAuthenticated(false);
-    };
-
-    const handleAccessTokenExpired = () => {
-      console.log('Access token expired');
-      setUser(null);
-      setIsAuthenticated(false);
-    };
-
-    const handleAccessTokenExpiring = () => {
-      console.log('Access token expiring, attempting silent renew');
-    };
-
-    const handleSilentRenewError = (error: Error) => {
-      console.warn('Silent renew failed:', error);
-    };
 
     manager.events.addUserLoaded(handleUserLoaded);
     manager.events.addUserUnloaded(handleUserUnloaded);
@@ -127,23 +128,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 const logout = async () => {
   if (userManager) {
     try {
-      // Clear local state immediately
+      setIsLoggingOut(true);
+      userManager.stopSilentRenew();
       setUser(null);
       setIsAuthenticated(false);
-      
-      // Clear any stored tokens
+
+      const currentUser = await userManager.getUser();
+
       await userManager.removeUser();
       
-      // Then redirect to identity server for complete logout
-      await userManager.signoutRedirect({
-        post_logout_redirect_uri: AUTH_URLS.LOGOUT_REDIRECT
-      });
+      const logoutArgs: any = {
+        post_logout_redirect_uri: AUTH_URLS.LOGIN_REDIRECT
+      };
+      
+      if (currentUser?.id_token) {
+        logoutArgs.id_token_hint = currentUser.id_token;
+        console.log('Adding id_token_hint to logout request');
+      } else {
+        console.warn('No id_token available for logout - PostLogoutRedirectUri may not work properly');
+      }
+
+      await userManager.signoutRedirect(logoutArgs);
+
       console.log('Logout successful');
     } catch (error) {
       console.error('Logout failed:', error);
-      // Ensure local state is cleared even if logout fails
       setUser(null);
       setIsAuthenticated(false);
+    } finally {
+
+      setTimeout(() => setIsLoggingOut(false), 1000);
     }
   }
 };
@@ -164,6 +178,7 @@ const logout = async () => {
     user,
     isAuthenticated,
     isLoading,
+    isLoggingOut,
     userManager,
     login,
     logout,
