@@ -341,32 +341,34 @@ builder.Services.AddSingleton<IApiEndpoints>(sp =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-app.UseExceptionHandler();
+
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseWebAssemblyDebugging();
     app.UseDeveloperExceptionPage();
-    
+
     // Add detailed request logging for debugging
     app.Use(async (context, next) =>
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-        logger.LogInformation("REQUEST: {Method} {Path} {QueryString}", 
-            context.Request.Method, 
-            context.Request.Path, 
+        logger.LogInformation("REQUEST: {Method} {Path} {QueryString}",
+            context.Request.Method,
+            context.Request.Path,
             context.Request.QueryString);
-        
-        await next();
-        
-        logger.LogInformation("RESPONSE: {Method} {Path} -> {StatusCode}", 
-            context.Request.Method, 
-            context.Request.Path, 
-            context.Response.StatusCode);
+
+            await next();
+
+            logger.LogInformation("RESPONSE: {Method} {Path} -> {StatusCode}",
+                context.Request.Method,
+                context.Request.Path,
+                context.Response.StatusCode);
     });
 }
+// Configure the HTTP request pipeline.
+app.UseExceptionHandler();
+
 if (builder.Environment.IsDevelopment())
 {
     app.UseCors("AllowWeb");

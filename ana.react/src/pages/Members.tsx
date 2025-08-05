@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApiClient } from '../hooks/useApiClient';
 import { useAuth } from '../contexts/AuthContext';
-import { AnaGroupMember } from '../services/ApiClient';
+import { AnaGroupMember, AnaRoleNames } from '../services/ApiClient';
 
 interface NewUser {
   email: string;
@@ -84,8 +84,9 @@ const Members: React.FC = () => {
       setAddMemberStatusMessage('');
       
       await apiClient.createGroupMember(displayedGroupId, {
+        groupId: displayedGroupId,
         email: newUser.email,
-        role: 'Member' // Default role
+        role: AnaRoleNames.User
       });
       
       setAddMemberStatusMessage('Member added successfully');
@@ -98,17 +99,17 @@ const Members: React.FC = () => {
       
     } catch (error) {
       console.error('Error adding member:', error);
-      setAddMemberStatusMessage(`Error adding member: ${error}`);
+      setAddMemberStatusMessage(`Failed to add user!`);
       setAddMemberStatusColor('red');
     }
   };
 
   const checkAdminChanged = async (isChecked: boolean, userId: string, groupId: string) => {
     try {
-      const newRole = isChecked ? 'Admin' : 'Member';
-      
+      const newRole = isChecked ? AnaRoleNames.Admin : AnaRoleNames.User;
+
       await apiClient.changeGroupMemberRole(groupId, userId, {
-        role: newRole
+        roleName: newRole
       });
       
       // Update the local state
@@ -169,13 +170,13 @@ const Members: React.FC = () => {
                       <input 
                         type="checkbox" 
                         checked={m.role === 'Admin'}
-                        onChange={(e) => checkAdminChanged(e.target.checked, m.userId, displayedGroupId)}
+                        onChange={(e) => checkAdminChanged(e.target.checked, m.userId!, displayedGroupId)}
                       />
                       Administrator
                     </div>
                     <button 
                       type="button" 
-                      onClick={() => removeMember(displayedGroupId, m.userId)}
+                      onClick={() => removeMember(displayedGroupId, m.userId!)}
                     >
                       Remove
                     </button>

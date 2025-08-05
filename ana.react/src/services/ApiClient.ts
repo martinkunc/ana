@@ -26,11 +26,20 @@ export interface SelectedGroupResponse { // ok
 }
 
 export interface AnaGroupMember { // ok
-  userId: string;
+  userId?: string;
   groupId: string;
   role: string;
   email: string;
-  displayName: string;
+  displayName?: string;
+}
+
+export interface ChangeGroupMemberRoleRequest {
+    roleName: string;
+}
+
+export class AnaRoleNames {
+    public static readonly Admin = "Admin";
+    public static readonly User = "User";
 }
 
 export class ApiClient {
@@ -153,14 +162,14 @@ export class ApiClient {
     return this.makeRequest<AnaGroupMember[]>(`/api/v1/group/${groupId}/members`);
   }
 
-  async createGroupMember(groupId: string, memberData: any): Promise<void> {
+  async createGroupMember(groupId: string, memberData: AnaGroupMember): Promise<void> {
     return this.makeRequest<void>(`/api/v1/group/${groupId}/member`, {
       method: 'POST',
       body: JSON.stringify(memberData)
     });
   }
 
-  async changeGroupMemberRole(groupId: string, userId: string, roleData: any): Promise<void> {
+  async changeGroupMemberRole(groupId: string, userId: string, roleData: ChangeGroupMemberRoleRequest): Promise<void> {
     return this.makeRequest<void>(`/api/v1/group/${groupId}/member/${userId}/role`, {
       method: 'PUT',
       body: JSON.stringify(roleData)
