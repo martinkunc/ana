@@ -37,6 +37,11 @@ export interface ChangeGroupMemberRoleRequest {
     roleName: string;
 }
 
+export interface GetUserGroupsResponse {
+  userId: string;
+  groups: AnaGroup[];
+}
+
 export class AnaRoleNames {
     public static readonly Admin = "Admin";
     public static readonly User = "User";
@@ -113,7 +118,8 @@ export class ApiClient {
 
   // User methods
   async getUserGroups(userId: string): Promise<AnaGroup[]> {
-    return this.makeRequest<AnaGroup[]>(`/api/v1/user/groups/${userId}`);
+    const getUserGroupsResponse = await this.makeRequest<GetUserGroupsResponse>(`/api/v1/user/groups/${userId}`);
+    return getUserGroupsResponse?.groups || [];
   }
 
   async getUserSelectedGroup(userId: string): Promise<SelectedGroupResponse> {

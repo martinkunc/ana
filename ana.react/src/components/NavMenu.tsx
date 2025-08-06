@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useApiClient } from '../hooks/useApiClient';
+import { useSelectedGroup } from '../contexts/SelectedGroupContext';
 import styles from './NavMenu.module.css';
 
 interface NavMenuProps {
@@ -9,11 +8,9 @@ interface NavMenuProps {
   onNavToggle?: (isOpen: boolean) => void;
 }
 
-const NavMenu: React.FC<NavMenuProps> = ({ className = ''}) => {
+const NavMenu: React.FC<NavMenuProps> = ({ className = '' }) => {
   const [collapseNavMenu, setCollapseNavMenu] = useState(true);
-  const [anaGroupName, setAnaGroupName] = useState<string>('Loading...');
-  const { user, isAuthenticated } = useAuth();
-  const apiClient = useApiClient();
+  const { anaGroupName } = useSelectedGroup();
   const location = useLocation();
 
   const navMenuCssClass = collapseNavMenu ? `collapse` : "";
@@ -51,47 +48,6 @@ const NavMenu: React.FC<NavMenuProps> = ({ className = ''}) => {
       exact: false
     }
   ];
-
-  const refreshSelectedGroup = useCallback(async () => {
-    if (!isAuthenticated || !user) {
-      console.log('User not authenticated, skipping group refresh');
-      return;
-    }
-
-    try {
-      console.log('Refreshing NavMenu selected group');
-      console.log(`User is authenticated: ${JSON.stringify(user.profile)}`);
-      
-      const userId = user.profile?.sub;
-      if (!userId) {
-        console.error('User ID not found in claims');
-        setAnaGroupName('No user ID');
-        return;
-      }
-
-      console.log(`Fetching selected group for user: ${userId}`);
-      
-      const selectedGroup = await apiClient.getUserSelectedGroup(userId);
-      if (selectedGroup) {
-        setAnaGroupName(selectedGroup.anaGroup.name);
-      } else {
-        setAnaGroupName('No group selected');
-      }
-        console.log(`Set group name to: ${selectedGroup?.anaGroup?.name}`);
-    } catch (error) {
-      console.error('Error refreshing selected group:', error);
-      setAnaGroupName('Error loading');
-    }
-  }, [isAuthenticated, user, apiClient]);
-
-  useEffect(() => {
-    console.log('NavMenu useEffect triggered', { isAuthenticated, user: !!user });
-    if (isAuthenticated && user) {
-      refreshSelectedGroup();
-    } else {
-      setAnaGroupName('Not authenticated');
-    }
-  }, [isAuthenticated, user, refreshSelectedGroup]);
 
   const isActiveLink = (item: typeof navigationItems[0]): boolean => {
     if (item.exact) {
