@@ -26,9 +26,25 @@
 
         DisplayNameService.DisplayName = displayName;
     }
-    public void BeginLogOut()
+    
+    public async void BeginLogOut()
     {
-        Navigation.NavigateToLogout("authentication/logout");
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        
+        // Get id_token from user claims if available
+        var idTokenClaim = authState.User.Claims.FirstOrDefault(c => c.Type == "id_token");
+        
+        if (idTokenClaim != null)
+        {
+            Console.WriteLine("Adding id_token_hint to logout request");
+            // Pass id_token_hint as query parameter in the logout URL
+            Navigation.NavigateToLogout($"authentication/logout?id_token_hint={idTokenClaim.Value}");
+        }
+        else
+        {
+            Console.WriteLine("Warning: No id_token available for logout - PostLogoutRedirectUri may not work properly");
+            Navigation.NavigateToLogout("authentication/logout");
+        }
     }
 
     protected override void OnInitialized()

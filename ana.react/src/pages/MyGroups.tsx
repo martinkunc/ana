@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApiClient } from '../hooks/useApiClient';
 import { useAuth } from '../contexts/AuthContext';
-import { useSelectedGroup } from '../contexts/SelectedGroupContext';
+import { useSharedState } from '../contexts/SharedStateContext';
 import { AnaGroup } from '../services/ApiClient';
 import styles from './MyGroups.module.css';
 
@@ -13,7 +13,7 @@ interface NewGroup {
 const MyGroups: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const apiClient = useApiClient();
-  const { selectedGroup, refreshSelectedGroup } = useSelectedGroup();
+  const { selectedGroup, refreshSelectedGroup } = useSharedState();
   
   const [myGroupsList, setMyGroupsList] = useState<AnaGroup[]>([]);
   const [groupsLoadingStatus, setGroupsLoadingStatus] = useState<string | null>('Loading...');

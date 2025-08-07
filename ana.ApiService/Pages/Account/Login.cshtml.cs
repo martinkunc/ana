@@ -90,30 +90,9 @@ public class LoginModel : PageModel
                 return Page();
             }
 
-            if (!IsValidInvitationCode(Input.InvitationCode))
-            {
-                ErrorMessage = "Invalid invitation code";
-                return Page();
-            }
-
             return await RegisterUser(returnUrl ?? "/");
         }
         return Page();
-    }
-
-    private bool IsValidInvitationCode(string invitationCode)
-    {
-        if (_environment.IsDevelopment())
-        {
-            // In development, allow any code
-            return true;
-        }
-        if (int.TryParse(invitationCode, out var code))
-        {
-            if (code == int.Parse(DateTime.Now.ToString("yyyyMMdd")) + 2)
-                return true;
-        }
-        return false;
     }
 
     public async Task<IActionResult> OnPostBackToLoginAsync(string? returnUrl = null)

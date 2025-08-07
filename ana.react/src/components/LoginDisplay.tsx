@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useUserDisplayName } from '../hooks/useUserDisplayName';
+import { useSharedState } from '../contexts/SharedStateContext';
 
 interface LoginDisplayProps {
   className?: string;
 }
 
 const LoginDisplay: React.FC<LoginDisplayProps> = ({ className = '' }) => {
-  const { user, isAuthenticated, isLoading, login, logout } = useAuth();
-  const { displayName, isLoading: isLoadingDisplayName } = useUserDisplayName();
+  const { isAuthenticated, isLoading, login, logout } = useAuth();
+  const { displayName, isLoadingDisplayName } = useSharedState();
 
 
   const handleLogin = async () => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { useSelectedGroup } from '../contexts/SelectedGroupContext';
+import { useSharedState } from '../contexts/SharedStateContext';
 import styles from './NavMenu.module.css';
 
 interface NavMenuProps {
@@ -10,7 +10,7 @@ interface NavMenuProps {
 
 const NavMenu: React.FC<NavMenuProps> = ({ className = '' }) => {
   const [collapseNavMenu, setCollapseNavMenu] = useState(true);
-  const { anaGroupName } = useSelectedGroup();
+  const { anaGroupName } = useSharedState();
   const location = useLocation();
 
   const navMenuCssClass = collapseNavMenu ? `collapse` : "";

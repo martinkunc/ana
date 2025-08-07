@@ -1,5 +1,5 @@
 import { AuthProvider } from './contexts/AuthContext';
-import { SelectedGroupProvider } from './contexts/SelectedGroupContext';
+import { SharedStateProvider } from './contexts/SharedStateContext';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Authentication from './components/Authentication'; 
 import ProtectedRoute from './components/ProtectedRoute'; 
@@ -8,11 +8,12 @@ import NotFound from './components/NotFound';
 import Home from './pages/Home';
 import Members from './pages/Members';
 import MyGroups from './pages/MyGroups';
+import Settings from './pages/Settings';
 
 const App = () => {
   return (
     <AuthProvider>
-      <SelectedGroupProvider>
+      <SharedStateProvider>
         <Router>
           <Routes>
             {/* Authentication routes */}
@@ -28,6 +29,7 @@ const App = () => {
                       <Route path="/" element={<Home />} />
                       <Route path="/members" element={<Members />} />
                       <Route path="/mygroups" element={<MyGroups />} />
+                      <Route path="/settings" element={<Settings />} />
                     </Routes>
                   </MainLayout>
                 </ProtectedRoute>
@@ -38,7 +40,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
-      </SelectedGroupProvider>
+      </SharedStateProvider>
     </AuthProvider>
   );
 };

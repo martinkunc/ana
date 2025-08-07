@@ -22,16 +22,23 @@ Console.WriteLine($"BaseAddress URL: {baseAddress}");
 Console.WriteLine($"apiServiceUrl: {apiServiceUrl}");
 
 
-
+var baseAddressNoSlash = baseAddress.TrimEnd('/');
 // Configure OIDC authentication
 builder.Services.AddOidcAuthentication(options =>
 {
     options.ProviderOptions.DefaultScopes.Add("ana_api");
     options.ProviderOptions.ClientId = "blazor"; // Client ID registered in IdentityServer
     options.ProviderOptions.Authority = apiServiceUrl;
-    options.ProviderOptions.PostLogoutRedirectUri = $"{baseAddress}authentication/login";
+    options.ProviderOptions.PostLogoutRedirectUri = $"{apiServiceUrl}/account/login?returnUrl={baseAddressNoSlash}";
+    //options.ProviderOptions.PostLogoutRedirectUri = baseAddress; // Redirect back to the Blazor app
+
     options.ProviderOptions.RedirectUri = $"{baseAddress}authentication/login-callback";
     options.ProviderOptions.ResponseType = "code"; // Use authorization code flow
+    
+    // Configure logout to use id_token_hint for proper logout flow
+    options.AuthenticationPaths.LogOutPath = "authentication/logout";
+    options.AuthenticationPaths.LogOutCallbackPath = "authentication/logout-callback";
+    options.AuthenticationPaths.LogOutFailedPath = "authentication/logout-failed";
 });
 
 // register the cookie handler
