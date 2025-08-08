@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode } from 'react';
 import NavMenu from './NavMenu';
 import LoginDisplay from './LoginDisplay';
 import styles from './MainLayout.module.css';

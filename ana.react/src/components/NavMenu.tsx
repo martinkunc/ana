@@ -8,7 +8,7 @@ interface NavMenuProps {
   onNavToggle?: (isOpen: boolean) => void;
 }
 
-const NavMenu: React.FC<NavMenuProps> = ({ className = '' }) => {
+const NavMenu: React.FC<NavMenuProps> = ({ }) => {
   const [collapseNavMenu, setCollapseNavMenu] = useState(true);
   const { anaGroupName } = useSharedState();
   const location = useLocation();
