@@ -15,6 +15,12 @@ logger.LogDebug($"Starting application with Debug: ");
 
 var externalUrl = builder.Configuration["ApiService:Url"] 
     ?? throw new InvalidOperationException("API URL not configured");
+var localUrl = new Uri(externalUrl);
+var runningOnAzure = !localUrl.IsLoopback;
+Console.WriteLine($"MY: Running on Azure: {runningOnAzure}");
+
+var externalPublicDomain = "https://anniversarynotification.com";
+externalUrl = !runningOnAzure ? externalUrl : externalPublicDomain;
 
 logger.LogInformation("API URL configured as: {ApiUrl}", externalUrl);
 
