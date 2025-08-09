@@ -16,7 +16,7 @@ FROM nginx:alpine
 COPY --from=build /app/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Expose the default nginx port
+# Expose standard HTTP port 80 for Azure Container Apps
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]

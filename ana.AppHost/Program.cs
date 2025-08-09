@@ -146,7 +146,6 @@ var nodeBuilder = builder.AddNpmApp("reactapp", "../ana.react")
     .WithEnvironment("VITE_API_URL", apiUrlHttps)
     .WithEnvironment("SOME_TEST", "CONTENT")
     .WithEnvironment("BROWSER", "none")
-    .WithExternalHttpEndpoints()
     .PublishAsDockerFile();
 
 if (builder.Environment.IsDevelopment() && !isAspireManifestGeneration)
@@ -158,9 +157,13 @@ if (builder.Environment.IsDevelopment() && !isAspireManifestGeneration)
     apiServiceBuilder.WithEnvironment("ReactApp__Url", reactAppUrl);
 
 }
-else
+
+if (isAspireManifestGeneration)
 {
-    nodeBuilder.WithHttpEndpoint(env: "VITE_PORT");
+    // In Aspire manifest generation, use standard HTTP port 80 for React app with nginx
+    Console.WriteLine("Setting port 80 for React app in production (nginx).");
+    nodeBuilder.WithHttpEndpoint(port: 80, name: "http", env: "VITE_PORT")
+        .WithExternalHttpEndpoints();
 }
 
 var functions = builder.AddAzureFunctionsProject<Projects.ana_Functions>("functions")

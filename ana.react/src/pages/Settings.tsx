@@ -113,7 +113,6 @@ const Settings: React.FC = () => {
               fontSize: '1.2em',
               marginTop: '0.2em',
               marginBottom: '1em',
-              padding: '0.3em'
             }}
             value={settingsModel.displayName}
             onChange={(e) => handleInputChange('displayName', e.target.value)}
@@ -129,10 +128,11 @@ const Settings: React.FC = () => {
               fontSize: '1.2em',
               marginTop: '0.2em',
               marginBottom: '1em',
-              padding: '0.3em'
             }}
             value={settingsModel.whatsAppNumber}
             onChange={(e) => handleInputChange('whatsAppNumber', e.target.value)}
+            placeholder='Phone number for ex. +447912345678'
+            title='International phone number in E.164 format with +country code and then full phone number'
           />
         </div>
 

@@ -56,13 +56,24 @@ var serviceName = "apiservice"; // Your service name as defined in Container App
 var isRunningOnAzureContainerApps = !string.IsNullOrEmpty(envDnsSuffix);
 Console.WriteLine($"isRunningOnAzureContainerApps: {isRunningOnAzureContainerApps}");
 var externalPublicDomain = "https://anniversarynotification.com";
-var externalUrl = !isRunningOnAzureContainerApps ? builder.Configuration["ASPNETCORE_EXTERNAL_URL"] : externalPublicDomain;
+var externalReactPublicDomain = "https://react.anniversarynotification.com";
+var externalUrl = builder.Configuration["ASPNETCORE_EXTERNAL_URL"];
+
+if (isRunningOnAzureContainerApps)
+{
+    externalUrl = externalPublicDomain;
+    webAppUrl = externalPublicDomain;
+    reactAppUrl = externalReactPublicDomain;
+}
+Console.WriteLine($"Api External URL : {externalUrl}");
+Console.WriteLine($"Web External URL : {webAppUrl}");
+Console.WriteLine($"React External URL : {reactAppUrl}");
 
 // Currently on Azure it detects isRunningOnAzureContainerApps as true and uses externalPublicDomain,
 // but that means it doesn't work directly in Azure Container Apps
 Console.WriteLine($"MY: External URL: {externalUrl}");
 
-if (builder.Environment.IsDevelopment())
+//if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddCors(options =>
     {
@@ -217,11 +228,10 @@ builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>,
 
 var apiUrl = externalUrl;
 var webClientsUrls = new List<string>();
-if (builder.Environment.IsDevelopment())
-{
-    webClientsUrls.Add(webAppUrl);
-    webClientsUrls.Add(reactAppUrl);
-}
+webClientsUrls.Add(webAppUrl);
+webClientsUrls.Add(reactAppUrl);
+logger.LogInformation($"Api URLs: {apiUrl}");
+logger.LogInformation($"Web clients URLs: {string.Join(", ", webClientsUrls)}");
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
     options.Events.RaiseErrorEvents = true;
@@ -244,27 +254,12 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 .AddAspNetIdentity<IdentityUser>();
 
 
-// if (!builder.Environment.IsDevelopment())
-// {
-//     // Production: Use Azure Key Vault for data protection
-// // Todo:
-//     // builder.Services.AddDataProtection()
-//     //     .PersistKeysToAzureBlobStorage(new Uri($"{builder.Configuration["DataProtection:BlobStorage:ContainerUri"]}/keys.xml"))
-//     //     .ProtectKeysWithAzureKeyVault(new Uri($"{Config.KeyVault.KeyVaultUrl}/keys/dataprotection-key"), new DefaultAzureCredential())
-//     //     .SetApplicationName("ana-identityserver");
-// }
-// else
-// {
-//     // Development: Use local file system
-//     builder.Services.AddDataProtection()
-//         .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(Path.GetTempPath(), "ana-dataprotection-keys")))
-//         .SetApplicationName("ana-identityserver");
-// }
+
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.ExpireTimeSpan = TimeSpan.FromHours(1); // Set to match or exceed your JWT lifetime
-    options.SlidingExpiration = true; // Optional: extends session on activity
+    options.ExpireTimeSpan = TimeSpan.FromHours(1); 
+    options.SlidingExpiration = true; 
 });
 
 builder.Services.AddRazorPages();
@@ -369,10 +364,8 @@ if (app.Environment.IsDevelopment())
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
-if (builder.Environment.IsDevelopment())
-{
-    app.UseCors("AllowWeb");
-}
+app.UseCors("AllowWeb");
+
 app.UseIdentityServer();
 
 app.UseRouting();
