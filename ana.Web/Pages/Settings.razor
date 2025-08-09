@@ -1,4 +1,4 @@
-﻿@page "/settings"
+@page "/settings"
 @layout MainLayout
 @inherits LayoutComponentBase
 @attribute [Authorize]
@@ -17,7 +17,10 @@
 
     <div style="margin-bottom: 1.5em;">
         <label>Phone for WhatsApp notification</label><br />
-        <InputText style="width: 320px; font-size: 1.2em; margin-top: 0.2em; margin-bottom: 1em;" @bind-Value="settingsModel.WhatsAppNumber" />
+        <InputText style="width: 320px; font-size: 1.2em; margin-top: 0.2em; margin-bottom: 1em;" @bind-Value="settingsModel.WhatsAppNumber" 
+            placeholder='Phone number for ex. +447912345678'
+            title='International phone number in E.164 format with +country code and then full phone number'
+        />
     </div>
 
     <div style="margin-bottom: 1.5em;">

@@ -3,9 +3,7 @@ public class AnaAnniv
     public string Id { get; set; }
     public string GroupId { get; set; }
     public string Name { get; set; }
-
     public string Date { get; set; }
-
     public string AlignedDate { get; set; }
 
     public AnaAnniv()

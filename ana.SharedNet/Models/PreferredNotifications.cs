@@ -1,4 +1,3 @@
-
 namespace ana.SharedNet;
 
 public static class PreferredNotifications

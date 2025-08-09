@@ -5,9 +5,10 @@
 }
 <div class="login-container">
     <h2>Anniversary notifications</h2>
-    @if (Model.ShowRegistrationFields) {
+    @if (Model.Input?.IsRegistration == "1") {
         <div class="form-group">
             <span>Application is storing personal identifiable records. By registering you are giving us a consent to store your records.</span>
+            <a href="#" id="showPrivacy">See the Privacy Policy</a>
         </div>
     }
     <form method="post" novalidate>
@@ -15,7 +16,7 @@
 
         <div class="form-group">
             <label>User email</label>
-            <input type="text" asp-for="Input.Email" class="form-control" value="" required="false" autofocus />
+            <input type="text" asp-for="Input.Email" class="form-control" required="false" autofocus />
             <span asp-validation-for="Input.Email" class="text-danger"></span>
         </div>
 
@@ -25,7 +26,7 @@
             <span asp-validation-for="Input.Password" class="text-danger"></span>
         </div>
 
-        @if (Model.ShowRegistrationFields)
+        @if (Model.Input?.IsRegistration == "1")
         {
             <input type="hidden" asp-for="Input.IsRegistration" class="form-control" value="1"/>
 
@@ -40,11 +41,35 @@
                 <input type="text" asp-for="Input.GroupName" class="form-control" required="false"/>
                 <span asp-validation-for="Input.GroupName" class="text-danger"></span>
             </div>
+
+            <div class="form-group d-flex align-items-center">
+                <div class="form-check">
+                    <span class="form-check-label">
+                        The application is for the testing purposes only. Please do not use real personal data.
+                    </span>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" asp-for="Input.ConsentCookies" class="form-check-input" id="ConsentCookies" />
+                    <label class="form-check-label" for="ConsentCookies">
+                        I consent to the use of essential cookies
+                    </label>
+                </div>
+                <span asp-validation-for="Input.ConsentCookies" class="text-danger"></span>
+            </div>
+            <div class="form-group d-flex align-items-center">
+                <div class="form-check">
+                    <input type="checkbox" asp-for="Input.ConsentAgeAndPolicy" class="form-check-input" id="ConsentAgeAndPolicy" />
+                    <label class="form-check-label" for="ConsentAgeAndPolicy">
+                        I am at least 13 years old and agree to the data handling policy
+                    </label>
+                </div>
+                <span asp-validation-for="Input.ConsentAgeAndPolicy" class="text-danger"></span>
+            </div>
         }
 
         <div class="button-group reverse-buttons">
-            <button type="submit" class="btn btn-primary">@(Model.ShowRegistrationFields ? "Create Account" : "Login")</button>        
-            @if (!Model.ShowRegistrationFields)
+            <button type="submit" class="btn btn-primary">@(Model.Input?.IsRegistration == "1" ? "Create Account" : "Login")</button>        
+            @if (Model.Input?.IsRegistration != "1")
             {
                 <button type="submit" asp-page-handler="Register" class="btn btn-secondary">Register</button>
             } else 
@@ -56,4 +81,50 @@
             <span class="text-danger">@(Model.ErrorMessage)</span>
         </div>
     </form>
+    <div id="privacyModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span id="closePrivacy" class="close">&times;</span>
+        <iframe src="/privacy" style="width:100%;height:400px;border:none;"></iframe>
+    </div>
+    <script>
+    let modalCloseHandler = null;
+    let windowClickHandler = null;
+
+    const showPrivacyElement = document.getElementById('showPrivacy');
+    if (showPrivacyElement) {
+        showPrivacyElement.onclick = function(e) {
+            e.preventDefault();
+            document.getElementById('privacyModal').style.display = 'block';
+            
+            modalCloseHandler = function() {
+                closeModal();
+            };
+            
+            windowClickHandler = function(event) {
+                if (event.target == document.getElementById('privacyModal')) {
+                    closeModal();
+                }
+            };
+            
+            document.getElementById('closePrivacy').addEventListener('click', modalCloseHandler);
+            window.addEventListener('click', windowClickHandler);
+        };
+    }
+
+    function closeModal() {
+        document.getElementById('privacyModal').style.display = 'none';
+        
+        if (modalCloseHandler) {
+            document.getElementById('closePrivacy').removeEventListener('click', modalCloseHandler);
+            modalCloseHandler = null;
+        }
+        
+        if (windowClickHandler) {
+            window.removeEventListener('click', windowClickHandler);
+            windowClickHandler = null;
+        }
+    }
+    </script>
+</div>
+</div>
 </div>

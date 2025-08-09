@@ -1,29 +1,24 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
-using ana.Web.Layout;
-using ana.SharedNet;
-using System.Diagnostics.CodeAnalysis;
-using System.Collections;
-using Azure.Core.Pipeline;
 
 namespace ana.Web.Pages;
 
 public partial class Members : LayoutComponentBase
 {
     [Inject]
-    private AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+    private AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
 
     [Inject]
     private IApiClient apiClient { get; set; } = default!;
 
     [Inject]
-    private IJSRuntime JSRuntime { get; set; }
+    private IJSRuntime? JSRuntime { get; set; }
 
     private string MembersOfGroupTitle { get; set; } = "Members";
-    
-    public List<AnaGroupMember> GroupMembers { get; set; }
+
+    public List<AnaGroupMember> GroupMembers { get; set; } = new List<AnaGroupMember>();
 
     private bool isAdmin { get; set; } = false;
 
@@ -32,16 +27,24 @@ public partial class Members : LayoutComponentBase
     private string? addMemberStatusMessage { get; set; }
     public string? MembersLoadingStatus { get; set; }
     protected NewGroupUser newUser { get; set; } = new NewGroupUser();
-    protected EditContext editContext { get; set; }
+    protected EditContext? editContext { get; set; }
     public string AddGroupUserSummary { get; set; } = string.Empty;
     public static class Colors
     {
         public static string Red = "red";
         public static string Green = "#4caf50";
     }
-    private string addMemberStatusColor { get; set; }  = Colors.Green;
+    private string addMemberStatusColor { get; set; } = Colors.Green;
     protected override async Task OnInitializedAsync()
     {
+        if (JSRuntime == null)
+        {
+            throw new InvalidOperationException("JSRuntime is not available for confirmation dialog.");
+        }
+        if (AuthenticationStateProvider == null)
+        {
+            throw new InvalidOperationException("AuthenticationStateProvider is not available.");
+        }
         editContext = new EditContext(newUser);
         MembersLoadingStatus = "Loading members...";
 
@@ -70,7 +73,7 @@ public partial class Members : LayoutComponentBase
 
     protected async Task AddGroupMember()
     {
-        if (!editContext.Validate())
+        if (!editContext?.Validate() ?? false)
         {
             AddGroupUserSummary = "Please correct the errors above.";
             return;
@@ -96,7 +99,7 @@ public partial class Members : LayoutComponentBase
 
     private async Task RefreshGroupMembersAsync(string groupId)
     {
-        newUser = new NewGroupUser{ GroupId = groupId };
+        newUser = new NewGroupUser { GroupId = groupId };
         editContext = new EditContext(newUser);
         MembersLoadingStatus = "Loading members...";
         Console.WriteLine($"Refreshing group members for groupId {groupId}");
@@ -113,7 +116,8 @@ public partial class Members : LayoutComponentBase
 
     private async Task CheckAdminChanged(object isAdmin, string userId, string groupId)
     {
-        if (!bool.TryParse(isAdmin?.ToString(), out var isAdminBool)) {
+        if (!bool.TryParse(isAdmin?.ToString(), out var isAdminBool))
+        {
             return;
         }
         Console.WriteLine($"Changed is admin for: {userId} in {groupId} to {isAdminBool}");
@@ -124,17 +128,19 @@ public partial class Members : LayoutComponentBase
         };
         Console.WriteLine($"Changing role for group {groupId} userId {userId} to roleName {roleName}");
         await apiClient.ChangeGroupMemberRoleAsync(groupId, userId, roleName);
-        
-        
+
         StateHasChanged();
         await RefreshGroupMembersAsync(groupId);
         StateHasChanged();
     }
 
-
-
     private async Task RemoveMember(string groupId, string userId)
     {
+        if (JSRuntime == null)
+        {
+            throw new InvalidOperationException("JSRuntime is not available for confirmation dialog.");
+        }
+
         bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to remove the user from this group ?");
         if (!confirmed)
             return;

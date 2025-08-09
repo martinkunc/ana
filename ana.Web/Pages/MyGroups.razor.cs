@@ -1,42 +1,39 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
-using ana.Web.Layout;
-using ana.SharedNet;
-using System.Diagnostics.CodeAnalysis;
-using System.Collections;
 
 namespace ana.Web.Pages;
 
 public partial class MyGroups : LayoutComponentBase
 {
     [Inject]
-    private AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+    private AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
 
     [Inject]
-    private UserSelectedGroupService userSelectedGroupService { get; set; }
+    private UserSelectedGroupService? userSelectedGroupService { get; set; }
 
     [Inject]
     private IApiClient apiClient { get; set; } = default!;
 
-    [Inject]
-    private IJSRuntime JSRuntime { get; set; }
-    
-    public List<AnaGroup> MyGroupsList { get; set; }
+    public List<AnaGroup> MyGroupsList { get; set; } = new List<AnaGroup>();
 
     private AnaGroup? selectedGroup { get; set; }
 
-    private string displayedUserId { get; set; }
+    private string? displayedUserId { get; set; }
 
     private string? addGroupStatusMessage { get; set; }
     public string? GroupsLoadingStatus { get; set; }
     protected NewGroup newGroup { get; set; } = new NewGroup();
-    protected EditContext editContext { get; set; }
+    protected EditContext? editContext { get; set; }
     public string AddGroupSummary { get; set; } = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
+        if (AuthenticationStateProvider == null)
+        {
+            throw new InvalidOperationException("AuthenticationStateProvider is not available.");
+        }
         editContext = new EditContext(newGroup);
         GroupsLoadingStatus = "Loading groups...";
 
@@ -60,7 +57,7 @@ public partial class MyGroups : LayoutComponentBase
 
     protected async Task AddGroup()
     {
-        if (!editContext.Validate())
+        if (!editContext?.Validate() ?? false)
         {
             AddGroupSummary = "Please correct the errors above.";
             return;
@@ -104,7 +101,7 @@ public partial class MyGroups : LayoutComponentBase
         Console.WriteLine($"Switching group to {groupId} for userId {userId}");
         await apiClient.SelectGroupAsync(userId, groupId);
         Console.WriteLine("Raising selected group changed");
-        userSelectedGroupService.RaiseChange();
+        userSelectedGroupService?.RaiseChange();
         var selectedGroupRes = await apiClient.GetSelectedGroupAsync(userId);
         selectedGroup = selectedGroupRes?.AnaGroup;
         if (selectedGroup == null)
@@ -116,7 +113,4 @@ public partial class MyGroups : LayoutComponentBase
         await RefreshGroupsAsync(userId);
         StateHasChanged();
     }
-
-
-
 }

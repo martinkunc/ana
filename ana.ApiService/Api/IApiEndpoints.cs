@@ -1,5 +1,3 @@
-using System.Security.Claims;
-
 public interface IApiEndpoints
 {
     Task<CreateGroupResponse> CreateGroup(CreateGroupRequest request);

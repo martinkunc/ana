@@ -4,19 +4,67 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        // {
-        //     "name": "Attach to .NET Functions",
-        //     "type": "coreclr",
-        //     "request": "attach",
-        //     "processId": "${command:azureFunctions.pickProcess}"
-        // }
+       
+        {
+            "name": "Launch Chrome for blazor debugging",
+            "type": "blazorwasm",
+            "request": "attach",
+            "cwd": "${workspaceFolder}/ana.Web/",
+            "url": "https://localhost:7003/",
+            "timeout": 75000,
+            "browser": "edge",
+            "webRoot": "${workspaceFolder}/ana.Web",
+        },        
+        {
+            "name": "Launch Chrome for Wasm debugging",
+            "type": "pwa-chrome",
+            "request": "launch",
+            "timeout": 30000,
+            // If you have changed the default port / launch URL make sure to update the expectation below
+            "url": "https://localhost:7003/",
+            "webRoot": "${workspaceFolder}/ana.Web/",
+            "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+            "runtimeExecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+            "runtimeArgs": [
+                "--new-window",
+                "--user-data-dir=C:\\Temp\\BlazorDebug",
+                "--remote-debugging-port=9222",
+                "--remote-debugging-address=0.0.0.0",
+                "--incognito"
+            ],
+        },
+        {
+            "name": "Watch: ana.Web",
+            "type": "coreclr",
+            "request": "launch",
+            "cwd": "${workspaceFolder}\\ana.Web",
+            "program": "dotnet",
+            "args": [
+                "watch",
+                "--project",
+                "ana.Web.csproj",
+                "--configuration", "Debug",
+                "--launch-profile", "BlazorWeb",
+                "--verbose"
+            ]
+        },
+        {
+            "name": "Launch for react debugging",
+            "type": "chrome",
+            "request": "launch",
+            "webRoot": "${workspaceFolder}/ana.react/src",
+            "url": "http://localhost:7004",
+            "sourceMapPathOverrides": {
+                "webpack:///src/*": "${webRoot}/*",
+                "webpack:///./*": "${webRoot}/*",
+                "webpack:///*": "${webRoot}/*",
+                "webpack:///src/components/*": "${webRoot}/components/*",
+                "webpack:///src/assets/*": "${webRoot}/assets/*",
+                "webpack:///src/App.tsx": "${webRoot}/App.tsx",
+                "webpack:///src/components/NavMenu.tsx": "${webRoot}/components/NavMenu.tsx",
+                "webpack:///src/components/MainLayout.tsx": "${webRoot}/components/MainLayout.tsx"
+            },
+            "port": 9222
+        }
     ],
-    // "configurations": [
-    //     {
-    //     "type": "blazorwasm",
-    //     "request": "launch",
-    //     "name": "Launch Blazor WebAssembly App",
-    //     "url": "https://localhost:7398/"
-    //     }
-    // ]
 }

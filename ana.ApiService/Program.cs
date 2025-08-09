@@ -1,13 +1,9 @@
 using System.Security.Cryptography.X509Certificates;
-using ana.ServiceDefaults;
 using Azure.Identity;
-using Azure.Security.KeyVault.Certificates;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Azure.Cosmos;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using ana.SharedNet;
 
@@ -17,13 +13,24 @@ var logger = LoggerFactory.Create(config =>
 {
     config.AddConsole();
     config.AddDebug();
+    config.SetMinimumLevel(LogLevel.Information);
 }).CreateLogger<Program>();
 
-logger.LogInformation($"Starting application with INFO: ");
-logger.LogDebug($"Starting application with Debug: ");
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
+
+// Configure detailed logging for development
+if (builder.Environment.IsDevelopment())
+{
+    builder.Logging.SetMinimumLevel(LogLevel.Information);
+    builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Information);
+    builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting", LogLevel.Information);
+    builder.Logging.AddFilter("Microsoft.AspNetCore.Routing", LogLevel.Information);
+}
+
+var webAppUrl = Environment.GetEnvironmentVariable("WebApp__Url");
+var reactAppUrl = Environment.GetEnvironmentVariable("ReactApp__Url");
 
 string SecretConnectionString = await builder.GetFromSecretsOrVault(Config.SecretNames.AnaDbConnectionString);
 var SecretFromEmail = await builder.GetFromSecretsOrVault(Config.SecretNames.FromEmail);
@@ -34,26 +41,51 @@ var SecretWhatsAppFrom = await builder.GetFromSecretsOrVault(Config.SecretNames.
 var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.WebAppClientSecret);
 var SecretBlazorClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.BlazorClientSecret);
 
+string env = builder.Environment.EnvironmentName;
+Console.WriteLine($"Environment: {env}");
 
 var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
-var serviceName = "apiservice"; // Your service name as defined in Container Apps
+
 var isRunningOnAzureContainerApps = !string.IsNullOrEmpty(envDnsSuffix);
-
+Console.WriteLine($"isRunningOnAzureContainerApps: {isRunningOnAzureContainerApps}");
 var externalPublicDomain = "https://anniversarynotification.com";
-var externalUrl = !isRunningOnAzureContainerApps ? builder.Configuration["ASPNETCORE_EXTERNAL_URL"] : externalPublicDomain;
+var externalReactPublicDomain = "https://react.anniversarynotification.com";
+var externalUrl = builder.Configuration["ASPNETCORE_EXTERNAL_URL"];
 
+if (isRunningOnAzureContainerApps)
+{
+    externalUrl = externalPublicDomain;
+    webAppUrl = externalPublicDomain;
+    reactAppUrl = externalReactPublicDomain;
+}
+// Because when we run on AC apps, we use public domains, the authentication doesn't work on AC url directly
+Console.WriteLine($"Api External URL : {externalUrl}");
+Console.WriteLine($"Web External URL : {webAppUrl}");
+Console.WriteLine($"React External URL : {reactAppUrl}");
+if (webAppUrl == null || reactAppUrl == null || externalUrl == null)
+{
+    throw new InvalidOperationException("WebApp, ReactApp, or Api URL are not set in environment variables or not running on AC");
+}
 
-Console.WriteLine($"MY: External URL: {externalUrl}");
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWeb", policy =>
+    {
+        policy.WithOrigins(webAppUrl, reactAppUrl)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+    });
+});
 
 builder.Services.AddAuthentication(options =>
-{ 
+{
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
     .AddJwtBearer(options =>
     {
-        
         options.Authority = externalUrl;
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
@@ -83,28 +115,17 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-
-
-// Add services to the container.
 builder.Services.AddProblemDetails();
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-//builder.AddAzureCosmosClient("cosmos-db");
-
+// prints configurations for debugging purposes
 foreach (var conf in builder.Configuration.AsEnumerable())
 {
 
     logger.LogInformation($"Config: {conf.Key} = {conf.Value}");
 }
-
-
-
-
-
-
-
+// application db context with CosmosDb configuration. It requires passing credentials, so parsing the Conn. string
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     var accountEndpoint = "";
@@ -138,10 +159,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
             cosmosOptions.ConnectionMode(Microsoft.Azure.Cosmos.ConnectionMode.Gateway);
         }
         );
-
 });
-
-
 
 builder.Services.AddSingleton<CosmosClient>(provider =>
 {
@@ -190,7 +208,14 @@ builder.Services.Configure<IdentityOptions>(options =>
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>,
     UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
 
-
+var apiUrl = externalUrl;
+var webClientsUrls = new List<string>
+{
+    webAppUrl,
+    reactAppUrl
+};
+logger.LogInformation($"Api URLs: {apiUrl}");
+logger.LogInformation($"Web clients URLs: {string.Join(", ", webClientsUrls)}");
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 {
     options.Events.RaiseErrorEvents = true;
@@ -198,7 +223,6 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
     options.Events.RaiseFailureEvents = true;
     options.Events.RaiseSuccessEvents = true;
 
-    // Disable automatic redirects
     options.UserInteraction.ErrorUrl = "/error";
     options.UserInteraction.LoginUrl = "/account/login";
     options.UserInteraction.LoginReturnUrlParameter = "returnUrl";
@@ -208,12 +232,16 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 .AddInMemoryIdentityResources(IdentityServerConfig.GetResources())
 .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
 .AddInMemoryApiResources(IdentityServerConfig.GetApis())
-.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, new[] { externalUrl }, SecretWebAppClientSecret))
-//.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
+.AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, apiUrl, webClientsUrls, SecretWebAppClientSecret))
 .AddAspNetIdentity<IdentityUser>();
 
-builder.Services.AddRazorPages();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromHours(1); 
+    options.SlidingExpiration = true; 
+});
 
+builder.Services.AddRazorPages();
 
 var identityServerKeyPath = builder.Configuration["IdentityServerKeyPath"];
 if (identityServerKeyPath != null)
@@ -246,11 +274,7 @@ else
     identityServerBuilder.AddSigningCredential(cert);
 }
 
-
 builder.Services.AddAuthorization();
-
-
-var httpClient = new HttpClient();
 
 builder.Services.AddHttpClient(
     "Auth",
@@ -267,11 +291,12 @@ builder.Services.AddSingleton<IApiClient>(sp =>
     return new ApiClient(new ApiHttpClientFactory(httpClientFactory, externalUrl, SecretWebAppClientSecret, loggerFac), logger);
 });
 
-
 builder.Services.AddSingleton<DailyTaskService>();
 var taskService = builder.Services.BuildServiceProvider().GetRequiredService<DailyTaskService>();
 taskService.SetSecrets(SecretFromEmail, SecretSendGridKey, SecretTwilioAccountSID, SecretTwilioAccountToken, SecretWhatsAppFrom);
 
+// When testing DailyTask, this triggers it after startup
+//await taskService.RunNowAsync();
 
 builder.Services.AddSingleton<IApiEndpoints>(sp =>
 {
@@ -281,29 +306,67 @@ builder.Services.AddSingleton<IApiEndpoints>(sp =>
     return new ApiEndpoints(logger, dbContextFactory, httpContextAccessor, taskService);
 });
 
-
-
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
+    // in development, OpenApi is available at https://localhost:7001/openapi/v1.json
     app.MapOpenApi();
+    app.UseWebAssemblyDebugging();
+    app.UseDeveloperExceptionPage();
+
+    // Request logging for debugging
+    app.Use(async (context, next) =>
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("REQUEST: {Method} {Path} {QueryString}",
+            context.Request.Method,
+            context.Request.Path,
+            context.Request.QueryString);
+
+            await next();
+
+            logger.LogInformation("RESPONSE: {Method} {Path} -> {StatusCode}",
+                context.Request.Method,
+                context.Request.Path,
+                context.Response.StatusCode);
+    });
 }
+app.UseExceptionHandler();
+
+app.UseCors("AllowWeb");
 
 app.UseIdentityServer();
-app.UseAuthentication();
-app.UseAuthorization();
+
+app.UseRouting();
+
+// Configure authentication to skip debugging endpoints
+app.UseWhen(context => 
+{
+    var isDebugPath = context.Request.Path.StartsWithSegments("/_framework/debug") ||
+                     context.Request.Path.StartsWithSegments("/_framework/debug/") ||
+                     context.Request.Path.StartsWithSegments("/_framework/debug/ws-proxy");
+    
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    if (isDebugPath)
+    {
+        logger.LogInformation("SKIPPING AUTH for debug path: {Path}", context.Request.Path);
+    }
+    
+    return !isDebugPath;
+}, 
+appBuilder =>
+{
+    appBuilder.UseAuthentication();
+    appBuilder.UseAuthorization();
+});
+
 app.UseFileServer();
 app.UseBlazorFrameworkFiles();
+
 app.MapRazorPages();
-
-app.MapFallbackToFile("index.html");
-
 app.MapApiEndpoints();
-
+app.MapFallbackToFile("index.html");
 
 var builder1 = new DbContextOptionsBuilder<ApplicationDbContext>();
 
@@ -312,8 +375,6 @@ builder1.UseCosmos(SecretConnectionString, Config.Database.Name);
 using (var dbContext = new ApplicationDbContext(builder1.Options))
 {
     await SeedDatabase.Initialize(app.Services);
-
-
 }
 
 app.Run();

@@ -1,7 +1,7 @@
 using ana.SharedNet;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Logging;
-
+// The call to Api service requires token, which we are requesting with WebApp secret from IdP
 public class FunctionsHttpClientFactory : IAnaHttpClientFactory
 {
     private readonly IHttpClientFactory _httpClientFactory;

@@ -1,32 +1,31 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 using Duende.IdentityModel;
-using System.Linq;
 using ana.Web.Pages;
 
 public class LoginModel : PageModel
 {
     private readonly SignInManager<IdentityUser> _signInManager;
-    
+
     private readonly IApiClient _apiClient;
     private readonly UserManager<IdentityUser> _userManager;
 
     private readonly ILogger<LoginModel> _logger;
+    private readonly IWebHostEnvironment _environment;
 
     public LoginModel(
         SignInManager<IdentityUser> signInManager,
         UserManager<IdentityUser> userManager,
         IApiClient apiClient,
-        ILogger<LoginModel> logger)
+        ILogger<LoginModel> logger,
+        IWebHostEnvironment environment)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _apiClient = apiClient;
         _logger = logger;
+        _environment = environment;
     }
 
     [BindProperty]
@@ -47,17 +46,24 @@ public class LoginModel : PageModel
 
         [Display(Name = "Group Name")]
         public string GroupName { get; set; }
-        
-        public string? IsRegistration { get; set; }
-    }
 
-    [BindProperty]
-    public bool ShowRegistrationFields { get; set; }
+        public string? IsRegistration { get; set; }
+
+        [Display(Name = "I consent to the use of essential cookies")]
+        [Required(ErrorMessage = "You must consent to the use of essential cookies.")]
+        public bool ConsentCookies { get; set; }
+
+        [Display(Name = "I am at least 13 years old and agree to the data handling policy")]
+        [Required(ErrorMessage = "You must confirm your age and agree to the data policy.")]
+        public bool ConsentAgeAndPolicy { get; set; }
+
+        public string? InvitationCode { get; set; }
+    }
 
     public void OnGet(string? returnUrl = null)
     {
         Console.WriteLine($"OnGet called with returnUrl: {returnUrl}");
-
+        Input = new InputModel();
         ReturnUrl = returnUrl ?? Url.Content("~/");
     }
 
@@ -65,12 +71,21 @@ public class LoginModel : PageModel
     {
         if (Input?.IsRegistration != "1")
         {
-            ShowRegistrationFields = true;
+            if (Input != null)
+            {
+                Input.IsRegistration = "1";
+            }
             return Page();
         }
 
         if (ModelState.IsValid)
         {
+            if (!Input.ConsentCookies || !Input.ConsentAgeAndPolicy)
+            {
+                ErrorMessage = "For your registration you have to agree with use of Cookies and the Data handling policy. Please check your consents.";
+                return Page();
+            }
+
             return await RegisterUser(returnUrl ?? "/");
         }
         return Page();
@@ -104,9 +119,9 @@ public class LoginModel : PageModel
             ErrorMessage = "All fields are required.";
             return Page();
         }
-        
+
         var user = new IdentityUser { UserName = Input.DisplayName, Email = Input.Email };
-        var result = await _userManager.CreateAsync(user, Input?.Password  ?? "");
+        var result = await _userManager.CreateAsync(user, Input?.Password ?? "");
         if (result.Succeeded)
         {
             await _signInManager.SignInAsync(user, isPersistent: false);
@@ -128,15 +143,6 @@ public class LoginModel : PageModel
                 SelectedGroupId = createGroupResponse.Group.Id
             });
 
-            // await _apiClient.SelectGroupAsync(createGroupResponse.UserId, createGroupResponse.Group.Id);
-            // await _apiClient.UpdateUserSettingsAsync(userId, new AnaUser
-            // {
-            //     Id = userId,
-            //     DisplayName = Input.DisplayName,
-            //     WhatsAppNumber = "",
-            //     PreferredNotification = NotificationType.None.ToString()
-            // });
-
 
             return LocalRedirect(returnUrl ?? "/");
         }
@@ -147,17 +153,23 @@ public class LoginModel : PageModel
         }
         return Page();
     }
-    
+
 
     private async Task<IActionResult> LoginUser(string? returnUrl = null)
     {
         var result = await _signInManager.PasswordSignInAsync(Input.Email ?? "", Input.Password ?? "", false, lockoutOnFailure: false);
 
-
-
         if (result.Succeeded)
         {
-            return LocalRedirect(returnUrl ?? "/");
+            if (Url.IsLocalUrl(returnUrl ?? "/"))
+            {
+                return LocalRedirect(returnUrl ?? "/");
+            }
+            else
+            {
+                Response.Redirect(returnUrl ?? "/");
+                return new EmptyResult();
+            }
         }
         else
         {

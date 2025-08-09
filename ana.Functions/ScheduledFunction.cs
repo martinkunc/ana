@@ -12,7 +12,7 @@ public class ScheduledFunction
         _apiClient = apiClient;
     }
 
-    private const string ScheduleEachMinute = "0 * * * * *";
+    private const string ScheduleEachMinute = "0 * * * * *"; // for testing
     private const string ScheduleEachDay = "0 0 6 * * *"; // Every day at 6 AM UTC
 
     [Function("ScheduledFunction")]
@@ -20,6 +20,6 @@ public class ScheduledFunction
     {
         _logger.LogInformation("Function executed at: {time}", DateTime.UtcNow);
         _logger.LogDebug("Timer schedule: {schedule}", timer.ScheduleStatus);
-        _apiClient.RunDailyTasksAsync().GetAwaiter().GetResult();
+        await _apiClient.RunDailyTasksAsync();
     }
 }

@@ -22,7 +22,7 @@ properties:
         identity: {{ .Env.AZURE_CONTAINER_REGISTRY_MANAGED_IDENTITY_ID }}
     secrets:
       - name: connectionstrings--cosmos-db
-        value: '{{ securedParameter "cosmos_db" }}'
+        value: '{{ .Env.COSMOS_DB_CONNECTIONSTRING }}'
   template:
     containers:
       - image: {{ .Image }}

@@ -1,3 +1,4 @@
+// Provider for selected group
 public class UserSelectedGroupService
 {
     public event Action? OnChange;

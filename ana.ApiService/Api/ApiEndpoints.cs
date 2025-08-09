@@ -1,10 +1,5 @@
-using System;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using ana.SharedNet;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 public class ApiEndpoints : IApiEndpoints
 {
@@ -149,13 +144,13 @@ public class ApiEndpoints : IApiEndpoints
             if (role == null)
                 return null;
 
-            return new GetSelectedGroupResponse { AnaGroup = firstGroup, UserRole =role.Name };
+            return new GetSelectedGroupResponse { AnaGroup = firstGroup, UserRole = role.Name };
         }
 
         var group = await _applicationDbContext.AnaGroups
             .Where(g => g.Id == user.SelectedGroupId)
             .FirstOrDefaultAsync();
-        if (group ==null)
+        if (group == null)
         {
             _logger.LogWarning("Group with ID {groupId} not found for user {userId}", user.SelectedGroupId, userId);
             return null;
@@ -201,14 +196,14 @@ public class ApiEndpoints : IApiEndpoints
         var groupToUsers = await _applicationDbContext.AnaGroupToUsers
             .Where(agu => agu.GroupId == groupId)
             .ToListAsync();
-        
+
         if (groupToUsers == null || !groupToUsers.Any())
-            return new List<AnaGroupMember>();
+            return [];
 
         var groupMembers = await _applicationDbContext.AnaUsers
             .Where(agu => groupToUsers.Select(g => g.UserId).Contains(agu.Id))
             .ToListAsync();
-        
+
         var roleIdMap = await _applicationDbContext.AnaRoles
             .ToDictionaryAsync(r => r.Id, r => r.Name);
 
@@ -221,20 +216,20 @@ public class ApiEndpoints : IApiEndpoints
         }).ToList();
 
         if (groupMembers == null || !groupMembers.Any())
-            return new List<AnaGroupMember>();
+            return [];
 
         return mappedgroupMembers;
     }
 
     public async Task CreateGroupMember(string groupId, AnaGroupMember newMember)
-    { 
+    {
         _logger.LogInformation("Create member for group {groupId}", groupId);
         var creatingUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
         var existingUser = await _applicationDbContext.Users
             .FirstOrDefaultAsync(u => u.Email == newMember.Email);
-        
+
         if (existingUser == null)
             throw new InvalidOperationException($"User with email {newMember.Email} does not exist.");
 
@@ -316,7 +311,8 @@ public class ApiEndpoints : IApiEndpoints
                 RoleId = newRoleId
             };
             _applicationDbContext.AnaGroupToUsers.Add(groupToUser);
-        } else
+        }
+        else
         {
             groupToUser.RoleId = newRoleId;
             _applicationDbContext.AnaGroupToUsers.Update(groupToUser);
@@ -350,7 +346,7 @@ public class ApiEndpoints : IApiEndpoints
 
         if (groupToUser == null)
         {
-            _logger.LogWarning("User {userId} isn't present in group {groupId}",userId, groupId);
+            _logger.LogWarning("User {userId} isn't present in group {groupId}", userId, groupId);
             throw new InvalidOperationException($"User {userId} is not present in group {groupId}");
         }
 
@@ -394,7 +390,7 @@ public class ApiEndpoints : IApiEndpoints
         existingAnniversary = await _applicationDbContext
             .AnaAnnivs
             .FirstOrDefaultAsync(a => a.Id == anniversaryId && a.GroupId == groupId);
-            
+
         if (existingAnniversary == null)
         {
             existingAnniversary = (await _applicationDbContext
@@ -464,7 +460,7 @@ public class ApiEndpoints : IApiEndpoints
         _logger.LogInformation("Updating user settings for user {userId}", userId);
 
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
-        
+
         var idUser = await _applicationDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (idUser == null)
         {
@@ -499,7 +495,7 @@ public class ApiEndpoints : IApiEndpoints
         _logger.LogInformation("Deleting user {userId}", userId);
 
         var _applicationDbContext = _dbContextFactory.CreateDbContext();
-        
+
         var user = await _applicationDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user == null)
         {
@@ -519,22 +515,25 @@ public class ApiEndpoints : IApiEndpoints
         var groupToUsers = await _applicationDbContext.AnaGroupToUsers
             .Where(gu => gu.UserId == anaUser.Id).ToListAsync();
         var groupsToUsersRemove = new List<AnaGroupToUser>();
-        foreach (var gtu in groupToUsers) {
+        foreach (var gtu in groupToUsers)
+        {
             var otherGroupMembersCount = await _applicationDbContext.AnaGroupToUsers
             .Where(gu => gu.GroupId == gtu.GroupId && gu.UserId != anaUser.Id)
             .CountAsync();
-            if (otherGroupMembersCount == 0) {
+            if (otherGroupMembersCount == 0)
+            {
                 groupsToUsersRemove.Add(gtu);
             }
         }
-        foreach (var gtur in groupsToUsersRemove) {
+        foreach (var gtur in groupsToUsersRemove)
+        {
             var atr = await _applicationDbContext.AnaAnnivs
                 .Where(an => an.GroupId == gtur.GroupId)
                 .ToListAsync();
             _logger.LogInformation($"Removing Anniversaries for cancelled user [{string.Join(",", atr.Select(a => a.Id))}]");
             _applicationDbContext.AnaAnnivs.RemoveRange(atr.ToArray());
         }
-        _logger.LogInformation($"Removing AnaGroupToUsers for cancelled user [{string.Join(",", groupsToUsersRemove.Select(a => a.GroupId + "-"+ a.UserId))}]");
+        _logger.LogInformation($"Removing AnaGroupToUsers for cancelled user [{string.Join(",", groupsToUsersRemove.Select(a => a.GroupId + "-" + a.UserId))}]");
         _applicationDbContext.AnaGroupToUsers.RemoveRange(groupsToUsersRemove.ToArray());
 
         var groupsToRemoveList = groupsToUsersRemove.Select(gtu => gtu.GroupId).Distinct();
@@ -544,7 +543,7 @@ public class ApiEndpoints : IApiEndpoints
                 .ToListAsync();
 
         _applicationDbContext.AnaGroups.RemoveRange(groupsToRemove.ToArray());
-        
+
         await _applicationDbContext.SaveChangesAsync();
     }
 
@@ -553,7 +552,7 @@ public class ApiEndpoints : IApiEndpoints
         _logger.LogInformation("Starting daily task");
         await _dailyTaskService.RunNowAsync();
     }
-    
+
     public string GetAlignedDate(string date)
     {
         var parts = date.Split('/');

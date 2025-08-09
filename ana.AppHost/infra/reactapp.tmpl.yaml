@@ -14,7 +14,7 @@ properties:
         autoConfigureDataProtection: true
     ingress:
       external: true
-      targetPort: 8000
+      targetPort: 80
       transport: http
       allowInsecure: false
     registries:
@@ -36,7 +36,7 @@ properties:
           - name: VITE_API_URL
             value: https://apiservice.{{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN }}
           - name: VITE_PORT
-            value: "8000"
+            value: "80"
           - name: services__apiservice__http__0
             value: http://apiservice.{{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN }}
           - name: services__apiservice__https__0

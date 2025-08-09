@@ -1,11 +1,8 @@
-using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ana.SharedNet;
-using System.Security.Policy;
-
 
 var builder = FunctionsApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -16,28 +13,16 @@ var logger = loggerFactory.CreateLogger("Program");
 logger.LogInformation($"Starting application with INFO: ");
 logger.LogDebug($"Starting application with Debug: ");
 
-
 var externalUrl = builder.Configuration["ApiService:Url"] 
     ?? throw new InvalidOperationException("API URL not configured");
 
 logger.LogInformation("API URL configured as: {ApiUrl}", externalUrl);
-var localUrl = new Uri(externalUrl);
-var runningOnAzure = !localUrl.IsLoopback;
-Console.WriteLine($"MY: Running on Azure: {runningOnAzure}");
-
-var externalPublicDomain = "https://anniversarynotification.com";
-externalUrl = !runningOnAzure ? externalUrl : externalPublicDomain;
 
 var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.SecretNames.WebAppClientSecret);
 
 Console.WriteLine($"MY: External URL: {externalUrl}");
 
 builder.ConfigureFunctionsWebApplication();
-
-builder.Services
-    .AddApplicationInsightsTelemetryWorkerService()
-    .ConfigureFunctionsApplicationInsights()
-    .AddLogging();
 
 builder.Services.AddHttpClient();
 

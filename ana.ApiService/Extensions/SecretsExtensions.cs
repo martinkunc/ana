@@ -4,7 +4,6 @@ using ana.SharedNet;
 
 public static class SecretsExtensions
 {
-
     public static async Task<string> GetFromSecretsOrVault(
         this WebApplicationBuilder builder, string secretKeyName)
     {
@@ -14,7 +13,8 @@ public static class SecretsExtensions
 
         if (string.IsNullOrEmpty(secretValue))
         {
-            if (builder.Environment.IsDevelopment()) {
+            if (builder.Environment.IsDevelopment())
+            {
                 throw new InvalidOperationException($"Secret {secretKeyName} has to be configured as a secret in local development environment.");
             }
             var client = new SecretClient(new Uri(Config.KeyVault.KeyVaultUrl), new DefaultAzureCredential());
