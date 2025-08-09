@@ -1,17 +1,13 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 using Duende.IdentityModel;
-using System.Linq;
 using ana.Web.Pages;
 
 public class LoginModel : PageModel
 {
     private readonly SignInManager<IdentityUser> _signInManager;
-    
+
     private readonly IApiClient _apiClient;
     private readonly UserManager<IdentityUser> _userManager;
 
@@ -60,7 +56,7 @@ public class LoginModel : PageModel
         [Display(Name = "I am at least 13 years old and agree to the data handling policy")]
         [Required(ErrorMessage = "You must confirm your age and agree to the data policy.")]
         public bool ConsentAgeAndPolicy { get; set; }
-        
+
         public string? InvitationCode { get; set; }
     }
 
@@ -123,9 +119,9 @@ public class LoginModel : PageModel
             ErrorMessage = "All fields are required.";
             return Page();
         }
-        
+
         var user = new IdentityUser { UserName = Input.DisplayName, Email = Input.Email };
-        var result = await _userManager.CreateAsync(user, Input?.Password  ?? "");
+        var result = await _userManager.CreateAsync(user, Input?.Password ?? "");
         if (result.Succeeded)
         {
             await _signInManager.SignInAsync(user, isPersistent: false);
@@ -157,7 +153,7 @@ public class LoginModel : PageModel
         }
         return Page();
     }
-    
+
 
     private async Task<IActionResult> LoginUser(string? returnUrl = null)
     {

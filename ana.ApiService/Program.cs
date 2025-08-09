@@ -1,16 +1,11 @@
 using System.Security.Cryptography.X509Certificates;
-using ana.ServiceDefaults;
 using Azure.Identity;
-using Azure.Security.KeyVault.Certificates;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Azure.Cosmos;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using ana.SharedNet;
-using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,8 +16,6 @@ var logger = LoggerFactory.Create(config =>
     config.SetMinimumLevel(LogLevel.Information);
 }).CreateLogger<Program>();
 
-logger.LogInformation($"Starting application with INFO: ");
-logger.LogDebug($"Starting application with Debug: ");
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
@@ -52,7 +45,7 @@ string env = builder.Environment.EnvironmentName;
 Console.WriteLine($"Environment: {env}");
 
 var envDnsSuffix = Environment.GetEnvironmentVariable("CONTAINER_APP_ENV_DNS_SUFFIX");
-var serviceName = "apiservice"; // Your service name as defined in Container Apps
+
 var isRunningOnAzureContainerApps = !string.IsNullOrEmpty(envDnsSuffix);
 Console.WriteLine($"isRunningOnAzureContainerApps: {isRunningOnAzureContainerApps}");
 var externalPublicDomain = "https://anniversarynotification.com";
@@ -65,27 +58,25 @@ if (isRunningOnAzureContainerApps)
     webAppUrl = externalPublicDomain;
     reactAppUrl = externalReactPublicDomain;
 }
+// Because when we run on AC apps, we use public domains, the authentication doesn't work on AC url directly
 Console.WriteLine($"Api External URL : {externalUrl}");
 Console.WriteLine($"Web External URL : {webAppUrl}");
 Console.WriteLine($"React External URL : {reactAppUrl}");
-
-// Currently on Azure it detects isRunningOnAzureContainerApps as true and uses externalPublicDomain,
-// but that means it doesn't work directly in Azure Container Apps
-Console.WriteLine($"MY: External URL: {externalUrl}");
-
-//if (builder.Environment.IsDevelopment())
+if (webAppUrl == null || reactAppUrl == null || externalUrl == null)
 {
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy("AllowWeb", policy =>
-        {
-            policy.WithOrigins(webAppUrl, reactAppUrl)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        });
-    });
+    throw new InvalidOperationException("WebApp, ReactApp, or Api URL are not set in environment variables or not running on AC");
 }
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWeb", policy =>
+    {
+        policy.WithOrigins(webAppUrl, reactAppUrl)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+    });
+});
 
 builder.Services.AddAuthentication(options =>
 {
@@ -95,7 +86,6 @@ builder.Services.AddAuthentication(options =>
 })
     .AddJwtBearer(options =>
     {
-        
         options.Authority = externalUrl;
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new TokenValidationParameters
@@ -125,23 +115,17 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-
-
-// Add services to the container.
 builder.Services.AddProblemDetails();
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-//builder.AddAzureCosmosClient("cosmos-db");
-
+// prints configurations for debugging purposes
 foreach (var conf in builder.Configuration.AsEnumerable())
 {
 
     logger.LogInformation($"Config: {conf.Key} = {conf.Value}");
 }
-
-
+// application db context with CosmosDb configuration. It requires passing credentials, so parsing the Conn. string
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     var accountEndpoint = "";
@@ -175,9 +159,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
             cosmosOptions.ConnectionMode(Microsoft.Azure.Cosmos.ConnectionMode.Gateway);
         }
         );
-
 });
-
 
 builder.Services.AddSingleton<CosmosClient>(provider =>
 {
@@ -227,9 +209,11 @@ builder.Services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>,
     UserClaimsPrincipalFactory<IdentityUser, IdentityRole>>();
 
 var apiUrl = externalUrl;
-var webClientsUrls = new List<string>();
-webClientsUrls.Add(webAppUrl);
-webClientsUrls.Add(reactAppUrl);
+var webClientsUrls = new List<string>
+{
+    webAppUrl,
+    reactAppUrl
+};
 logger.LogInformation($"Api URLs: {apiUrl}");
 logger.LogInformation($"Web clients URLs: {string.Join(", ", webClientsUrls)}");
 var identityServerBuilder = builder.Services.AddIdentityServer(options =>
@@ -239,7 +223,6 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
     options.Events.RaiseFailureEvents = true;
     options.Events.RaiseSuccessEvents = true;
 
-    // Disable automatic redirects
     options.UserInteraction.ErrorUrl = "/error";
     options.UserInteraction.LoginUrl = "/account/login";
     options.UserInteraction.LoginReturnUrlParameter = "returnUrl";
@@ -250,11 +233,7 @@ var identityServerBuilder = builder.Services.AddIdentityServer(options =>
 .AddInMemoryApiScopes(IdentityServerConfig.GetApiScopes())
 .AddInMemoryApiResources(IdentityServerConfig.GetApis())
 .AddInMemoryClients(IdentityServerConfig.GetClients(builder.Configuration, apiUrl, webClientsUrls, SecretWebAppClientSecret))
-//.AddApiAuthorization<IdentityUser, ApplicationDbContext>()
 .AddAspNetIdentity<IdentityUser>();
-
-
-
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -263,7 +242,6 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddRazorPages();
-
 
 var identityServerKeyPath = builder.Configuration["IdentityServerKeyPath"];
 if (identityServerKeyPath != null)
@@ -296,11 +274,7 @@ else
     identityServerBuilder.AddSigningCredential(cert);
 }
 
-
 builder.Services.AddAuthorization();
-
-
-var httpClient = new HttpClient();
 
 builder.Services.AddHttpClient(
     "Auth",
@@ -317,11 +291,11 @@ builder.Services.AddSingleton<IApiClient>(sp =>
     return new ApiClient(new ApiHttpClientFactory(httpClientFactory, externalUrl, SecretWebAppClientSecret, loggerFac), logger);
 });
 
-
 builder.Services.AddSingleton<DailyTaskService>();
 var taskService = builder.Services.BuildServiceProvider().GetRequiredService<DailyTaskService>();
 taskService.SetSecrets(SecretFromEmail, SecretSendGridKey, SecretTwilioAccountSID, SecretTwilioAccountToken, SecretWhatsAppFrom);
 
+// When testing DailyTask, this triggers it after startup
 //await taskService.RunNowAsync();
 
 builder.Services.AddSingleton<IApiEndpoints>(sp =>
@@ -332,19 +306,16 @@ builder.Services.AddSingleton<IApiEndpoints>(sp =>
     return new ApiEndpoints(logger, dbContextFactory, httpContextAccessor, taskService);
 });
 
-
-
 var app = builder.Build();
-
-
 
 if (app.Environment.IsDevelopment())
 {
+    // in development, OpenApi is available at https://localhost:7001/openapi/v1.json
     app.MapOpenApi();
     app.UseWebAssemblyDebugging();
     app.UseDeveloperExceptionPage();
 
-    // Add detailed request logging for debugging
+    // Request logging for debugging
     app.Use(async (context, next) =>
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
@@ -361,7 +332,6 @@ if (app.Environment.IsDevelopment())
                 context.Response.StatusCode);
     });
 }
-// Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
 app.UseCors("AllowWeb");
@@ -397,8 +367,6 @@ app.UseBlazorFrameworkFiles();
 app.MapRazorPages();
 app.MapApiEndpoints();
 app.MapFallbackToFile("index.html");
-
-
 
 var builder1 = new DbContextOptionsBuilder<ApplicationDbContext>();
 

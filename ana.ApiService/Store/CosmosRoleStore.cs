@@ -1,12 +1,5 @@
-using Duende.IdentityServer.EntityFramework.Entities;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
 
 /// <summary>
 /// Cosmos DB Role Store
@@ -17,7 +10,6 @@ public class CosmosRoleStore<TUserRoleEntity, TRoleEntity, TKey> : IRoleStore<TR
     IRoleClaimStore<TRoleEntity>
     where TRoleEntity : IdentityRole<TKey>, new()
     where TKey : IEquatable<TKey>
-
 {
     private readonly IRepository _repo;
     private bool _disposed;
@@ -65,7 +57,6 @@ public class CosmosRoleStore<TUserRoleEntity, TRoleEntity, TKey> : IRoleStore<TR
     {
         _repo = repo;
     }
-
 
     // <inheritdoc />
     public async Task<IdentityResult> CreateAsync(TRoleEntity role, CancellationToken cancellationToken = default)

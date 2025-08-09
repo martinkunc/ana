@@ -20,7 +20,6 @@ const NavMenu: React.FC<NavMenuProps> = ({ }) => {
     console.log(`NavMenu toggled: navMenuCssClass: ${navMenuCssClass}`);
   };
 
-
   // Navigation items configuration
   const navigationItems = [
     {
@@ -76,7 +75,6 @@ const NavMenu: React.FC<NavMenuProps> = ({ }) => {
           </button>
         </div>
       </div>
-
 
       <div className={`${navMenuCssClass} ${styles.navScrollableClass}`}>
         <nav className="flex-column">

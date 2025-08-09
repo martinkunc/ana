@@ -1,9 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using ana.Web.Layout;
-
 namespace ana.Web.Pages;
 
 using Microsoft.AspNetCore.Components;
@@ -12,47 +6,56 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 
-
 public partial class Home : LayoutComponentBase, IDisposable
 {
     [Inject]
-    private AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+    private AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
 
     [Inject]
     private IApiClient apiClient { get; set; } = default!;
 
     [Inject]
-    private IJSRuntime JSRuntime { get; set; }
+    private IJSRuntime? JSRuntime { get; set; }
 
     [Inject]
-    private ITokenService TokenService { get; set; }
-    
-    public List<AnaAnniv> Anniversaries { get; set; }
-    public string AnniversariesLoadingStatus { get; set; }
+    private ITokenService? TokenService { get; set; }
+
+    public List<AnaAnniv>? Anniversaries { get; set; }
+    public string? AnniversariesLoadingStatus { get; set; }
     protected NewAnniversary newAnniversary { get; set; } = new NewAnniversary();
-    protected EditContext editContext { get; set; }
+    protected EditContext? editContext { get; set; }
     public string AddAnniversarySummary { get; set; } = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         // Subscribe to token expiration events
-        TokenService.TokenExpired += OnTokenExpired;
-        
+        if (TokenService != null && OnTokenExpired != null)
+        {
+            TokenService.TokenExpired += OnTokenExpired!;
+        }
+
         try
         {
             editContext = new EditContext(newAnniversary);
             AnniversariesLoadingStatus = "Loading anniversaries...";
 
+            if (AuthenticationStateProvider == null)
+            {
+                AnniversariesLoadingStatus = "Authentication provider not available.";
+                return;
+            }
+
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             Console.WriteLine($"User is authenticated: {string.Join(",", authState.User.Claims.Select(c => $"{c.Type}={c.Value}"))}");
-            
-            if (!authState.User.Identity.IsAuthenticated)
+
+            if (!authState?.User?.Identity?.IsAuthenticated ?? false)
             {
+                Console.WriteLine("User is not authenticated.");
                 AnniversariesLoadingStatus = "Please log in to view anniversaries.";
                 return;
             }
 
-            var userId = authState.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value ?? 
+            var userId = authState!.User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value ??
                 throw new InvalidOperationException("User ID not found in claims.");
 
             var selectedGroup = await apiClient.GetSelectedGroupAsync(userId);
@@ -102,9 +105,10 @@ public partial class Home : LayoutComponentBase, IDisposable
 
     public void Dispose()
     {
-        if (TokenService != null)
+        if (TokenService != null && OnTokenExpired != null)
         {
-            TokenService.TokenExpired -= OnTokenExpired;
+            // Unsubscribe from the token expired event to avoid memory leaks
+            TokenService.TokenExpired -= OnTokenExpired!;
         }
         else
         {
@@ -114,22 +118,22 @@ public partial class Home : LayoutComponentBase, IDisposable
 
     protected async Task AddAnniversary()
     {
-        if (!editContext.Validate())
+        if (!editContext?.Validate() ?? false)
         {
             AddAnniversarySummary = "Please correct the errors above.";
             return;
         }
-    
+
         if (string.IsNullOrEmpty(newAnniversary.Id))
         {
-             
+
             var na = new AnaAnniv { Date = FormatDate(newAnniversary.Date), Name = newAnniversary.Name, GroupId = newAnniversary.GroupId };
             await apiClient.CreateAnniversaryAsync(newAnniversary.GroupId, na);
         }
         else
         {
             // Update existing
-            var na = new AnaAnniv { Id=newAnniversary.Id, Date = FormatDate(newAnniversary.Date), Name = newAnniversary.Name, GroupId = newAnniversary.GroupId };
+            var na = new AnaAnniv { Id = newAnniversary.Id, Date = FormatDate(newAnniversary.Date), Name = newAnniversary.Name, GroupId = newAnniversary.GroupId };
             await apiClient.UpdateAnniversaryAsync(na);
         }
 
@@ -144,7 +148,7 @@ public partial class Home : LayoutComponentBase, IDisposable
     private async Task RefreshAnniversaries(string groupId)
     {
         // await apiClient.CreateAnniversaryAsync(group.Id, na);
-        newAnniversary = new NewAnniversary{ GroupId = groupId };
+        newAnniversary = new NewAnniversary { GroupId = groupId };
         editContext = new EditContext(newAnniversary);
 
         AnniversariesLoadingStatus = "Loading anniversaries...";
@@ -159,7 +163,7 @@ public partial class Home : LayoutComponentBase, IDisposable
         }
     }
 
-    private async Task EditAnniversary(string id, string groupId, string date, string name)
+    private void EditAnniversary(string id, string groupId, string date, string name)
     {
         Console.WriteLine($"Editing anniversary: {name} on {date}");
 
@@ -176,6 +180,10 @@ public partial class Home : LayoutComponentBase, IDisposable
 
     private async Task RemoveAnniversary(string anniversaryId, string groupId)
     {
+        if (JSRuntime == null)
+        {
+            throw new InvalidOperationException("JSRuntime is not available for confirmation dialog.");
+        }
         bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to remove this anniversary?");
         if (!confirmed)
             return;
@@ -183,7 +191,7 @@ public partial class Home : LayoutComponentBase, IDisposable
         // Remove from backend if needed
         await apiClient.DeleteAnniversaryAsync(anniversaryId, groupId);
         // Remove from local list
-        Anniversaries = Anniversaries.Where(a => a.Id != anniversaryId).ToList();
+        Anniversaries = Anniversaries?.Where(a => a.Id != anniversaryId).ToList();
         StateHasChanged();
         await RefreshAnniversaries(groupId);
     }

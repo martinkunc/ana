@@ -1,4 +1,4 @@
-﻿<CascadingAuthenticationState>
+<CascadingAuthenticationState>
     <Router AppAssembly="@typeof(ana.Web.App).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData">
@@ -19,19 +19,3 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
-
-
-
-@code {
-    // Optionally log available routes for debugging
-    /*
-    protected override void OnInitialized()
-    {
-        Console.WriteLine("Available routes:");
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            Console.WriteLine($"Assembly: {assembly.FullName}");
-        }
-    }
-    */
-}

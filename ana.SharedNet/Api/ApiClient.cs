@@ -1,22 +1,17 @@
 using System.Net.Http.Json;
-
 using Microsoft.Extensions.Logging;
 
+// Generic Api client which works with configured client factory
 public class ApiClient : IApiClient
 {
     private readonly IAnaHttpClientFactory _anaHttpClientFactory;
 
-    //private readonly HttpClient _httpClient;
-
-
-    //private readonly ITokenService _tokenService;
     private readonly ILogger<ApiClient> _logger;
 
     public ApiClient(IAnaHttpClientFactory anaHttpClientFactory,
         ILogger<ApiClient> logger)
     {
         _anaHttpClientFactory = anaHttpClientFactory;
-
         _logger = logger;
     }
 
@@ -201,7 +196,6 @@ public class ApiClient : IApiClient
         }
     }
 
-
     public async Task<AnaAnniv> UpdateAnniversaryAsync(AnaAnniv anniversary)
     {
         HttpClient _httpClient = await _anaHttpClientFactory.GetHttpClient();
@@ -313,7 +307,6 @@ public class ApiClient : IApiClient
         }
     }
 
-
     public async Task<AnaUser> GetUserSettingsAsync(string userId)
     {
         HttpClient _httpClient = await _anaHttpClientFactory.GetHttpClient();
@@ -392,5 +385,4 @@ public class ApiClient : IApiClient
             throw new Exception($"Failed to start daily task: {res.ReasonPhrase}");
         }
     }
-
 }

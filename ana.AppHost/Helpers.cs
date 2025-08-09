@@ -1,20 +1,6 @@
 public static class EnvExtensions
 {
-    public static IResourceBuilder<T> WithEnvironmentPrefix<T>(this IResourceBuilder<T> resourceBuilder, string prefix)
-        where T : IResourceWithEnvironment
-    {
-        return resourceBuilder.WithEnvironment(context =>
-        {
-            var kvps = context.EnvironmentVariables.ToArray();
-
-            // Adds a prefix to all environment variable names
-            foreach (var p in kvps)
-            {
-                context.EnvironmentVariables[$"{prefix}{p.Key}"] = p.Value;
-            }
-        });
-    }
-
+    // When it is running in against local cosmosdb, use connection string from user secrets, otherwise from key vault
     public static bool IsCosmosDbLocal(string connectionString)
     {
         if (string.IsNullOrEmpty(connectionString))

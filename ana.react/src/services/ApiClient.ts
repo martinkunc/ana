@@ -1,18 +1,19 @@
-export interface AnaGroup { // ok
+// Api client for react
+export interface AnaGroup {
   id: string;
   name: string;
   description?: string;
 }
 
-export interface AnaUser { // ok
+export interface AnaUser {
   id: string;
   displayName: string;
   selectedGroupId?: string;
   preferredNotification: string;
-  whatsAppNumber:string;
+  whatsAppNumber: string;
 }
 
-export interface AnaAnniv { // ok
+export interface AnaAnniv {
   id?: string;
   groupId?: string;
   name?: string;
@@ -20,12 +21,12 @@ export interface AnaAnniv { // ok
   alignedDate?: string;
 }
 
-export interface SelectedGroupResponse { // ok
+export interface SelectedGroupResponse {
   anaGroup: AnaGroup;
   userRole: string;
 }
 
-export interface AnaGroupMember { // ok
+export interface AnaGroupMember {
   userId?: string;
   groupId: string;
   role: string;
@@ -34,7 +35,7 @@ export interface AnaGroupMember { // ok
 }
 
 export interface ChangeGroupMemberRoleRequest {
-    roleName: string;
+  roleName: string;
 }
 
 export interface GetUserGroupsResponse {
@@ -43,8 +44,8 @@ export interface GetUserGroupsResponse {
 }
 
 export class AnaRoleNames {
-    public static readonly Admin = "Admin";
-    public static readonly User = "User";
+  public static readonly Admin = "Admin";
+  public static readonly User = "User";
 }
 
 export class ApiClient {
@@ -78,7 +79,7 @@ export class ApiClient {
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      
+
       try {
         const errorText = await response.text();
         if (errorText) {
@@ -92,7 +93,7 @@ export class ApiClient {
       } catch {
         // Keep the default error message if we can't parse the error response
       }
-      
+
       console.error(`API Error ${response.status}:`, errorMessage);
       throw new Error(errorMessage);
     }
@@ -211,21 +212,5 @@ export class ApiClient {
     return this.makeRequest<void>(`/api/v1/group/${groupId}/anniversary/${anniversaryId}`, {
       method: 'DELETE'
     });
-  }
-
-  // Utility methods
-  async runDailyTask(): Promise<void> {
-    return this.makeRequest<void>('/api/v1/daily-task', {
-      method: 'POST'
-    });
-  }
-
-  // Alias methods for consistency
-  async addGroupMember(groupId: string, memberData: any): Promise<void> {
-    return this.createGroupMember(groupId, memberData);
-  }
-
-  async removeGroupMember(groupId: string, userId: string): Promise<void> {
-    return this.deleteGroupMember(groupId, userId);
   }
 }

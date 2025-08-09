@@ -1,10 +1,8 @@
 
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 
+// EF model for application with containers and entities configuration
 public class ApplicationDbContext : CosmosIdentityDbContext<IdentityUser, IdentityRole, string>
-
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options) { }
@@ -65,7 +63,6 @@ public class ApplicationDbContext : CosmosIdentityDbContext<IdentityUser, Identi
     public virtual DbSet<AnaRole> AnaRoles { get; set; } = default!;
 
     public virtual DbSet<AnaAnniv> AnaAnnivs { get; set; } = default!;
-    
+
     public virtual DbSet<AnaUser> AnaUsers { get; set; } = default!;
-    
 }

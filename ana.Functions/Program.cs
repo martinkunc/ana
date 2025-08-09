@@ -1,10 +1,8 @@
-using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ana.SharedNet;
-
 
 var builder = FunctionsApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -14,7 +12,6 @@ var logger = loggerFactory.CreateLogger("Program");
 
 logger.LogInformation($"Starting application with INFO: ");
 logger.LogDebug($"Starting application with Debug: ");
-
 
 var externalUrl = builder.Configuration["ApiService:Url"] 
     ?? throw new InvalidOperationException("API URL not configured");
@@ -26,7 +23,6 @@ var SecretWebAppClientSecret = await builder.GetFromSecretsOrVault(Config.Secret
 Console.WriteLine($"MY: External URL: {externalUrl}");
 
 builder.ConfigureFunctionsWebApplication();
-
 
 builder.Services.AddHttpClient();
 

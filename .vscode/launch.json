@@ -15,7 +15,6 @@
             "browser": "edge",
             "webRoot": "${workspaceFolder}/ana.Web",
         },        
-
         {
             "name": "Launch Chrome for Wasm debugging",
             "type": "pwa-chrome",

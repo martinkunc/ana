@@ -1,12 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using System.Timers;
 
 public class TokenService : ITokenService, IDisposable
@@ -16,10 +11,10 @@ public class TokenService : ITokenService, IDisposable
     private readonly ILogger<TokenService> _logger;
     private readonly NavigationManager _navigationManager;
     private readonly System.Timers.Timer _tokenCheckTimer;
-    private string _cachedToken;
+    private string? _cachedToken;
     private DateTimeOffset _tokenExpiry;
 
-    public event EventHandler<TokenExpiredEventArgs> TokenExpired;
+    public event EventHandler<TokenExpiredEventArgs>? TokenExpired;
 
     public TokenService(
         IAccessTokenProvider tokenProvider,
@@ -41,7 +36,7 @@ public class TokenService : ITokenService, IDisposable
         _logger.LogInformation("TokenService initialized with automatic token checking");
     }
 
-    private async void OnTokenCheckTimerElapsed(object sender, ElapsedEventArgs e)
+    private async void OnTokenCheckTimerElapsed(object? sender, ElapsedEventArgs e)
     {
         try
         {
@@ -73,7 +68,7 @@ public class TokenService : ITokenService, IDisposable
         try
         {
             var authState = await _authStateProvider.GetAuthenticationStateAsync();
-            if (!authState.User.Identity.IsAuthenticated)
+            if (!authState?.User?.Identity?.IsAuthenticated ?? false)
                 return true;
 
             // Get the token directly to check expiration
@@ -82,7 +77,7 @@ public class TokenService : ITokenService, IDisposable
             {
                 var expClaim = ParseTokenClaims(token.Value)
                     .FirstOrDefault(c => c.Type == "exp");
-                
+
                 if (expClaim != null && long.TryParse(expClaim.Value, out var exp))
                 {
                     var expDateTime = DateTimeOffset.FromUnixTimeSeconds(exp);
@@ -141,7 +136,7 @@ public class TokenService : ITokenService, IDisposable
                 });
 
                 throw new AccessTokenNotAvailableException(
-                    _navigationManager, tokenResult, null); 
+                    _navigationManager, tokenResult, null);
             }
 
             throw new Exception("Unable to retrieve valid access token");
@@ -175,7 +170,7 @@ public class TokenService : ITokenService, IDisposable
             var keyValuePairs = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
 
             var claims = new List<Claim>();
-            foreach (var kvp in keyValuePairs)
+            foreach (var kvp in keyValuePairs ?? Enumerable.Empty<KeyValuePair<string, object>>())
             {
                 claims.Add(new Claim(kvp.Key, kvp.Value?.ToString() ?? ""));
             }

@@ -10,7 +10,6 @@ const LoginDisplay: React.FC<LoginDisplayProps> = ({ className = '' }) => {
   const { isAuthenticated, isLoading, login, logout } = useAuth();
   const { displayName, isLoadingDisplayName } = useSharedState();
 
-
   const handleLogin = async () => {
     try {
       await login();

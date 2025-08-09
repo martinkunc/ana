@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -15,25 +15,21 @@
     </NotAuthorized>
 </AuthorizeView>
 
-@code{
-        protected override async Task OnInitializedAsync()
+@code {
+    protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var displayName = authState.User.Identity?.Name ?? "";
-
-        // Optionally, get from a custom claim or call your API here
-        // var displayName = authState.User.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "";
-
         DisplayNameService.DisplayName = displayName;
     }
-    
+
     public async void BeginLogOut()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        
+
         // Get id_token from user claims if available
         var idTokenClaim = authState.User.Claims.FirstOrDefault(c => c.Type == "id_token");
-        
+
         if (idTokenClaim != null)
         {
             Console.WriteLine("Adding id_token_hint to logout request");

@@ -1,32 +1,24 @@
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
-public static class ApiMapper {
+public static class ApiMapper
+{
 
     public static IApiEndpoints apiEndpoints;
 
-
     public static RouteGroupBuilder MapApiEndpoints(this IEndpointRouteBuilder routes)
     {
-        //var rootGroup = routes.MapGroup("/");
-        //rootGroup.MapGet("/", () => "API is running");
         apiEndpoints = routes.ServiceProvider.GetService<IApiEndpoints>() ?? throw new InvalidOperationException("IApiEndpoints service is not registered.");
-
-
 
         var group = routes.MapGroup("/api/v1/");
 
         group.WithTags("AnaTag");
-
-
 
         var authGroup = routes.MapGroup("/api/v1/")
             .RequireAuthorization(new AuthorizeAttribute
             {
                 AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
             });
-
 
         authGroup.MapPost("group", apiEndpoints.CreateGroup)
             .Produces(StatusCodes.Status400BadRequest)
@@ -47,7 +39,7 @@ public static class ApiMapper {
         authGroup.MapPost("user/select-group/{userId}/{groupId}", apiEndpoints.SelectGroup)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status200OK);
-        
+
         authGroup.MapGet("group/{groupId}/members", apiEndpoints.GetGroupMembers)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status200OK);
@@ -66,7 +58,7 @@ public static class ApiMapper {
         authGroup.MapPut("group/{groupId}/member/{userId}/role", apiEndpoints.ChangeGroupMemberRole)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status200OK);
-        
+
         // api/v1/group/{encodedGroupId}/member/{encodedUserId}
         authGroup.MapDelete("group/{groupId}/member/{userId}", apiEndpoints.DeleteGroupMember)
             .Produces(StatusCodes.Status400BadRequest)
@@ -80,7 +72,6 @@ public static class ApiMapper {
         authGroup.MapPut("group/{groupId}/anniversary/{anniversaryId}", apiEndpoints.UpdateAnniversary)
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status200OK);
-
 
         authGroup.MapDelete("group/{groupId}/anniversary/{anniversaryId}", apiEndpoints.DeleteAnniversary)
             .Produces(StatusCodes.Status400BadRequest)
@@ -104,10 +95,6 @@ public static class ApiMapper {
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status200OK);
 
-
         return group;
     }
-
-    
-
 }

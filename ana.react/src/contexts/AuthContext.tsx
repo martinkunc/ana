@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserManager, WebStorageStateStore, User } from 'oidc-client-ts';
 import { PUBLIC_URLS, APP_CONFIG, AUTH_URLS } from '../config/config';
 
+// A provider for authentication, encapsulating login and logout and user token
+
 interface AuthContextType {
   user: any;
   isAuthenticated: boolean;

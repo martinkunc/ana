@@ -1,22 +1,18 @@
-using Aspire.Hosting;
 using Azure.Provisioning;
 using Azure.Provisioning.CosmosDB;
 using Microsoft.Extensions.Hosting;
-using Azure.Identity;
-using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 using ana.SharedNet;
-using k8s.Models;
-using Azure.Provisioning.Storage;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-IResourceBuilder<IResourceWithConnectionString> localCosmosResource = null;
-IResourceBuilder<Aspire.Hosting.AzureCosmosDBResource> cosmosDb = null;
+IResourceBuilder<IResourceWithConnectionString> localCosmosResource;
+IResourceBuilder<Aspire.Hosting.AzureCosmosDBResource> cosmosDb;
 
 var isAspireManifestGeneration = builder.ExecutionContext.IsPublishMode;
 Console.WriteLine($"MY: Aspire manifest generation: {isAspireManifestGeneration}");
 
+// Config doesn't allow passing empty string as empty, so for empty password we set another key to true
 string defaultAdminPasswordIsEmpty = string.Empty;
 var defaultAdminPassword = builder.Configuration["DefaultAdminPassword"];
 if (defaultAdminPassword != null && defaultAdminPassword == "")
@@ -29,11 +25,13 @@ var connString = await builder.GetFromSecretsOrVault(Config.SecretNames.AnaDbCon
 Console.WriteLine($"MY: Connection string: {connString}");
 
 var isLocalCosmosDb = EnvExtensions.IsCosmosDbLocal(connString);
-IResourceBuilder<IResourceWithConnectionString> cosmosResourceBuilder = null;
-IResourceBuilder<Aspire.Hosting.Azure.AzureStorageResource> storage = null;
-IResourceBuilder<Aspire.Hosting.Azure.AzureBlobStorageResource> blobs = null;
-IResourceBuilder<Aspire.Hosting.Azure.AzureTableStorageResource> tables = null;
+IResourceBuilder<IResourceWithConnectionString> cosmosResourceBuilder;
+IResourceBuilder<Aspire.Hosting.Azure.AzureStorageResource> storage;
+IResourceBuilder<Aspire.Hosting.Azure.AzureBlobStorageResource> blobs;
+IResourceBuilder<Aspire.Hosting.Azure.AzureTableStorageResource> tables;
 
+// During the Aspire manifest generation, use the reference to pre-deployed CosmosDb with conn. string from keyvault,
+// otherwise the connection string from user secrets
 if (isLocalCosmosDb && !isAspireManifestGeneration)
 {
     Console.WriteLine("Using Local Cosmos from connection string: ");
@@ -78,7 +76,6 @@ else
 
 Console.WriteLine($"MY: Connection string: {connString}");
 
-
 if (cosmosResourceBuilder == null)
 {
     throw new InvalidOperationException("Cosmos DB resource is not configured. Please check your connection string or Azure Cosmos DB setup.");
@@ -97,7 +94,7 @@ if (!isAspireManifestGeneration)
 {
     apiServiceBuilder.WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development");
 }
-
+// all our, prefixed user secret settings will be passed as environment variables to Api
 var variables = builder.Configuration.AsEnumerable()
         .Where(kvp => kvp.Key.StartsWith("ana-"))
         .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -140,14 +137,13 @@ if (builder.Environment.IsDevelopment() && !isAspireManifestGeneration)
 var nodeBuilder = builder.AddNpmApp("reactapp", "../ana.react")
     .WithReference(apiService)
     .WaitFor(apiService)
-    //.WithEnvironment("VITE_API_URL", apiService.Resource.GetEndpoints() GetHttpEndpointUrl())
-    //.WithEnvironmentPrefix("VITE_")
     .WithEnvironment("services__apiservice__https__0", apiUrlHttps)
     .WithEnvironment("VITE_API_URL", apiUrlHttps)
     .WithEnvironment("SOME_TEST", "CONTENT")
     .WithEnvironment("BROWSER", "none")
     .PublishAsDockerFile();
 
+// use fixed port for local development, so that api could preconfigure the IdP and CORS
 if (builder.Environment.IsDevelopment() && !isAspireManifestGeneration)
 {
     Console.WriteLine("Setting VITE_PORT to 7004 for React app in development.");
@@ -155,9 +151,10 @@ if (builder.Environment.IsDevelopment() && !isAspireManifestGeneration)
     var reactAppUrl = nodeBuilder.GetEndpoint("http");
     //webUrlHttps
     apiServiceBuilder.WithEnvironment("ReactApp__Url", reactAppUrl);
-
 }
 
+// Set the internal Node port to 80, which AC uses for communication, but keep standard external https port
+// Setting affects infrastructure resources created by aspire
 if (isAspireManifestGeneration)
 {
     // In Aspire manifest generation, use standard HTTP port 80 for React app with nginx
@@ -176,7 +173,5 @@ var functions = builder.AddAzureFunctionsProject<Projects.ana_Functions>("functi
        .WithHostStorage(storage);
 
 Console.WriteLine($"MY: Environment: {builder.Environment.EnvironmentName}");
-
-
 
 builder.Build().Run();

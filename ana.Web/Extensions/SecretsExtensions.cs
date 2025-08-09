@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using ana.SharedNet;
 public static class SecretsExtensions
 {
-
     public static async Task<string> GetFromSecretsOrVault(
         this WebAssemblyHostBuilder builder, string configKeyName, string keyVaultSecretName)
     {

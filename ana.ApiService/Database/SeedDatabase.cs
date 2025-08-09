@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.AspNetCore.Identity;
@@ -9,7 +8,7 @@ using ana.Web.Pages;
 public static class SeedDatabase
 {
 
-
+    // Creates the database if it doesn't exist and containers with partition keys
     public static async Task Initialize(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
@@ -194,11 +193,8 @@ public static class SeedDatabase
                 await context.SaveChangesAsync();
         }
 
-
         if (await context.Set<AnaGroup>().FirstOrDefaultAsync() == null)
         {
-            // var adminRole = await context.AnaGroups.FirstOrDefaultAsync(r => r.Name == "Admin");
-            // var userRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
             var adminUser = await context.Users.FirstOrDefaultAsync(u => u.UserName == "admin");
             var adminRole = await context.AnaRoles.FirstOrDefaultAsync(u => u.Name == AnaRoleNames.Admin);
             if (adminUser != null && adminRole != null)

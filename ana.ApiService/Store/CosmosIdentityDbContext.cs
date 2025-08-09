@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;
 
-
 /// <summary>
 /// Cosmos Identity Database Context
 /// </summary>
@@ -14,7 +13,6 @@ public class CosmosIdentityDbContext<TUser, TRole, TKey> :
         where TRole : IdentityRole<TKey>
         where TKey : IEquatable<TKey>
 {
-
     private readonly bool _backwardCompatibility;
 
     private StoreOptions? GetStoreOptions() => this.GetService<IDbContextOptions>()

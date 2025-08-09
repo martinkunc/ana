@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-
+// Component to handle authentication routes and pass actions to userManager for OIDC
 const Authentication = () => {
   const { action } = useParams();
   const { userManager } = useAuth();
@@ -16,27 +16,27 @@ const Authentication = () => {
           case 'login':
             await userManager.signinRedirect();
             break;
-            
+
           case 'login-callback':
             const user = await userManager.signinRedirectCallback();
             const state = user?.state as { returnUrl?: string } | undefined;
             const returnUrl = state?.returnUrl || '/';
             navigate(returnUrl, { replace: true });
             break;
-            
+
           case 'logout':
             await userManager.signoutRedirect();
             break;
-            
+
           case 'logout-callback':
             await userManager.signoutRedirectCallback();
             navigate('/', { replace: true });
             break;
-            
+
           case 'silent-callback':
             await userManager.signinSilentCallback();
             break;
-            
+
           default:
             navigate('/', { replace: true });
         }

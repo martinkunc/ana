@@ -1,19 +1,15 @@
-
 .navbarToggler {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-
-/* NavMenu specific top-row styling - different from MainLayout! */
 .topRow {
     height: 3.5rem;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0, 0, 0, 0.4);
 }
 
 :global(.navbar-brand) {
     font-size: 1.1rem;
 }
-
 
 .bi {
     display: inline-block;
@@ -60,12 +56,12 @@
 }
 
 .navItem a.active {
-    background-color: rgba(255,255,255,0.37);
+    background-color: rgba(255, 255, 255, 0.37);
     color: white;
 }
 
 .navItem a:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255, 255, 255, 0.1);
     color: white;
 }
 
@@ -75,14 +71,11 @@
     }
 
     :global(.collapse) {
-        /* Never collapse the sidebar for wide screens */
         display: block !important;
     }
-    
+
     .nav-scrollable {
-        /* Allow sidebar to scroll for tall menus */
         height: calc(100vh - 3.5rem);
         overflow-y: auto;
     }
 }
-

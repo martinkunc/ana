@@ -27,7 +27,6 @@ public class UserTokensEntityTypeConfiguration<TKey> : IEntityTypeConfiguration<
             builder.Property(t => t.Name).HasMaxLength(_maxKeyLength);
         }
 
-
         builder.ToContainer(_tableName);
     }
 }

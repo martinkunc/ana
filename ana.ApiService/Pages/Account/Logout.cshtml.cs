@@ -1,6 +1,5 @@
 using Duende.IdentityServer.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 public class LogoutModel : PageModel
@@ -36,6 +35,7 @@ public class LogoutModel : PageModel
         return Page();
     }
 
+    // Handles redirection based on PostLogoutRedirectUri, which it pass in the returnUrl to return to either React or Blazor after logout
     public async Task<IActionResult> OnPost()
     {
         var logout = await _interactionService.GetLogoutContextAsync(LogoutId);
@@ -55,7 +55,7 @@ public class LogoutModel : PageModel
             {
                 return LocalRedirect(postLogoutUri);
             }
-        
+
             Response.Redirect(postLogoutUri);
             return new EmptyResult();
         }

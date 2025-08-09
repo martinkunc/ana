@@ -12,7 +12,6 @@ Console.WriteLine($"Environment: {env}");
 var baseAddress = builder.HostEnvironment.BaseAddress;
 var apiServiceUrlConfig = builder.Configuration["ApiService__Url"];
 
-
 var apiServiceUrl = baseAddress;
 if (builder.HostEnvironment.IsDevelopment())
 {
@@ -20,7 +19,10 @@ if (builder.HostEnvironment.IsDevelopment())
 }
 Console.WriteLine($"BaseAddress URL: {baseAddress}");
 Console.WriteLine($"apiServiceUrl: {apiServiceUrl}");
-
+if (apiServiceUrl == null)
+{
+    throw new InvalidOperationException("ApiService__Url configuration is missing. Please check your appsettings or environment variables.");
+}
 
 var baseAddressNoSlash = baseAddress.TrimEnd('/');
 // Configure OIDC authentication

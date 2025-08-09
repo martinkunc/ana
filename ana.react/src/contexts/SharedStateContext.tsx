@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { useAuth } from './AuthContext';
 import { useApiClient } from '../hooks/useApiClient';
 import { AnaGroup } from '../services/ApiClient';
-
+// Provider for user display name and selected group
 interface SelectedGroupContextType {
   selectedGroup: AnaGroup | null;
   anaGroupName: string;

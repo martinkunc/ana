@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
 
 /// <summary>
 /// Identity store base
@@ -21,13 +19,14 @@ public abstract class IdentityStoreBase
     /// <returns></returns>
     protected IdentityResult ProcessExceptions(Exception e)
     {
-        var errors = new List<IdentityError>();
-
-        errors.Add(new IdentityError()
+        var errors = new List<IdentityError>
         {
-            Code = "500",
-            Description = e.Message
-        });
+            new IdentityError()
+            {
+                Code = "500",
+                Description = e.Message
+            }
+        };
 
         return IdentityResult.Failed(errors.ToArray());
     }

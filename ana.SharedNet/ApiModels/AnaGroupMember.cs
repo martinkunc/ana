@@ -6,9 +6,7 @@ public class AnaGroupMember
     public string GroupId { get; set; }
     public string Role { get; set; }
     public string Email { get; set; }
-
     public string DisplayName { get; set; }
-
     public AnaGroupMember()
     {
         UserId = string.Empty;

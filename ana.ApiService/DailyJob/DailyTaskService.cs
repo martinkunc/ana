@@ -1,17 +1,12 @@
 using ana.Web.Pages;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using System;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 
-public class DailyTaskService : BackgroundService
+// Service is started by Azure function throught Api call It runs daily at 6 AM GMT, select anniversaries for upcoming day and sends them
+public class DailyTaskService
 {
     int hourToStart = 6; // 6 AM
     private string _secretFromEmail;
@@ -28,29 +23,6 @@ public class DailyTaskService : BackgroundService
         _dbContextFactory = dbContextFactory;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        _logger.LogInformation($"Schedulling the daily task for regular execution");
-        // Calculate initial delay until next 6AM
-        var now = DateTime.Now;
-        var nextHourToStart = now.Date.AddHours(hourToStart);
-        if (now > nextHourToStart)
-            nextHourToStart = nextHourToStart.AddDays(1);
-        _logger.LogInformation($"Next hour to start is at {nextHourToStart}");
-
-        var initialDelay = nextHourToStart - now;
-        _logger.LogInformation($"Initial delay is {initialDelay}");
-        await Task.Delay(initialDelay, stoppingToken);
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            await DoDailyWork();
-
-            // Wait for 24 hours until next run
-            await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
-        }
-    }
-
     public async Task RunNowAsync()
     {
         await DoDailyWork();
@@ -59,10 +31,6 @@ public class DailyTaskService : BackgroundService
     private async Task DoDailyWork()
     {
         _logger.LogInformation($"Daily task running at {DateTime.Now}");
-
-        //
-
-        //
 
         var tomorrow = DateTime.Now.AddDays(1);
         var formattedDate = FormatDate(tomorrow);
@@ -76,7 +44,7 @@ public class DailyTaskService : BackgroundService
 
         var anniversariesTomorrow = string.Join(", ", annivs.Select(a => $"On {a.Date}: {a.Name} from GroupId {a.GroupId}"));
 
-        Dictionary<string, List<string>> groupNotifications = new Dictionary<string, List<string>>();
+        Dictionary<string, List<string>> groupNotifications = [];
         foreach (var anniv in annivs)
         {
             _logger.LogInformation($"Anniversary: {anniv.Name} on {anniv.Date} from GroupId {anniv.GroupId}");
@@ -86,7 +54,7 @@ public class DailyTaskService : BackgroundService
             }
             else
             {
-                groupNotifications[anniv.GroupId] = new List<string> { anniv.Name };
+                groupNotifications[anniv.GroupId] = [anniv.Name];
             }
         }
 
@@ -99,14 +67,14 @@ public class DailyTaskService : BackgroundService
             .Select(agu => new { agu.UserId, agu.GroupId })
             .Distinct()
             .ToListAsync();
-        
+
         var userGroups = membersToGetNotified
             .GroupBy(m => m.UserId)
             .ToDictionary(
                 g => g.Key, // UserId
                 g => g.Select(x => x.GroupId).ToList() // List of GroupIds for this user
             );
-        
+
         var usersToMessages = new Dictionary<string, List<string>>();
         foreach (var group in userGroups)
         {
@@ -133,7 +101,7 @@ public class DailyTaskService : BackgroundService
             .Where(m => groupNotifications.ContainsKey(m.GroupId) && groupNotifications[m.GroupId].Any())
             .Select(m => new { m.UserId, m.GroupId, Messages = groupNotifications[m.GroupId] })
             .ToList();
-        // Your logic here
+
         var notifiedMembers = membersToGetNotified.Select(m => m.UserId).Distinct().ToList();
         var notificationTypes = new List<string> { NotificationType.Email.ToString(), NotificationType.WhatsApp.ToString() };
         var notifiedUsers = await _applicationDbContext.AnaUsers
@@ -142,16 +110,16 @@ public class DailyTaskService : BackgroundService
 
         var notifiedUsersDict = notifiedUsers.ToDictionary(u => u.Id, u => u);
 
-        //var notifiedUsersWithMessages = notifiedUsers.Select(u => new { u.Id, u.PreferredNotification, u.WhatsAppNumber, Messages = usersToMessages.ContainsKey(u.Id) ? usersToMessages[u.Id] : new List<string>() }).ToList();
-
         var notifiedUsersWithEmail = await _applicationDbContext.Users.Where(u => notifiedMembers.Contains(u.Id)).Select(u => new { u.Id, u.Email }).ToListAsync();
 
-        var notifiedUsersWithEmailAndMessages = notifiedUsersWithEmail.Select(u => new {
+        var notifiedUsersWithEmailAndMessages = notifiedUsersWithEmail.Select(u => new
+        {
             u.Id,
             u.Email,
             PreferredNotification = notifiedUsersDict.ContainsKey(u.Id) ? notifiedUsersDict[u.Id].PreferredNotification : NotificationType.None.ToString(),
             WhatsAppNumber = notifiedUsersDict.ContainsKey(u.Id) ? notifiedUsersDict[u.Id].WhatsAppNumber : string.Empty,
-            Messages = usersToMessages.ContainsKey(u.Id) ? usersToMessages[u.Id] : new List<string>() }
+            Messages = usersToMessages.ContainsKey(u.Id) ? usersToMessages[u.Id] : []
+        }
         ).ToList();
 
         foreach (var nu in notifiedUsersWithEmailAndMessages)
@@ -187,9 +155,9 @@ public class DailyTaskService : BackgroundService
                 ["2"] = anniversaries,
             }, new JsonSerializerOptions
             {
-                WriteIndented = true 
+                WriteIndented = true
             }),
-            messagingServiceSid:"MG51f74f879a04bb15f550cc83d54b6b72"
+            messagingServiceSid: "MG51f74f879a04bb15f550cc83d54b6b72"
         );
 
         _logger.LogInformation($"Body: {message.Body}");
@@ -215,7 +183,7 @@ public class DailyTaskService : BackgroundService
     }
 
     internal void SetSecrets(string secretFromEmail,
-        string secretSendGridKey, 
+        string secretSendGridKey,
         string secretTwilioAccountSID,
         string secretTwilioAccountToken,
         string secretWhatsAppFrom)

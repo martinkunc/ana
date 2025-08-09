@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-
 internal static class Utilities
 {
     internal static int GenerateRandomInt()

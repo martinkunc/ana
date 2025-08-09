@@ -1,14 +1,7 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Threading;
-using System.Threading.Tasks;
-
 
 /// <summary>
 /// Cosmos DB User store

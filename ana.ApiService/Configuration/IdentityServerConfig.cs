@@ -1,27 +1,20 @@
 using ana.SharedNet;
 using Duende.IdentityServer;
 using Duende.IdentityServer.Models;
-using Microsoft.Azure.Cosmos;
-using OpenTelemetry.Context;
 
 public class IdentityServerConfig
 {
     public static class IdentityServer
     {
         public const string CertificateName = "anaidentitycert";
-        //public const string IssuerName = "Ana Identity Server";
         public const string AudienceName = "ana_api";
     }
 
     public static class Resources
     {
         public const string ana = "ana";
-        // Add other resources as needed
     }
 
-
-
-    // ApiResources define the apis in your system
     public static IEnumerable<ApiResource> GetApis()
     {
         return new List<ApiResource>
@@ -35,7 +28,6 @@ public class IdentityServerConfig
     }
 
     // ApiScope is used to protect the API 
-    //The effect is the same as that of API resources in IdentityServer 3.x
     public static IEnumerable<ApiScope> GetApiScopes()
     {
         return new List<ApiScope>
@@ -57,64 +49,64 @@ public class IdentityServerConfig
             };
     }
 
-
-    // client want to access resources (aka scopes)
+    // IdP Clients configuration
     public static IEnumerable<Client> GetClients(IConfiguration configuration, string apiUrl, List<string> webClientsUrls, string webAppClientSecret)
     {
         return new List<Client>
             {
+                // Blazor + React use Authorization Code + PKCE OAuth flow (for SPAs/Blazor WebAssembly)
                 new Client
                 {
                     ClientId = Config.IdentityServer.ClientId.Blazor,
                     AllowedGrantTypes = GrantTypes.Code,
                     RequirePkce = true,
                     RequireClientSecret = false,
-
                     RedirectUris = CreateRedirectUris(webClientsUrls, "/authentication/login-callback" ),
                     PostLogoutRedirectUris = CreatePostLogoutRedirectUris(apiUrl, webClientsUrls, "/account/login"),
                     AllowedCorsOrigins = new[] { apiUrl }.Concat(webClientsUrls).ToList(),
-                    AllowedScopes = new List<string>
-                    {
+                    AllowedScopes =
+                    [
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.Email,
                         Config.IdentityServer.Scopes.ana,
                         Config.IdentityServer.Scopes.anaApi,
-                    }
+                    ]
                 },
+                // Web in api is using Authorization Code + Client Credentials OAuth flow (for server-side web apps)
                 new Client
                 {
                     ClientId = Config.IdentityServer.ClientId.WebApp,
                     ClientName = "WebApp Client",
-                    ClientSecrets = new List<Secret>
-                    {
+                    ClientSecrets =
+                    [
                         new Secret(webAppClientSecret.Sha256())
-                    },
-                    ClientUri = $"{configuration["WebAppClient"]}", // public uri of the client
+                    ],
+                    ClientUri = $"{configuration["WebAppClient"]}",
                     AllowedGrantTypes = GrantTypes.CodeAndClientCredentials,
                     AllowAccessTokensViaBrowser = false,
                     RequireConsent = false,
                     AllowOfflineAccess = true,
                     AlwaysIncludeUserClaimsInIdToken = true,
                     RequirePkce = false,
-                    RedirectUris = new List<string>
-                    {
+                    RedirectUris =
+                    [
                         $"{configuration["WebAppClient"]}/signin-oidc"
-                    },
-                    PostLogoutRedirectUris = new List<string>
-                    {
+                    ],
+                    PostLogoutRedirectUris =
+                    [
                         $"{configuration["WebAppClient"]}/signout-callback-oidc"
-                    },
-                    AllowedScopes = new List<string>
-                    {
+                    ],
+                    AllowedScopes =
+                    [
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
                         IdentityServerConstants.StandardScopes.OfflineAccess,
                         Config.IdentityServer.Scopes.ana,
                         Config.IdentityServer.Scopes.anaApi,
-                    },
-                    AccessTokenLifetime = 60*60*2, // 2 hours
-                    IdentityTokenLifetime= 60*60*2 // 2 hours
+                    ],
+                    AccessTokenLifetime = 60*60*2,
+                    IdentityTokenLifetime= 60*60*2
                 },
             };
     }

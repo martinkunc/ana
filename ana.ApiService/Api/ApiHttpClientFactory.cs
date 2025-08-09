@@ -1,5 +1,3 @@
-
-using Microsoft.Extensions.Logging;
 using Duende.IdentityModel.Client;
 using ana.SharedNet;
 public class ApiHttpClientFactory : IAnaHttpClientFactory
@@ -16,16 +14,13 @@ public class ApiHttpClientFactory : IAnaHttpClientFactory
     {
         _httpClientFactory = httpClientFactory;
         _baseAddress = baseAddress;
-        
         _webAppClientSecret = clientSecret;
-
         _logger = logger;
     }
 
     public async Task<HttpClient> GetHttpClient()
     {
         string token = await GetAccessToken();
-        //var token = _tokenService.GenerateJwtToken(identity);
         var _httpClient = _httpClientFactory.CreateClient();
         _httpClient.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);

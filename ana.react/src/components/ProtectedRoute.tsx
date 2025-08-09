@@ -18,7 +18,7 @@ const ProtectedRoute: React.FC<React.PropsWithChildren<{}>> = ({ children }) => 
   }
 
   if (isLoggingOut) {
-    return <div>Logging out...</div>; // Or return null to show nothing
+    return <div>Logging out...</div>;
   }
 
   if (!isAuthenticated) {
