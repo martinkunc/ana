@@ -7,25 +7,46 @@ const isLocalhost = (): boolean => {
          hostname === '::1';
 };
 
-const getApiHost = () => {
+const getApiBase = () => {
+          const apiUrl=  "/api" //  import.meta.env.VITE_API_URL 
+          return apiUrl;
+        };
+
+const getApiUrl = () => {
           if (isLocalhost()) {
             return "https://localhost:7001";
           }
 
-          // Production/deployed environment fallback
           const hostname = window.location.hostname;
           if (hostname.includes('azurecontainerapps.io')) {
             return `https://${hostname.replace('ana-react', 'ana-api')}`;
           }
           
-          // Default fallback
           return "https://anniversarynotification.com";
         };
 
+const getPublicApiUrl = () => {
+          if (isLocalhost()) {
+            return "https://localhost:7001";
+          }
+
+          return "https://anniversarynotification.com";
+        };
+
+  const getPublicAppUrl = () => {
+          if (isLocalhost()) {
+            return "https://localhost:7001";
+          }
+
+          return "https://react.anniversarynotification.com";
+        };
+
 export const PUBLIC_URLS = {
-  API_BASE: `${getApiHost()}`,
+  API_BASE: `${getApiBase()}`,
+  API_URL: `${getApiUrl()}`,
+  APP_BASE: `${getPublicAppUrl()}`,
   OIDC_AUTHORITY: (() => {
-    return getApiHost();
+    return getPublicApiUrl();
   })(),
 
 } as const;
@@ -36,7 +57,7 @@ export const APP_CONFIG = {
 } as const;
 
 export const AUTH_URLS = {
-  LOGIN_REDIRECT: `${PUBLIC_URLS.API_BASE}/account/login?returnUrl=${window.location.origin}`,
+  LOGIN_REDIRECT: `${PUBLIC_URLS.API_URL}/account/login?returnUrl=${window.location.origin}`,
 } as const;
 
 

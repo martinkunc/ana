@@ -78,7 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const manager = new UserManager(oidcConfig);
     setUserManager(manager);
 
-
     manager.events.addUserLoaded(handleUserLoaded);
     manager.events.addUserUnloaded(handleUserUnloaded);
     manager.events.addAccessTokenExpired(handleAccessTokenExpired);
