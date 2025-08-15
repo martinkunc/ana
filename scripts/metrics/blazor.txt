@@ -1,0 +1,79 @@
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       6      1     42      2       8 CookieHandler::SendAsync@15-22@../../ana.Web/Identity/CookieHandler.cs
+       5      2     20      0       5 UserSelectedGroupService::RaiseChange@6-10@../../ana.Web/Identity/UserSelectedGroupService.cs
+       5      2     19      1       5 UserDisplayNameService::if@12-16@../../ana.Web/Identity/UserDisplayNameService.cs
+       8      1     38      0       9 NavMenu::OnInitializedAsync@24-32@../../ana.Web/Layout/NavMenu.razor.cs
+       5      1     18      0       5 NavMenu::Dispose@34-38@../../ana.Web/Layout/NavMenu.razor.cs
+      23      6    141      0      24 NavMenu::RefreshSelectedGroup@40-63@../../ana.Web/Layout/NavMenu.razor.cs
+       4      1     10      0       4 NavMenu::ToggleNavMenu@65-68@../../ana.Web/Layout/NavMenu.razor.cs
+       5      1     17      0       5 NewGroupUser::NewGroupUser@9-13@../../ana.Web/Models/NewGroupUser.cs
+       5      1     17      0       5 NewGroup::NewGroup@8-12@../../ana.Web/Models/NewGroup.cs
+       7      1     35      0       7 NewAnniversary::NewAnniversary@13-19@../../ana.Web/Models/NewAnniversary.cs
+      20      4    123      3      24 SecretsExtensions::GetFromSecretsOrVault@7-30@../../ana.Web/Extensions/SecretsExtensions.cs
+      10      1     35      4      10 WebHttpClientFactory::WebHttpClientFactory@10-19@../../ana.Web/Api/WebHttpClientFactory.cs
+      24      5    124      0      26 WebHttpClientFactory::GetHttpClient@21-46@../../ana.Web/Api/WebHttpClientFactory.cs
+      31     10    222      0      35 Colors::OnInitializedAsync@38-72@../../ana.Web/Pages/Members.razor.cs
+      22      5     93      0      25 Colors::AddGroupMember@74-98@../../ana.Web/Pages/Members.razor.cs
+      16      2     69      1      16 Colors::RefreshGroupMembersAsync@100-115@../../ana.Web/Pages/Members.razor.cs
+      18      3     98      3      19 Colors::CheckAdminChanged@117-135@../../ana.Web/Pages/Members.razor.cs
+      14      3     87      2      18 Colors::RemoveMember@137-154@../../ana.Web/Pages/Members.razor.cs
+      13      4    105      0      15 Settings::OnInitializedAsync@25-39@../../ana.Web/Pages/Settings.razor.cs
+      15      2     58      0      15 Settings::SaveSettings@43-57@../../ana.Web/Pages/Settings.razor.cs
+      22      5     95      0      22 Settings::CancelAccount@59-80@../../ana.Web/Pages/Settings.razor.cs
+      51     17    267      0      59 Home::OnInitializedAsync@29-87@../../ana.Web/Pages/Home.razor.cs
+      16      2     47      2      16 Home::OnTokenExpired@89-104@../../ana.Web/Pages/Home.razor.cs
+      11      3     31      0      12 Home::Dispose@106-117@../../ana.Web/Pages/Home.razor.cs
+      20      5    139      0      28 Home::AddAnniversary@119-146@../../ana.Web/Pages/Home.razor.cs
+      15      2     61      1      17 Home::RefreshAnniversaries@148-164@../../ana.Web/Pages/Home.razor.cs
+      13      1     58      4      14 Home::EditAnniversary@166-179@../../ana.Web/Pages/Home.razor.cs
+      14      4     88      2      17 Home::RemoveAnniversary@181-197@../../ana.Web/Pages/Home.razor.cs
+       5      1     32      1       5 Home::FormatDate@199-203@../../ana.Web/Pages/Home.razor.cs
+      23      6    166      0      26 MyGroups::OnInitializedAsync@31-56@../../ana.Web/Pages/MyGroups.razor.cs
+      20      5     81      0      23 MyGroups::AddGroup@58-80@../../ana.Web/Pages/MyGroups.razor.cs
+      16      2     69      1      16 MyGroups::RefreshGroupsAsync@82-97@../../ana.Web/Pages/MyGroups.razor.cs
+      17      4    103      2      17 MyGroups::SwitchGroup@99-115@../../ana.Web/Pages/MyGroups.razor.cs
+      16      1     72      4      19 TokenService::TokenService@19-37@../../ana.Web/Services/TokenService.cs
+      15      3     51      2      15 TokenService::OnTokenCheckTimerElapsed@39-53@../../ana.Web/Services/TokenService.cs
+       8      3     37      0      10 TokenService::GetValidAccessTokenAsync@55-64@../../ana.Web/Services/TokenService.cs
+      32     11    170      0      39 TokenService::IsTokenExpiringSoonAsync@66-104@../../ana.Web/Services/TokenService.cs
+      47      9    212      0      57 TokenService::RefreshTokenAsync@106-162@../../ana.Web/Services/TokenService.cs
+      20      5    142      1      22 TokenService::ParseTokenClaims@164-185@../../ana.Web/Services/TokenService.cs
+       9      3     43      1       9 TokenService::ParseBase64WithoutPadding@187-195@../../ana.Web/Services/TokenService.cs
+       5      3     19      0       5 TokenService::Dispose@197-201@../../ana.Web/Services/TokenService.cs
+       5      1     19      1       5 if@21-25@../../ana.Web/Program.cs
+       4      1     23      1       4 foreach@29-32@../../ana.Web/Program.cs
+       6      1     23      1       6 if@34-39@../../ana.Web/Program.cs
+       4      1     15      1       4 if@44-47@../../ana.Web/Program.cs
+16 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+     10       6.0     1.0       42.0         1     ../../ana.Web/Identity/CookieHandler.cs
+      9       5.0     2.0       20.0         1     ../../ana.Web/Identity/UserSelectedGroupService.cs
+     17       5.0     2.0       19.0         1     ../../ana.Web/Identity/UserDisplayNameService.cs
+     56      10.0     2.2       51.8         4     ../../ana.Web/Layout/NavMenu.razor.cs
+     13       5.0     1.0       17.0         1     ../../ana.Web/Models/NewGroupUser.cs
+     12       5.0     1.0       17.0         1     ../../ana.Web/Models/NewGroup.cs
+     19       7.0     1.0       35.0         1     ../../ana.Web/Models/NewAnniversary.cs
+     27      20.0     4.0      123.0         1     ../../ana.Web/Extensions/SecretsExtensions.cs
+     42      17.0     3.0       79.5         2     ../../ana.Web/Api/WebHttpClientFactory.cs
+    130      20.2     4.6      113.8         5     ../../ana.Web/Pages/Members.razor.cs
+     70      16.7     3.7       86.0         3     ../../ana.Web/Pages/Settings.razor.cs
+    167      18.1     4.4       90.4         8     ../../ana.Web/Pages/Home.razor.cs
+     98      19.0     4.2      104.8         4     ../../ana.Web/Pages/MyGroups.razor.cs
+     11       0.0     0.0        0.0         0     ../../ana.Web/Services/ITokenService.cs
+    168      19.0     4.8       93.2         8     ../../ana.Web/Services/TokenService.cs
+     68       4.8     1.0       20.0         4     ../../ana.Web/Program.cs
+
+===========================================================================================================
+!!!! Warnings (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100) !!!!
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+      51     17    267      0      59 Home::OnInitializedAsync@29-87@../../ana.Web/Pages/Home.razor.cs
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+       917      14.9     3.4       76.3       45            1      0.02    0.08

@@ -1,5 +1,17 @@
 
 
+const isLocalProdTesting = (): boolean => {
+  
+  const isOnAzure = window.location.hostname.includes('azurecontainerapps.io') || 
+    window.location.hostname.includes('anniversarynotification.com');
+  console.log(`isOnAzure: ${isOnAzure ? 'Azure' : 'Local'}`);
+
+  if (import.meta.env.PROD && isLocalhost() && !isOnAzure) {
+    return true;
+  }
+  return false;
+};
+
 const isLocalhost = (): boolean => {
   const hostname = window.location.hostname;
   return hostname === 'localhost' || 
@@ -8,13 +20,28 @@ const isLocalhost = (): boolean => {
 };
 
 const getApiBase = () => {
-          const apiUrl=  "/api" //  import.meta.env.VITE_API_URL 
-          return apiUrl;
-        };
+    if (isLocalProdTesting()) {
+        const apiUrl = "/";
+        return apiUrl;
+    }
+    if (import.meta.env.DEV) {
+      return import.meta.env.VITE_API_URL;
+    }
+
+    const hostname = window.location.hostname;
+    if (hostname.includes('azurecontainerapps.io')) {
+      return `https://${hostname.replace('ana-react', 'ana-api')}`;
+    }
+    
+    return "https://anniversarynotification.com";
+};
 
 const getApiUrl = () => {
-          if (isLocalhost()) {
+          if (isLocalProdTesting()) {
             return "https://localhost:7001";
+          }
+          if (import.meta.env.DEV) {
+            return import.meta.env.VITE_API_URL;
           }
 
           const hostname = window.location.hostname;
@@ -26,15 +53,18 @@ const getApiUrl = () => {
         };
 
 const getPublicApiUrl = () => {
-          if (isLocalhost()) {
+          if (isLocalProdTesting()) {
             return "https://localhost:7001";
+          }
+          if (import.meta.env.DEV) {
+            return import.meta.env.VITE_API_URL;
           }
 
           return "https://anniversarynotification.com";
         };
 
   const getPublicAppUrl = () => {
-          if (isLocalhost()) {
+          if (isLocalProdTesting()) {
             return "https://localhost:7001";
           }
 

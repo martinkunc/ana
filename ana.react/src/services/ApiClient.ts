@@ -59,6 +59,7 @@ export class ApiClient {
 
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    console.log(`API Request: ${options.method || 'GET'} ${url}`);
     const token = this.getAccessToken();
 
     const headers: Record<string, string> = {

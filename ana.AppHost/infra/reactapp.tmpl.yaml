@@ -31,8 +31,6 @@ properties:
             value: none
           - name: NODE_ENV
             value: development
-          - name: SOME_TEST
-            value: CONTENT
           - name: VITE_API_URL
             value: https://apiservice.{{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN }}
           - name: VITE_PORT

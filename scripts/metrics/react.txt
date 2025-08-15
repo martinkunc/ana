@@ -1,0 +1,135 @@
+================================================
+  NLOC    CCN   token  PARAM  length  location  
+------------------------------------------------
+       1      1      6      0       1 refreshSelectedGroup@9-9@../../ana.react/src/contexts/SharedStateContext.tsx
+       1      1      8      1       1 updateDisplayName@12-12@../../ana.react/src/contexts/SharedStateContext.tsx
+       1      1      6      0       1 refreshDisplayName@13-13@../../ana.react/src/contexts/SharedStateContext.tsx
+       7      2     28      0       7 useSharedState@19-25@../../ana.react/src/contexts/SharedStateContext.tsx
+       3      1      6      1       3 setIsLoadingDisplayName@59-61@../../ana.react/src/contexts/SharedStateContext.tsx
+       3      1      8      0       3 (anonymous)@63-65@../../ana.react/src/contexts/SharedStateContext.tsx
+       3      1      6      1       3 setIsLoading@103-105@../../ana.react/src/contexts/SharedStateContext.tsx
+       4      1     11      0       4 (anonymous)@107-110@../../ana.react/src/contexts/SharedStateContext.tsx
+       1      2     10      1       1 login@13-13@../../ana.react/src/contexts/AuthContext.tsx
+       1      1      6      0       1 logout@14-14@../../ana.react/src/contexts/AuthContext.tsx
+       1      1      7      0       1 getAccessToken@15-15@../../ana.react/src/contexts/AuthContext.tsx
+       1      1      7      0       1 getIdToken@16-16@../../ana.react/src/contexts/AuthContext.tsx
+       1      1      5      0       1 getUserClaims@17-17@../../ana.react/src/contexts/AuthContext.tsx
+       7      2     28      0       7 useAuth@22-28@../../ana.react/src/contexts/AuthContext.tsx
+       5      2     29      0       5 handleUserLoaded@37-41@../../ana.react/src/contexts/AuthContext.tsx
+       5      1     20      0       5 handleUserUnloaded@43-47@../../ana.react/src/contexts/AuthContext.tsx
+       5      1     20      0       5 handleAccessTokenExpired@49-53@../../ana.react/src/contexts/AuthContext.tsx
+       3      1     10      0       3 handleAccessTokenExpiring@55-57@../../ana.react/src/contexts/AuthContext.tsx
+       3      1     12      0       3 handleSilentRenewError@59-61@../../ana.react/src/contexts/AuthContext.tsx
+       3      1      6      1       3 setIsLoading@102-104@../../ana.react/src/contexts/AuthContext.tsx
+       7      1     48      0       7 (anonymous)@108-114@../../ana.react/src/contexts/AuthContext.tsx
+      19      4     89      0      29 initializeAuth@87-115@../../ana.react/src/contexts/AuthContext.tsx
+      11      3     41      0      11 login@117-127@../../ana.react/src/contexts/AuthContext.tsx
+       3      1     14      1       3 setTimeout@161-163@../../ana.react/src/contexts/AuthContext.tsx
+      27      5    140      0      36 logout@129-164@../../ana.react/src/contexts/AuthContext.tsx
+       3      3     11      0       3 getAccessToken@166-168@../../ana.react/src/contexts/AuthContext.tsx
+       3      3     11      0       3 getIdToken@170-172@../../ana.react/src/contexts/AuthContext.tsx
+       3      3     11      0       3 getUserClaims@174-176@../../ana.react/src/contexts/AuthContext.tsx
+       6      3     25      0       7 isLocalProdTesting@1-7@../../ana.react/src/config/config.tsx
+       6      3     25      0       6 isLocalhost@9-14@../../ana.react/src/config/config.tsx
+       8      2     35      0       8 getApiBase@16-23@../../ana.react/src/config/config.tsx
+      13      4     61      0      15 getApiUrl@25-39@../../ana.react/src/config/config.tsx
+       9      3     38      0      10 getPublicApiUrl@41-50@../../ana.react/src/config/config.tsx
+       6      2     17      0       7 getPublicAppUrl@52-58@../../ana.react/src/config/config.tsx
+       3      1     11      0       3 OIDC_AUTHORITY@64-66@../../ana.react/src/config/config.tsx
+      31     12    170      0      37 handleAuthAction@11-47@../../ana.react/src/components/Authentication.tsx
+       4      1     15      0      41 (anonymous)@10-50@../../ana.react/src/components/Authentication.tsx
+      14      5     38      0      14 getDisplayMessage@52-65@../../ana.react/src/components/Authentication.tsx
+      17      1     66      0      73 Authentication@5-77@../../ana.react/src/components/Authentication.tsx
+      18      1     64      0      23 MainLayout@10-32@../../ana.react/src/components/MainLayout.tsx
+       7      2     26      0       7 handleLogin@13-19@../../ana.react/src/components/LoginDisplay.tsx
+       7      2     26      0       7 handleLogout@21-27@../../ana.react/src/components/LoginDisplay.tsx
+      24      1     66      1      27 ?@39-65@../../ana.react/src/components/LoginDisplay.tsx
+      15      4     81      0      31 LoginDisplay@9-39@../../ana.react/src/components/LoginDisplay.tsx
+       1      1      8      1       1 ?@8-8@../../ana.react/src/components/NavMenu.tsx
+       4      1     16      0       4 toggleNavMenu@18-21@../../ana.react/src/components/NavMenu.tsx
+       6      2     32      0       6 isActiveLink@51-56@../../ana.react/src/components/NavMenu.tsx
+       6      1     37      1       6 navigationItems.map@81-86@../../ana.react/src/components/NavMenu.tsx
+      31      1    122      0      37 (anonymous)@61-97@../../ana.react/src/components/NavMenu.tsx
+      37      2    149      0      87 NavMenu@11-97@../../ana.react/src/components/NavMenu.tsx
+       8      1     14      0       8 NotFound@2-9@../../ana.react/src/components/NotFound.tsx
+       3      1     13      0       3 (anonymous)@8-10@../../ana.react/src/hooks/useApiClient.ts
+       5      1     29      0       8 useApiClient@6-13@../../ana.react/src/hooks/useApiClient.ts
+       3      1      6      1       3 setIsLoading@41-43@../../ana.react/src/pages/Settings.tsx
+      18      6     97      0      23 loadUserSettings@24-46@../../ana.react/src/pages/Settings.tsx
+       4      1     14      0       4 (anonymous)@49-52@../../ana.react/src/pages/Settings.tsx
+       2      1      6      0       2 handleInputChange@48-49@../../ana.react/src/pages/Settings.tsx
+       7      2     46      0      35 (anonymous)@23-57@../../ana.react/src/pages/Settings.tsx
+      13      3     70      0      15 handleSaveSettings@59-73@../../ana.react/src/pages/Settings.tsx
+      13      3     70      0      15 handleCancelAccount@75-89@../../ana.react/src/pages/Settings.tsx
+       5      2     25      1       5 &&@193-197@../../ana.react/src/pages/Settings.tsx
+      22      2     80      1      28 (anonymous)@173-200@../../ana.react/src/pages/Settings.tsx
+       5      3     15      0       5 (anonymous)@26-30@../../ana.react/src/pages/Home.tsx
+       1      1     12      0       1 (anonymous)@53-53@../../ana.react/src/pages/Home.tsx
+      18      6     94      0      22 loadAnniversaries@32-53@../../ana.react/src/pages/Home.tsx
+      18      2    147      0      47 Home@13-59@../../ana.react/src/pages/Home.tsx
+       5      5     92      0       6 validateForm@61-66@../../ana.react/src/pages/Home.tsx
+      32      5    204      0     160 *global*@0-159@../../ana.react/src/pages/Home.tsx
+      30      4    128      0      35 addAnniversary@78-112@../../ana.react/src/pages/Home.tsx
+       9      1     22      0       9 editAnniversary@114-122@../../ana.react/src/pages/Home.tsx
+      14      4     64      0      17 removeAnniversary@124-140@../../ana.react/src/pages/Home.tsx
+       8      1     28      0       8 resetForm@142-149@../../ana.react/src/pages/Home.tsx
+       1      1     24      2       1 (anonymous)@209-209@../../ana.react/src/pages/Home.tsx
+       5      3     15      0       5 (anonymous)@24-28@../../ana.react/src/pages/Members.tsx
+      26      5    134      0      32 loadMembers@30-61@../../ana.react/src/pages/Members.tsx
+      10      3     75      0      12 validateForm@63-74@../../ana.react/src/pages/Members.tsx
+      23      3    109      0      30 addGroupMember@76-105@../../ana.react/src/pages/Members.tsx
+       2      1      2      0       2 (anonymous)@116-117@../../ana.react/src/pages/Members.tsx
+       4      2     24      0       5 (anonymous)@116-120@../../ana.react/src/pages/Members.tsx
+       7      2     37      0      10 checkAdminChanged@107-116@../../ana.react/src/pages/Members.tsx
+      22      2    245      0     118 Members@10-127@../../ana.react/src/pages/Members.tsx
+       1      1      7      0       1 (anonymous)@138-138@../../ana.react/src/pages/Members.tsx
+       1      1      7      0       1 (anonymous)@138-138@../../ana.react/src/pages/Members.tsx
+       7      2     33      0      10 removeMember@129-138@../../ana.react/src/pages/Members.tsx
+      22      4    122      0     156 *global*@0-155@../../ana.react/src/pages/Members.tsx
+      41      1     94      2      41 &&@191-231@../../ana.react/src/pages/Members.tsx
+       5      3     15      0       5 (anonymous)@28-32@../../ana.react/src/pages/MyGroups.tsx
+      15      5     73      0      17 initializeComponent@34-50@../../ana.react/src/pages/MyGroups.tsx
+      16      4     79      0      19 refreshGroups@52-70@../../ana.react/src/pages/MyGroups.tsx
+       8      2     55      0      10 validateForm@72-81@../../ana.react/src/pages/MyGroups.tsx
+      21      3    109      0      28 addGroup@83-110@../../ana.react/src/pages/MyGroups.tsx
+      13      2     72      0      17 switchGroup@112-128@../../ana.react/src/pages/MyGroups.tsx
+       1      1     24      2       1 (anonymous)@175-175@../../ana.react/src/pages/MyGroups.tsx
+      10      1     23      1      10 &&@186-195@../../ana.react/src/pages/MyGroups.tsx
+       1      1      4      0       1 getAccessToken@53-53@../../ana.react/src/services/ApiClient.ts
+       1      1      4      0       1 constructor@55-55@../../ana.react/src/services/ApiClient.ts
+      36      1    174      0      39 App@13-51@../../ana.react/src/App.tsx
+       3      1     21      0       3 (anonymous)@27-29@../../ana.react/vite.config.ts
+       3      1     11      0       3 (anonymous)@30-32@../../ana.react/vite.config.ts
+       4      1     36      0       8 configure@26-33@../../ana.react/vite.config.ts
+      12      1     28      2      19 configure@26-44@../../ana.react/vite.config.ts
+20 file analyzed.
+==============================================================
+NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
+--------------------------------------------------------------
+    111       2.9     1.1        9.9         8     ../../ana.react/src/contexts/SharedStateContext.tsx
+    164       5.6     1.9       26.2        20     ../../ana.react/src/contexts/AuthContext.tsx
+     71       7.3     2.6       30.3         7     ../../ana.react/src/config/config.tsx
+     67      16.5     4.8       72.2         4     ../../ana.react/src/components/Authentication.tsx
+     26       0.0     0.0        0.0         0     ../../ana.react/src/components/ProtectedRoute.tsx
+     25      18.0     1.0       64.0         1     ../../ana.react/src/components/MainLayout.tsx
+     56      13.2     2.2       49.8         4     ../../ana.react/src/components/LoginDisplay.tsx
+     94      14.2     1.3       60.7         6     ../../ana.react/src/components/NavMenu.tsx
+      9       8.0     1.0       14.0         1     ../../ana.react/src/components/NotFound.tsx
+     11       4.0     1.0       21.0         2     ../../ana.react/src/hooks/useApiClient.ts
+    199       9.7     2.3       46.0         9     ../../ana.react/src/pages/Settings.tsx
+    216      12.8     3.0       75.5        11     ../../ana.react/src/pages/Home.tsx
+    195      13.2     2.3       69.5        13     ../../ana.react/src/pages/Members.tsx
+    165      11.1     2.6       56.2         8     ../../ana.react/src/pages/MyGroups.tsx
+    174       1.0     1.0        4.0         2     ../../ana.react/src/services/ApiClient.ts
+     47      36.0     1.0      174.0         1     ../../ana.react/src/App.tsx
+     10       0.0     0.0        0.0         0     ../../ana.react/src/main.tsx
+      0       0.0     0.0        0.0         0     ../../ana.react/src/vite-env.d.ts
+     27       0.0     0.0        0.0         0     ../../ana.react/eslint.config.js
+     38       5.5     1.0       24.0         4     ../../ana.react/vite.config.ts
+
+===============================================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or nloc > 1000000 or parameter_count > 100)
+==========================================================================================
+Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
+------------------------------------------------------------------------------------------
+      1705       9.6     2.1       46.2      101            0      0.00    0.00

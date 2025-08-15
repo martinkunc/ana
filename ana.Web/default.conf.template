@@ -1,0 +1,71 @@
+server {
+    listen       ${BLAZOR_PORT};
+    listen  [::]:${BLAZOR_PORT};
+    server_name  _;
+
+    access_log  /var/log/nginx/server.access.log  main;
+
+    # API proxy configuration
+    location /api/ {
+        proxy_pass ${services__apiservice__https__0};
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        access_log /var/log/nginx/api.access.log main;
+        error_log /var/log/nginx/api.error.log debug;
+    }
+
+    # Static file root
+    root /usr/share/nginx/html;
+
+    # Enable serving of precompressed files (try .br then .gz then original)
+    # We keep original filenames so correct MIME type (application/wasm) is inferred.
+    location / {
+        # Only fall back to SPA index; don't rewrite to compressed variants here to avoid
+        # serving index.html for source map or other missed matches.
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
+    }
+
+    # WASM (immutable) – serve original filename to keep correct Content-Type
+    # and optionally substitute precompressed .br if it exists.
+    location ~* \.wasm$ {
+        root /usr/share/nginx/html;
+        # Ensure proper type even if nginx guesses based on .br during internal rewrite
+        types { application/wasm wasm; }
+        default_type application/wasm;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Vary "Accept-Encoding";
+        try_files $uri =404;
+        # Manual brotli static fallback (works even without brotli_static module)
+        if (-f $request_filename.br) {
+            add_header Content-Encoding br;
+            rewrite ^(.*)$ $1.br break;
+        }
+    }
+
+    # Assemblies and other binary data
+    location ~* \.(dll|pdb|dat)$ {
+        try_files $uri $uri.br $uri.gz =404;
+        default_type application/octet-stream;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Vary "Accept-Encoding";
+    }
+
+    # JS
+    location ~* \.js$ {
+        try_files $uri $uri.br $uri.gz =404;
+        default_type application/javascript;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Vary "Accept-Encoding";
+    }
+
+    # CSS
+    location ~* \.css$ {
+        try_files $uri $uri.br $uri.gz =404;
+        default_type text/css;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Vary "Accept-Encoding";
+    }
+}

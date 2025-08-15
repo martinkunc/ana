@@ -463,3 +463,19 @@ Note: ana.Host and ana.ApiService has to be started upfront
 dotnet watch --project .\ana.Web\ --configuration Debug --launch-profile "BlazorWeb"
 ```
 
+## Launch local production mode testing
+When ana.AppHost/appSettings.Development.json has added:
+```
+"AppMode": "prod"
+```
+The application will start containers with images tagged with `ana-react` and `ana-web`. These should be build upfront by shell scripts in scripts folder.
+In this mode, react and blazor run in production mode on same static url, redirected by nginx to api to remedy the effect of preflight requests.
+
+Scripts can be started from ana root using:
+```
+./scripts/build-web-docker.sh
+```
+and
+```
+./scripts/build-react-docker.sh
+```

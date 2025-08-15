@@ -11,6 +11,9 @@ import MyGroups from './pages/MyGroups';
 import Settings from './pages/Settings';
 
 const App = () => {
+  console.log("App component initialized. Environment mode:", import.meta.env.MODE);
+  console.log("App component initialized. Environment dev:", import.meta.env.DEV);
+  console.log("App component initialized. Environment prod:", import.meta.env.PROD);
   return (
     <AuthProvider>
       <SharedStateProvider>
