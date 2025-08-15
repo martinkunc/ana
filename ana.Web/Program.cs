@@ -32,16 +32,19 @@ foreach (var conf in builder.Configuration.AsEnumerable())
     Console.WriteLine($"Config: {conf.Key} = {conf.Value}");
 }
 var baseAddressNoSlash = baseAddress.TrimEnd('/');
+var postLogoutRedirectUri = apiServiceUrl;
 if (isLocalProdTesting)
 {
     Console.WriteLine("MY: ApiService__Url is loopback, using /api.");
     apiServiceUrl = baseAddressNoSlash + "/api";
+    postLogoutRedirectUri = apiServiceUrlConfig;
     authorityUrl = apiServiceUrlConfig;
 }
 
 Console.WriteLine($"BaseAddress URL: {baseAddress}");
 Console.WriteLine($"apiServiceUrl: {apiServiceUrl}");
 Console.WriteLine($"authorityUrl: {authorityUrl}");
+Console.WriteLine($"postLogoutRedirectUri: {postLogoutRedirectUri}");
 if (apiServiceUrl == null)
 {
     throw new InvalidOperationException("ApiService__Url configuration is missing. Please check your appsettings or environment variables.");
@@ -54,7 +57,7 @@ builder.Services.AddOidcAuthentication(options =>
     options.ProviderOptions.DefaultScopes.Add("ana_api");
     options.ProviderOptions.ClientId = "blazor"; // Client ID registered in IdentityServer
     options.ProviderOptions.Authority = authorityUrl;
-    options.ProviderOptions.PostLogoutRedirectUri = $"{apiServiceUrl}/account/login?returnUrl={baseAddressNoSlash}";
+    options.ProviderOptions.PostLogoutRedirectUri = $"{postLogoutRedirectUri}/account/login?returnUrl={baseAddressNoSlash}";
     //options.ProviderOptions.PostLogoutRedirectUri = baseAddress; // Redirect back to the Blazor app
 
     options.ProviderOptions.RedirectUri = $"{baseAddress}authentication/login-callback";
