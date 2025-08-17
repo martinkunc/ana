@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "chrome-launcher": "^1.1.2",
-    "lighthouse": "^12.5.0"
+    "lighthouse": "^12.5.0",
+    "puppeteer": "^24.16.2"
   }
 }

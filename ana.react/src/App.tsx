@@ -1,4 +1,4 @@
-import { AuthProvider } from './contexts/AuthContext';
+import { AppAuthProvider } from './contexts/AppAuthProvider';
 import { SharedStateProvider } from './contexts/SharedStateContext';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Authentication from './components/Authentication'; 
@@ -15,7 +15,7 @@ const App = () => {
   console.log("App component initialized. Environment dev:", import.meta.env.DEV);
   console.log("App component initialized. Environment prod:", import.meta.env.PROD);
   return (
-    <AuthProvider>
+  <AppAuthProvider>
       <SharedStateProvider>
         <Router>
           <Routes>
@@ -44,7 +44,7 @@ const App = () => {
           </Routes>
         </Router>
       </SharedStateProvider>
-    </AuthProvider>
+    </AppAuthProvider>
   );
 };
 

@@ -71,6 +71,8 @@ const getPublicApiUrl = () => {
           return "https://react.anniversarynotification.com";
         };
 
+export const DISABLE_AUTH: boolean = false;
+
 export const PUBLIC_URLS = {
   API_BASE: `${getApiBase()}`,
   API_URL: `${getApiUrl()}`,
@@ -97,6 +99,7 @@ export type AuthUrls = typeof AUTH_URLS;
 
 
 export default {
+  DISABLE_AUTH,
   PUBLIC_URLS,
   APP_CONFIG,
   AUTH_URLS,

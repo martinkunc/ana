@@ -1,6 +1,9 @@
 using ana.Web;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.Components.Authorization;
+using System.Security.Claims;
+using ana.Web.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -11,6 +14,8 @@ Console.WriteLine($"Environment: {env}");
 
 var baseAddress = builder.HostEnvironment.BaseAddress;
 var apiServiceUrlConfig = builder.Configuration["ApiService__Url"];
+
+var disableAuth = builder.Configuration.GetValue<bool>("DisableAuth");
 
 var isLocalProdTesting = builder.HostEnvironment.IsProduction()
     && Uri.TryCreate(apiServiceUrlConfig, new UriCreationOptions { }, out var apiServiceParsedUrl)
@@ -52,33 +57,30 @@ if (apiServiceUrl == null)
 
 
 // Configure OIDC authentication
-builder.Services.AddOidcAuthentication(options =>
+if (!disableAuth)
 {
-    options.ProviderOptions.DefaultScopes.Add("ana_api");
-    options.ProviderOptions.ClientId = "blazor"; // Client ID registered in IdentityServer
-    options.ProviderOptions.Authority = authorityUrl;
-    options.ProviderOptions.PostLogoutRedirectUri = $"{postLogoutRedirectUri}/account/login?returnUrl={baseAddressNoSlash}";
-    //options.ProviderOptions.PostLogoutRedirectUri = baseAddress; // Redirect back to the Blazor app
+    builder.Services.AddOidcAuthentication(options =>
+    {
+        options.ProviderOptions.DefaultScopes.Add("ana_api");
+        options.ProviderOptions.ClientId = "blazor"; // Client ID registered in IdentityServer
+        options.ProviderOptions.Authority = authorityUrl;
+        options.ProviderOptions.PostLogoutRedirectUri = $"{postLogoutRedirectUri}/account/login?returnUrl={baseAddressNoSlash}";
+        options.ProviderOptions.RedirectUri = $"{baseAddress}authentication/login-callback";
+        options.ProviderOptions.ResponseType = "code"; // Use authorization code flow
+        options.AuthenticationPaths.LogOutPath = "authentication/logout";
+        options.AuthenticationPaths.LogOutCallbackPath = "authentication/logout-callback";
+        options.AuthenticationPaths.LogOutFailedPath = "authentication/logout-failed";
+    });
+}
 
-    options.ProviderOptions.RedirectUri = $"{baseAddress}authentication/login-callback";
-    options.ProviderOptions.ResponseType = "code"; // Use authorization code flow
-    
-    // Configure logout to use id_token_hint for proper logout flow
-    options.AuthenticationPaths.LogOutPath = "authentication/logout";
-    options.AuthenticationPaths.LogOutCallbackPath = "authentication/logout-callback";
-    options.AuthenticationPaths.LogOutFailedPath = "authentication/logout-failed";
-});
-
-// register the cookie handler
 builder.Services.AddTransient<CookieHandler>();
 
-// set up authorization
 builder.Services.AddAuthorizationCore();
 
 builder.Services.AddScoped<UserDisplayNameService>();
 builder.Services.AddScoped<UserSelectedGroupService>();
 
-// Register the TokenService for automatic token refresh
+// Register the TokenService for automatic token refresh (overridden later if auth disabled)
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddHttpClient(
@@ -95,5 +97,18 @@ builder.Services.AddScoped<IApiClient>(sp =>
 
     return new ApiClient(new WebHttpClientFactory(httpClientFactory, apiServiceUrl, tokenService, loggerFac), logger);
 });
+
+// Local production bypass: fabricate an authenticated user to access app without OIDC round-trips
+if (disableAuth)
+{
+    Console.WriteLine("Auth disabled via configuration. Using bypass authentication.");
+    builder.Services.AddSingleton(new LocalProdBypassFlag(true));
+    builder.Services.AddScoped<AuthenticationStateProvider, BypassAuthenticationStateProvider>();
+    builder.Services.AddScoped<ITokenService, DummyTokenService>();
+}
+else
+{
+    builder.Services.AddSingleton(new LocalProdBypassFlag(false));
+}
 
 await builder.Build().RunAsync();

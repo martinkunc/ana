@@ -1,11 +1,24 @@
 @inject NavigationManager Navigation
 @inject ILogger<RedirectToLogin> Logger
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject LocalProdBypassFlag BypassFlag
 
 @code {
     protected override void OnInitialized()
     {
-        Logger.LogInformation("User not authenticated, redirecting to login");
+        if (BypassFlag.Enabled)
+        {
+            Logger.LogInformation("Bypass flag enabled; skipping redirect to login.");
+            return;
+        }
+        Logger.LogInformation("User not authenticated, redirecting to /authentication/login (interactive)");
+        // Avoid redirect loop if we're already on an authentication route
+        if (Navigation.Uri.Contains("/authentication/", StringComparison.OrdinalIgnoreCase))
+        {
+            Logger.LogInformation("Already on /authentication/* route; skipping redirect.");
+            return;
+        }
         var returnUrl = Uri.EscapeDataString(Navigation.Uri);
-        Navigation.NavigateTo($"/authentication/login?returnUrl={returnUrl}", true);
+        Navigation.NavigateTo($"/authentication/login?returnUrl={returnUrl}");
     }
 }

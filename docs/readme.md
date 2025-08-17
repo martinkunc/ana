@@ -258,7 +258,11 @@ azd up
 ```
 
 Deployment
+Before deployment, make sure AppMode is set to dev and both DisableAuth and DISABLE_AUTH are false.
 ```
+azd auth login --tenant-id [yourtenant@onmicrosoft.com]
+azd config set alpha.aca.persistDomains on
+azd infra synth
 azd deploy
 ```
 
@@ -479,3 +483,21 @@ and
 ```
 ./scripts/build-react-docker.sh
 ```
+
+## Enable fake authentication for bootstrap of applications
+To disable redirection backt to IdS login page, both applications have configuration switch which is disabling the Oidc configuration and instead provides fake tokens, which make application looks like logged in, without the real token. In this mode api communication doesn't work, but applications fully starts.
+
+For Ana.Web, the setting is in:
+
+ana.Web/appsettings.json:
+```
+"DisableAuth": true,
+```
+
+and for ana.react in:
+ana.react/src/config/config.tsx:
+```
+export const DISABLE_AUTH: boolean = true;
+```
+After the change in local productino testing mode, containers needs to be rebuild with AppMode prod.
+
