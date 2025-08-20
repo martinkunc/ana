@@ -1,0 +1,32 @@
+{
+  "webVitals": {
+    "FCP": 3108,
+    "FID": 2.8999999999068677,
+    "TTFB": 369.6999999997206,
+    "LCP": 3496
+  },
+  "networkRequests": [
+    {
+      "url": "http://localhost:7004/api/v1/user/select-group/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702857576,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702857705,
+      "duration": 129,
+      "size": 156
+    },
+    {
+      "url": "http://localhost:7004/api/v1/group/9cc38d17-5eaa-488f-817c-18ef3c530f01/anniversaries",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702857706,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702857862,
+      "duration": 156,
+      "size": 447
+    }
+  ]
+}

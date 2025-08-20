@@ -1,0 +1,38 @@
+{
+  "webVitals": {
+    "FCP": 2612,
+    "FID": 1,
+    "TTFB": 382,
+    "LCP": 7092
+  },
+  "networkRequests": [
+    {
+      "url": "http://localhost:7003/api/v1/user/select-group/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702908600,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702908752,
+      "duration": 152,
+      "size": 156
+    },
+    {
+      "url": "http://localhost:7003/api/v1/group/9cc38d17-5eaa-488f-817c-18ef3c530f01/members",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702908761,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702908931,
+      "duration": 170,
+      "size": 292
+    },
+    {
+      "url": "https://localhost:7001/.well-known/openid-configuration",
+      "method": "GET",
+      "type": "xhr",
+      "startTime": 1755702910049
+    }
+  ]
+}

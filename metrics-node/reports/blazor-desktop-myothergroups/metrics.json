@@ -1,0 +1,43 @@
+{
+  "webVitals": {
+    "FCP": 172,
+    "TTFB": 146.60000000009313,
+    "LCP": 644,
+    "FID": 0.20000000018626451
+  },
+  "networkRequests": [
+    {
+      "url": "http://localhost:7003/api/v1/user/groups/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702938361,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702938380,
+      "duration": 19,
+      "size": 129
+    },
+    {
+      "url": "http://localhost:7003/api/v1/user/select-group/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702938386,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702938425,
+      "duration": 39,
+      "size": 156
+    },
+    {
+      "url": "http://localhost:7003/api/v1/user/groups/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702938427,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702938461,
+      "duration": 34,
+      "size": 129
+    }
+  ]
+}

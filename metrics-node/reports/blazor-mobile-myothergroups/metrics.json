@@ -1,0 +1,49 @@
+{
+  "webVitals": {
+    "FCP": 2592,
+    "FID": 22.700000000186265,
+    "TTFB": 372.89999999990687,
+    "LCP": 7064
+  },
+  "networkRequests": [
+    {
+      "url": "http://localhost:7003/api/v1/user/groups/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702980674,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702980828,
+      "duration": 154,
+      "size": 129
+    },
+    {
+      "url": "http://localhost:7003/api/v1/user/select-group/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702980848,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702981014,
+      "duration": 166,
+      "size": 156
+    },
+    {
+      "url": "http://localhost:7003/api/v1/user/groups/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755702981022,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755702981192,
+      "duration": 170,
+      "size": 129
+    },
+    {
+      "url": "https://localhost:7001/.well-known/openid-configuration",
+      "method": "GET",
+      "type": "xhr",
+      "startTime": 1755702981940
+    }
+  ]
+}

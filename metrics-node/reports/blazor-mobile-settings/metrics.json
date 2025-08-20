@@ -1,0 +1,27 @@
+{
+  "webVitals": {
+    "FCP": 2600,
+    "FID": 24,
+    "TTFB": 378.39999999990687,
+    "LCP": 7132
+  },
+  "networkRequests": [
+    {
+      "url": "http://localhost:7003/api/v1/user/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755703053029,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755703053166,
+      "duration": 137,
+      "size": 154
+    },
+    {
+      "url": "https://localhost:7001/.well-known/openid-configuration",
+      "method": "GET",
+      "type": "xhr",
+      "startTime": 1755703054298
+    }
+  ]
+}

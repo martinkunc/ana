@@ -1,0 +1,21 @@
+{
+  "webVitals": {
+    "FCP": 3140,
+    "FID": 2.5,
+    "TTFB": 391.60000000009313,
+    "LCP": 3576
+  },
+  "networkRequests": [
+    {
+      "url": "http://localhost:7004/api/v1/user/85461b97-58f4-422e-b559-cc4503cdf7c9",
+      "method": "GET",
+      "type": "fetch",
+      "startTime": 1755703074269,
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "endTime": 1755703074402,
+      "duration": 133,
+      "size": 154
+    }
+  ]
+}
