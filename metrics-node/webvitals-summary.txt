@@ -1,0 +1,19 @@
+Web Vitals Summary
+Directory                              FCP(ms)   TTFB(ms)    LCP(ms)    FID(ms)
+-------------------------------------------------------------------------------
+blazor-desktop-anniversaries            404.00     377.90    1020.00       0.30
+blazor-desktop-members                  236.00     201.70     804.00       0.20
+blazor-desktop-myothergroups            172.00     146.60     644.00       0.20
+blazor-desktop-settings                 188.00     159.60     668.00       0.10
+blazor-mobile-anniversaries            2596.00     370.10    6948.00      20.60
+blazor-mobile-members                  2612.00     382.00    7092.00       1.00
+blazor-mobile-myothergroups            2592.00     372.90    7064.00      22.70
+blazor-mobile-settings                 2600.00     378.40    7132.00      24.00
+react-desktop-anniversaries             220.00     180.10     344.00       0.40
+react-desktop-members                   192.00     149.90     308.00       0.50
+react-desktop-myothergroups             188.00     147.10     280.00       0.40
+react-desktop-settings                  208.00     165.80     308.00       0.40
+react-mobile-anniversaries             3108.00     369.70    3496.00       2.90
+react-mobile-members                   3124.00     374.60    3516.00       2.80
+react-mobile-myothergroups             3120.00     367.60    3492.00       2.20
+react-mobile-settings                  3140.00     391.60    3576.00       2.50
