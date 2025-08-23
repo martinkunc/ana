@@ -1,0 +1,18 @@
+# Network aggregates across all folders (by content-type)
+Folder	Content-Type	Count	Total Duration (ms)	Total Size (KB)	Avg Duration (ms)	Avg Size (KB)
+blazor-desktop-anniversaries	application/json	2	116.0	0.59	58.0	0.29
+blazor-desktop-members	application/json	2	130.0	0.44	65.0	0.22
+blazor-desktop-myothergroups	application/json	3	92.0	0.4	30.67	0.13
+blazor-desktop-settings	application/json	1	1.0	0.15	1.0	0.15
+blazor-mobile-anniversaries	application/json	2	310.0	0.59	155.0	0.29
+blazor-mobile-members	application/json	2	322.0	0.44	161.0	0.22
+blazor-mobile-myothergroups	application/json	3	490.0	0.4	163.33	0.13
+blazor-mobile-settings	application/json	1	137.0	0.15	137.0	0.15
+react-desktop-anniversaries	application/json	2	90.0	0.59	45.0	0.29
+react-desktop-members	application/json	2	85.0	0.44	42.5	0.22
+react-desktop-myothergroups	application/json	1	8.0	0.13	8.0	0.13
+react-desktop-settings	application/json	1	0.0	0.15	0.0	0.15
+react-mobile-anniversaries	application/json	2	285.0	0.59	142.5	0.29
+react-mobile-members	application/json	2	289.0	0.44	144.5	0.22
+react-mobile-myothergroups	application/json	1	129.0	0.13	129.0	0.13
+react-mobile-settings	application/json	1	133.0	0.15	133.0	0.15
