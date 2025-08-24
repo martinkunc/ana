@@ -1,0 +1,6 @@
+dotnet publish "ana.Web.csproj" -c Release -o ./publish  
+Restore complete (0,2s)
+  ana.SharedNet succeeded (0,1s) → /Users/mkunc/src/ana/ana.SharedNet/bin/Release/net9.0/ana.SharedNet.dll
+  ana.Web succeeded (4,4s) → publish/
+
+Build succeeded in 4,8s
