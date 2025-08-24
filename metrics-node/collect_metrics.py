@@ -181,8 +181,6 @@ def generate_webvitals_chart(wv_results, output_path="webvitals_chart.png"):
     print(f"Saved chart -> {output_path}")
 
 
-# --- Network request aggregation (per folder by content type) ---
-
 def _normalize_content_type(ct: str) -> str:
     if not ct:
         return "unknown"
@@ -219,7 +217,6 @@ def read_network_aggregates(dirs, reports_root="reports"):
                 except Exception:
                     duration = None
             if duration is None:
-                # Skip unfinished or unmeasured requests
                 continue
             size = req.get("size", 0) or 0
 
@@ -229,13 +226,11 @@ def read_network_aggregates(dirs, reports_root="reports"):
             try:
                 bucket["total_size_bytes"] += int(size)
             except Exception:
-                # Size might be non-int; best effort cast
                 try:
                     bucket["total_size_bytes"] += int(float(size))
                 except Exception:
                     pass
 
-        # stable ordering: by total duration desc, then content type
         ordered = OrderedDict(sorted(by_ct.items(), key=lambda kv: (-kv[1]["total_duration_ms"], kv[0])))
         agg_by_folder[d] = ordered
 
@@ -243,7 +238,6 @@ def read_network_aggregates(dirs, reports_root="reports"):
 
 
 def write_aggregates_table(agg_by_folder, output_path="network-aggregates-all.txt"):
-    """Write a single TSV file across all folders with aggregated stats."""
     lines = []
     lines.append("# Network aggregates across all folders (by content-type)")
     lines.append("Folder\tContent-Type\tCount\tTotal Duration (ms)\tTotal Size (KB)\tAvg Duration (ms)\tAvg Size (KB)")
@@ -265,12 +259,6 @@ def write_aggregates_table(agg_by_folder, output_path="network-aggregates-all.tx
 
 
 def plot_aggregates_heatmap(agg_by_folder, output_path="network-aggregates-all.png"):
-    """
-    Create a single figure with two heatmaps (Duration and Size).
-    Rows = folders, Columns = content types (union across all folders).
-    Values = totals per folder-content type.
-    """
-    # Determine columns (content types)
     ct_set = set()
     for v in agg_by_folder.values():
         ct_set.update(v.keys())
@@ -279,7 +267,6 @@ def plot_aggregates_heatmap(agg_by_folder, output_path="network-aggregates-all.p
         print("No network request aggregates to plot.")
         return
 
-    # Build matrices in folder order as defined by 'directories'
     rows = [d for d in directories if d in agg_by_folder]
     if not rows:
         print("No folders with aggregates to plot.")
@@ -297,7 +284,6 @@ def plot_aggregates_heatmap(agg_by_folder, output_path="network-aggregates-all.p
             dur_mat[i, j] = v["total_duration_ms"]
             size_mat[i, j] = v["total_size_bytes"] / 1024.0  # KB
 
-    # Plot side-by-side heatmaps
     n_rows = len(rows)
     n_cols = len(content_types)
     fig_w = max(12, 1.2 * n_cols)
@@ -328,9 +314,7 @@ def plot_aggregates_heatmap(agg_by_folder, output_path="network-aggregates-all.p
     cbar2 = fig.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
     cbar2.ax.set_ylabel('KB', rotation=90, va='bottom')
 
-    # Optional: annotate top cells for readability (sparse labeling)
     try:
-        # Label only largest cells to avoid clutter
         def annotate_top(ax, mat, top_k=20, fmt="{:.0f}"):
             flat = mat.flatten()
             if flat.size == 0:
@@ -356,11 +340,6 @@ def plot_aggregates_heatmap(agg_by_folder, output_path="network-aggregates-all.p
 
 
 def generate_table_image(agg_by_folder, output_path="network-aggregates-all-table.png"):
-    """
-    Render the consolidated aggregates as a PNG image of a table.
-    Rows are ordered by folder (as in 'directories'), then by content type order used in aggregation.
-    """
-    # Build rows
     headers = [
         "Folder",
         "Content-Type",
@@ -394,10 +373,8 @@ def generate_table_image(agg_by_folder, output_path="network-aggregates-all-tabl
         print("No rows to render for table image.")
         return
 
-    # Calculate figure size based on number of rows/cols
-    n_rows = len(rows) + 1  # + header
+    n_rows = len(rows) + 1  
     n_cols = len(headers)
-    # Width per column and height per row (inches)
     col_w = 2.2
     row_h = 0.3
     fig_w = max(10, n_cols * col_w)
@@ -415,10 +392,8 @@ def generate_table_image(agg_by_folder, output_path="network-aggregates-all-tabl
     )
     the_table.auto_set_font_size(False)
     the_table.set_fontsize(8)
-    # Scale for better spacing
     the_table.scale(1, 1.2)
 
-    # Bold header row
     for (row, col), cell in the_table.get_celld().items():
         if row == 0:
             cell.set_text_props(weight='bold')
@@ -435,7 +410,6 @@ def main():
     print_webvitals_summary(wv)
     generate_webvitals_chart(wv)
 
-    # Network aggregates
     agg = read_network_aggregates(directories)
     write_aggregates_table(agg, output_path="network-aggregates-all.txt")
     plot_aggregates_heatmap(agg, output_path="network-aggregates-all.png")
